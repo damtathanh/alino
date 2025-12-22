@@ -3,7 +3,7 @@ import * as path from 'path';
 
 // Config
 const OUTPUT_FILE = 'repomix.md';
-const MAX_FILE_SIZE = 100 * 1024; // 100KB limit per file
+const MAX_FILE_SIZE = 100 * 1024; // 100KB limits
 const IGNORE_PATTERNS = [
     'node_modules', 'dist', 'build', '.next', 'coverage', '.git', '.vscode', '.idea',
     'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.DS_Store', 'repomix.md',
@@ -30,7 +30,7 @@ function getAllFiles(dir: string, fileList: string[] = []): string[] {
 
         // Basic ignore check
         if (isIgnored(file)) return;
-        if (path.basename(dir) === 'node_modules') return; // Safety check
+        if (path.basename(dir) === 'node_modules') return;
 
         const stat = fs.statSync(filePath);
 
@@ -52,8 +52,6 @@ function generateRepomix() {
     console.log(`🔍 Scanning directory: ${rootDir}`);
 
     const allFiles = getAllFiles(rootDir);
-
-    // Sort for consistency
     allFiles.sort();
 
     console.log(`Found ${allFiles.length} files to process.`);
