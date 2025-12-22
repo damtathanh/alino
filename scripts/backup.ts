@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const REMOTE_URL = 'https://github.com/damtathanh/alino.git';
+const REMOTE_URL = 'https://github.com/damtathanh/alino';
 
 function run(command: string, suppressOutput = false): string {
     try {
