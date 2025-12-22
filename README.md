@@ -1,71 +1,48 @@
-# MVP Codebase
+# Alino Monorepo
 
-A clean, modern, production-oriented MVP environment built with Next.js, TypeScript, and React.
+This is the production-ready monorepo for the Alino SaaS platform.
 
-## Tech Stack
+## Architecture
 
-- Node.js (LTS)
-- TypeScript (strict mode)
-- React
-- Next.js (App Router)
-- npm
+- **apps/web**: React application (Vite + TypeScript)
+- **apps/api**: Node.js API server (Express + TypeScript)
+- **packages/shared**: Shared TypeScript types and utilities
+- **scripts**: Automation scripts (backup, context generation)
 
 ## Getting Started
 
-### Installation
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-```bash
-npm install
-```
+2. **Environment Setup**
+   - Copy `.env.example` to `.env` in `apps/api` and `apps/web`.
+   - Fill in your Supabase credentials.
 
-### Development
+3. **Development**
+   Run both frontend and backend concurrently:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-```
+## Workflows
 
-This starts the development server at [http://localhost:3000](http://localhost:3000).
-
-### Build
-
-```bash
-npm run build
-```
-
-### Production
-
-```bash
-npm start
-```
-
-### Backup
-
+### 📦 Backup Code
+Automatically add, commit, and push changes to GitHub.
 ```bash
 npm run backup
 ```
+*Note: Requires `gh` CLI or Git configured with remote origin.*
 
-This script:
-1. Runs repomix to bundle the entire codebase
-2. Commits the repomix output
-3. Pushes to the connected GitHub repository
+### 🧠 Generate Context (Repomox)
+Aggregates all source code into a single markdown file (`repomix.md`) for LLM context instructions.
+```bash
+npm run repomox
+```
 
-## Project Structure
+## Commands
 
-- `app/` - UI components and routes (Next.js App Router)
-- `core/` - Domain models, types, and business logic
-- `infra/` - Backend integration, auth, and external services
-- `lib/` - Shared utilities and helpers
-- `scripts/` - Build and utility scripts
-- `public/` - Static assets
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in your values. Never commit `.env.local` or any files containing secrets.
-
-## TypeScript
-
-The project uses TypeScript in strict mode with absolute imports:
-- `@/app` - App directory
-- `@/core` - Core business logic
-- `@/infra` - Infrastructure code
-- `@/lib` - Shared utilities
+- `npm run build`: Build all workspaces
+- `npm run lint`: Lint all workspaces
+- `npm run test`: Run tests (placeholder)
