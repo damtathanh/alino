@@ -43,6 +43,17 @@ The content is organized as follows:
 scripts/
   backup.ts
 src/
+  landing/
+    components/
+      Audience.tsx
+      Features.tsx
+      Footer.tsx
+      Header.tsx
+      Hero.tsx
+      HowItWorks.tsx
+      ProblemSolution.tsx
+    landing.module.css
+    LandingPage.tsx
   lib/
     supabaseClient.ts
   shared/
@@ -63,6 +74,851 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/landing/components/Audience.tsx">
+import styles from '../landing.module.css';
+
+const Audience = () => {
+    return (
+        <section className={styles.section} id="for-brands">
+            <div className={styles.container}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem' }}>
+
+                    {/* For Creators */}
+                    <div className={styles.card} style={{ borderColor: 'var(--brand-primary)', backgroundColor: '#F8FAFC' }}>
+                        <div style={{
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: 'var(--brand-primary)',
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            marginBottom: '1rem'
+                        }}>
+                            For Creators
+                        </div>
+                        <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>Làm việc chuyên nghiệp hơn</h3>
+                        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <li style={{ display: 'flex', gap: '0.5rem' }}>
+                                <span style={{ color: 'var(--success)' }}>✔</span> Portfolio đẹp, load nhanh
+                            </li>
+                            <li style={{ display: 'flex', gap: '0.5rem' }}>
+                                <span style={{ color: 'var(--success)' }}>✔</span> Media Kit & Báo giá rõ ràng
+                            </li>
+                            <li style={{ display: 'flex', gap: '0.5rem' }}>
+                                <span style={{ color: 'var(--success)' }}>✔</span> Workflow quản lý deadline tự động
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* For Brands */}
+                    <div className={styles.card} style={{ borderColor: 'var(--text-secondary)' }}>
+                        <div style={{
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: 'var(--text-secondary)',
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            marginBottom: '1rem'
+                        }}>
+                            For Brands
+                        </div>
+                        <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>Booking dễ dàng & minh bạch</h3>
+                        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <li style={{ display: 'flex', gap: '0.5rem' }}>
+                                <span style={{ color: 'var(--brand-primary)' }}>✔</span> Xem hồ sơ & báo giá chuẩn
+                            </li>
+                            <li style={{ display: 'flex', gap: '0.5rem' }}>
+                                <span style={{ color: 'var(--brand-primary)' }}>✔</span> Gửi request theo mẫu, không thiếu info
+                            </li>
+                            <li style={{ display: 'flex', gap: '0.5rem' }}>
+                                <span style={{ color: 'var(--brand-primary)' }}>✔</span> Duyệt nội dung & lịch sử feedback
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default Audience;
+</file>
+
+<file path="src/landing/components/Features.tsx">
+import styles from '../landing.module.css';
+
+const Features = () => {
+    const features = [
+        {
+            title: "Hồ sơ cá nhân",
+            desc: "Portfolio chuyên nghiệp, thể hiện phong cách riêng với custom URL.",
+            icon: "👤"
+        },
+        {
+            title: "Bảng giá dịch vụ",
+            desc: "Niêm yết giá rõ ràng hoặc ẩn giá (Booking Only) tuỳ nhu cầu.",
+            icon: "🏷️"
+        },
+        {
+            title: "Đặt dịch vụ",
+            desc: "Form đặt hàng chuẩn hoá, giúp Brand gửi yêu cầu đầy đủ thông tin.",
+            icon: "🛒"
+        },
+        {
+            title: "Quản lý hợp đồng",
+            desc: "Theo dõi trạng thái từng deal: Mới, Đang làm, Chờ duyệt, Hoàn tất.",
+            icon: "📝"
+        },
+        {
+            title: "Duyệt nội dung",
+            desc: "Feedback tập trung ngay trên từng phiên bản nội dung.",
+            icon: "👀"
+        },
+        {
+            title: "Thanh toán",
+            desc: "Lưu lịch sử giao dịch, hỗ trợ tạo QR thanh toán và nhắc nợ.",
+            icon: "💸"
+        }
+    ];
+
+    return (
+        <section className={styles.section} id="features">
+            <div className={styles.container}>
+                <div className={styles.sectionTitle}>
+                    <h2>Alino gom tất cả về một chỗ</h2>
+                    <p>Mọi công cụ bạn cần để vận hành công việc sáng tạo nội dung.</p>
+                </div>
+
+                <div className={styles.featureGrid}>
+                    {features.map((item, idx) => (
+                        <div key={idx} className={styles.card}>
+                            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{item.icon}</div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.75rem' }}>{item.title}</h3>
+                            <p>{item.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default Features;
+</file>
+
+<file path="src/landing/components/Footer.tsx">
+import { useState } from 'react';
+import styles from '../landing.module.css';
+
+const FAQItem = ({ question, answer }: { question: string, answer: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div style={{ borderBottom: '1px solid var(--border-divider)', padding: '1rem 0' }}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                style={{
+                    background: 'none',
+                    border: 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    padding: 0
+                }}
+            >
+                {question}
+                <span style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+            </button>
+            {isOpen && <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>{answer}</p>}
+        </div>
+    );
+};
+
+const Footer = () => {
+    return (
+        <footer className={styles.footer} id="faq">
+            <div className={styles.container}>
+
+                {/* FAQ */}
+                <div style={{ maxWidth: '800px', margin: '0 auto 5rem' }}>
+                    <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Câu hỏi thường gặp</h2>
+                    <FAQItem
+                        question="Alino có miễn phí không?"
+                        answer="Có, Alino miễn phí trọn đời cho các tính năng cơ bản giúp bạn tạo hồ sơ và quản lý công việc."
+                    />
+                    <FAQItem
+                        question="Brand có cần tạo tài khoản để xem hồ sơ không?"
+                        answer="Không. Brand có thể xem hồ sơ public và gửi yêu cầu mà không cần đăng nhập."
+                    />
+                    <FAQItem
+                        question="Dữ liệu của tôi có được bảo mật không?"
+                        answer="Chắc chắn. Alino cam kết bảo mật thông tin hợp đồng và báo giá của bạn."
+                    />
+                </div>
+
+                {/* Final CTA */}
+                <div className={styles.ctaBand}>
+                    <h2>Bắt đầu làm việc chuyên nghiệp hơn với Alino</h2>
+                    <p>Thiết lập trong 5 phút · Không cần biết thiết kế · Dùng ngay</p>
+                    <button className={styles.btnWhite}>
+                        Tạo trang Alino miễn phí
+                    </button>
+                </div>
+
+                {/* Links */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.875rem',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                }}>
+                    <div>© 2024 Alino. All rights reserved.</div>
+                    <div style={{ display: 'flex', gap: '1.5rem' }}>
+                        <a href="#">Terms</a>
+                        <a href="#">Privacy</a>
+                        <a href="#">Contact</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+export default Footer;
+</file>
+
+<file path="src/landing/components/Header.tsx">
+import styles from '../landing.module.css';
+
+const Header = () => {
+    return (
+        <header className={styles.header}>
+            <div className={styles.container}>
+                <div className={styles.headerContent}>
+                    <div className={styles.logo}>
+                        <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M12 2L2 7L12 12L22 7L12 2Z"
+                                fill="#4F46E5"
+                                stroke="#4F46E5"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                            <path
+                                d="M2 17L12 22L22 17"
+                                stroke="#4F46E5"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                            <path
+                                d="M2 12L12 17L22 12"
+                                stroke="#4F46E5"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                        <span>ALINO</span>
+                    </div>
+
+                    <nav className={styles.nav}>
+                        <a href="#features" className={styles.navLink}>
+                            Features
+                        </a>
+                        <a href="#how-it-works" className={styles.navLink}>
+                            How it works
+                        </a>
+                        <a href="#for-brands" className={styles.navLink}>
+                            For Brands
+                        </a>
+                        <a href="#faq" className={styles.navLink}>
+                            FAQ
+                        </a>
+                    </nav>
+
+                    <button className={styles.btnPrimary}>
+                        Tạo trang Alino miễn phí
+                    </button>
+                </div>
+            </div>
+        </header>
+    );
+};
+
+export default Header;
+</file>
+
+<file path="src/landing/components/Hero.tsx">
+import styles from '../landing.module.css';
+
+const Hero = () => {
+    return (
+        <section className={styles.hero}>
+            <div className={styles.container}>
+                <div className={styles.heroContent}>
+                    <div className={styles.heroText}>
+                        <div style={{
+                            display: 'inline-block',
+                            padding: '4px 12px',
+                            background: 'var(--brand-soft-bg)',
+                            color: 'var(--brand-primary)',
+                            borderRadius: '20px',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            marginBottom: '1.5rem'
+                        }}>
+                            MVP Release 1.0
+                        </div>
+                        <h1>
+                            Chốt hợp đồng quảng cáo <span style={{ color: 'var(--brand-primary)' }}>gọn trong một nơi</span>
+                        </h1>
+                        <p className={styles.sub}>
+                            Nền tảng “tất cả trong một” giúp Content Creator và Brand làm việc chuyên nghiệp.
+                            Từ yêu cầu tới thanh toán — không trôi tin nhắn, không thất lạc tập tin.
+                        </p>
+
+                        <div className={styles.heroBullets}>
+                            <div className={styles.bullet}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Không trôi tin nhắn
+                            </div>
+                            <div className={styles.bullet}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Không thất lạc tập tin
+                            </div>
+                            <div className={styles.bullet}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Minh bạch tiến độ
+                            </div>
+                        </div>
+
+                        <div className={styles.ctaGroup}>
+                            <button className={styles.btnPrimary}>
+                                Tạo trang Alino miễn phí
+                            </button>
+                            <button className={styles.btnSecondary}>
+                                Xem Alino hoạt động
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className={styles.heroImage}>
+                        {/* Mockup Placeholder - Replacing with pure CSS structure for now */}
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '8px',
+                            padding: '1rem',
+                            border: '1px solid var(--border-divider)',
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem'
+                        }}>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', borderBottom: '1px solid var(--border-divider)', paddingBottom: '1rem' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#eee' }}></div>
+                                <div>
+                                    <div style={{ width: '120px', height: '12px', background: '#eee', marginBottom: '4px', borderRadius: '4px' }}></div>
+                                    <div style={{ width: '80px', height: '10px', background: '#f5f5f5', borderRadius: '4px' }}></div>
+                                </div>
+                                <div style={{ marginLeft: 'auto', padding: '4px 12px', background: 'var(--brand-primary)', color: 'white', borderRadius: '4px', fontSize: '12px' }}>Hire Me</div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <div style={{ flex: 1, padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
+                                    <div style={{ width: '100%', height: '8px', background: '#e5e5e5', marginBottom: '8px', borderRadius: '4px' }}></div>
+                                    <div style={{ width: '60%', height: '8px', background: '#e5e5e5', borderRadius: '4px' }}></div>
+                                </div>
+                                <div style={{ flex: 1, padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
+                                    <div style={{ width: '100%', height: '8px', background: '#e5e5e5', marginBottom: '8px', borderRadius: '4px' }}></div>
+                                    <div style={{ width: '60%', height: '8px', background: '#e5e5e5', borderRadius: '4px' }}></div>
+                                </div>
+                            </div>
+
+                            {/* Deal Pipeline Mini-Mockup */}
+                            <div style={{ marginTop: 'auto' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Deal Pipeline</div>
+                                <div style={{ display: 'flex', gap: '0.5rem', overflow: 'hidden' }}>
+                                    <div style={{ flex: 1, padding: '8px', background: 'var(--status-new)', borderRadius: '4px', fontSize: '10px' }}>
+                                        New Request
+                                    </div>
+                                    <div style={{ flex: 1, padding: '8px', background: 'var(--status-progress)', borderRadius: '4px', fontSize: '10px' }}>
+                                        Processing
+                                    </div>
+                                    <div style={{ flex: 1, padding: '8px', background: 'var(--status-awaiting)', borderRadius: '4px', fontSize: '10px' }}>
+                                        Review
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default Hero;
+</file>
+
+<file path="src/landing/components/HowItWorks.tsx">
+import styles from '../landing.module.css';
+
+const HowItWorks = () => {
+    return (
+        <section className={`${styles.section} ${styles.problemSection}`} id="how-it-works">
+            <div className={styles.container}>
+                <div className={styles.sectionTitle}>
+                    <h2>Bắt đầu đơn giản trong 3 bước</h2>
+                </div>
+
+                <div className={styles.steps}>
+                    <div>
+                        <div className={styles.stepNumber}>1</div>
+                        <h3 style={{ marginBottom: '0.5rem' }}>Tạo trang Alino</h3>
+                        <p>Thiết lập hồ sơ, portfolio và bảng giá dịch vụ chỉ trong 5 phút.</p>
+                    </div>
+                    <div>
+                        <div className={styles.stepNumber}>2</div>
+                        <h3 style={{ marginBottom: '0.5rem' }}>Nhận Booking</h3>
+                        <p>Chia sẻ link Alino. Brand xem hồ sơ và gửi yêu cầu theo mẫu chuẩn.</p>
+                    </div>
+                    <div>
+                        <div className={styles.stepNumber}>3</div>
+                        <h3 style={{ marginBottom: '0.5rem' }}>Quản lý & Thanh toán</h3>
+                        <p>Theo dõi tiến độ, duyệt nội dung và nhận thanh toán minh bạch.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default HowItWorks;
+</file>
+
+<file path="src/landing/components/ProblemSolution.tsx">
+import styles from '../landing.module.css';
+
+const ProblemSolution = () => {
+    const problems = [
+        {
+            icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+            ),
+            title: "Gửi hồ sơ qua tin nhắn",
+            desc: "Nội dung & file nằm rải rác khắp nơi, brand khó tìm lại, dễ bị trôi tin."
+        },
+        {
+            icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            ),
+            title: "Yêu cầu thiếu thông tin",
+            desc: "Phải hỏi đi hỏi lại quy cách, deadline, ngân sách... mất thời gian đôi bên."
+        },
+        {
+            icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+            ),
+            title: "Góp ý bị trôi",
+            desc: "Comment qua lại trên Zalo/Messenger/Email khiến việc tổng hợp sửa đổi thành ác mộng."
+        },
+        {
+            icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+            ),
+            title: "Tới lúc thanh toán ngại nhắc tiền",
+            desc: "Không có workflow nhắc nhở tự động, Creator thường phải tự đi đòi thanh toán."
+        }
+    ];
+
+    return (
+        <section className={`${styles.section} ${styles.problemSection}`}>
+            <div className={styles.container}>
+                <div className={styles.sectionTitle}>
+                    <h2>Làm việc chuyên nghiệp không nên bắt đầu bằng "Check ib em nhé"</h2>
+                    <p>Những vấn đề khiến bạn mất nhiều thời gian quản lý hơn là sáng tạo.</p>
+                </div>
+
+                <div className={styles.grid4}>
+                    {problems.map((item, idx) => (
+                        <div key={idx} className={styles.card}>
+                            <div className={styles.iconBox} style={{ color: 'var(--error)', background: '#FEF2F2' }}>
+                                {item.icon}
+                            </div>
+                            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>{item.title}</h3>
+                            <p style={{ fontSize: '0.95rem' }}>{item.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default ProblemSolution;
+</file>
+
+<file path="src/landing/landing.module.css">
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    width: 100%;
+}
+
+.section {
+    padding: 4rem 0;
+    width: 100%;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-divider);
+    padding: 1rem 0;
+}
+
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav {
+    display: flex;
+    gap: 2rem;
+}
+
+.navLink {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.navLink:hover {
+    color: var(--brand-primary);
+}
+
+/* Hero */
+.hero {
+    padding: 5rem 0 4rem;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.heroContent {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+@media (min-width: 900px) {
+    .heroContent {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.heroText h1 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+}
+
+@media (min-width: 768px) {
+    .heroText h1 {
+        font-size: 3.5rem;
+    }
+}
+
+.heroText .sub {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    max-width: 500px;
+}
+
+.heroBullets {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.bullet {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ctaGroup {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btnPrimary {
+    background-color: var(--brand-primary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
+}
+
+.btnPrimary:hover {
+    background-color: var(--brand-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+}
+
+.btnSecondary {
+    background-color: white;
+    color: var(--text-secondary);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid var(--border-divider);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnSecondary:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.heroImage {
+    background: var(--surface-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-divider);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    padding: 1.5rem;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Problem/Solution */
+.problemSection {
+    background-color: var(--bg-secondary);
+}
+
+.sectionTitle {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 4rem;
+}
+
+.sectionTitle h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+}
+
+.grid4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-divider);
+    transition: all 0.2s;
+}
+
+.card:hover {
+    border-color: var(--brand-active);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+.iconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background-color: var(--brand-soft-bg);
+    color: var(--brand-primary);
+}
+
+/* Features Grid */
+.featureGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* How it works */
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    text-align: center;
+}
+
+.stepNumber {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--brand-soft-bg);
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+/* Footer */
+.footer {
+    border-top: 1px solid var(--border-divider);
+    padding: 4rem 0 2rem;
+    background: var(--bg-secondary);
+}
+
+.ctaBand {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-hover) 100%);
+    padding: 4rem 2rem;
+    text-align: center;
+    border-radius: 20px;
+    color: white;
+    margin-bottom: 4rem;
+}
+
+.ctaBand h2 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.ctaBand p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+}
+
+.btnWhite {
+    background: white;
+    color: var(--brand-primary);
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btnWhite:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Nav */
+.mobileMenuBtn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .nav {
+        display: none;
+    }
+
+    .mobileMenuBtn {
+        display: block;
+    }
+}
+</file>
+
+<file path="src/landing/LandingPage.tsx">
+import Header from './components/Header';
+import Hero from './components/Hero';
+import ProblemSolution from './components/ProblemSolution';
+import Features from './components/Features';
+import HowItWorks from './components/HowItWorks';
+import Audience from './components/Audience';
+import Footer from './components/Footer';
+
+const LandingPage = () => {
+    return (
+        <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+            <Header />
+            <main>
+                <Hero />
+                <ProblemSolution />
+                <Features />
+                <HowItWorks />
+                <Audience />
+            </main>
+            <Footer />
+        </div>
+    );
+};
+
+export default LandingPage;
+</file>
 
 <file path="src/lib/supabaseClient.ts">
 import { createClient } from '@supabase/supabase-js'
@@ -90,12 +946,14 @@ export const API_VERSION = 'v1';
 import { useState, useEffect } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabaseClient'
+import LandingPage from './landing/LandingPage'
 
 function App() {
     const [session, setSession] = useState<Session | null>(null)
     const [loading, setLoading] = useState(true)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showLogin, setShowLogin] = useState(false)
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -130,17 +988,17 @@ function App() {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
                 Loading...
             </div>
         )
     }
 
-    return (
-        <div style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '600px', margin: '0 auto' }}>
-            <h1>Alino MVP</h1>
-            <div style={{ padding: '1rem', border: '1px solid #444', borderRadius: '8px', background: '#333' }}>
-                {session ? (
+    if (session) {
+        return (
+            <div style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '600px', margin: '0 auto' }}>
+                <h1>Alino MVP</h1>
+                <div style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9', color: '#333' }}>
                     <div>
                         <h2>Dashboard</h2>
                         <p><strong>Status:</strong> Authenticated</p>
@@ -153,38 +1011,57 @@ function App() {
                             Sign Out
                         </button>
                     </div>
-                ) : (
-                    <div>
-                        <h2>Login</h2>
-                        <p>Please log in to continue.</p>
-                        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #666' }}
-                            />
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #666' }}
-                            />
-                            <button
-                                type="submit"
-                                style={{ padding: '8px 16px', background: '#4444ff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                                Log In
-                            </button>
-                        </form>
-                    </div>
-                )}
+                </div>
             </div>
-        </div>
+        )
+    }
+
+    // Simple Auth View Toggle for demo purposes
+    if (showLogin) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--bg-secondary)' }}>
+                <div style={{ padding: '2rem', background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', width: '100%', maxWidth: '400px' }}>
+                    <button onClick={() => setShowLogin(false)} style={{ marginBottom: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>← Back to Home</button>
+                    <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Login to Alino</h2>
+                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-divider)' }}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-divider)' }}
+                        />
+                        <button
+                            type="submit"
+                            style={{ padding: '0.75rem', background: 'var(--brand-primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                            Log In
+                        </button>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <>
+            <LandingPage />
+            {/* Dev helper to reach login */}
+            <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 9999 }}>
+                <button onClick={() => setShowLogin(true)} style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '20px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                    Login (Dev)
+                </button>
+            </div>
+        </>
     )
 }
 
@@ -193,17 +1070,78 @@ export default App
 
 <file path="src/index.css">
 :root {
+  /* Core Neutrals */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+  --surface-card: #F2F4F7;
+  --border-divider: #E4E7EC;
+
+  /* Text */
+  --text-primary: #101828;
+  --text-secondary: #667085;
+  --text-disabled: #98A2B3;
+
+  /* Brand Indigo */
+  --brand-primary: #4F46E5;
+  --brand-hover: #4338CA;
+  --brand-active: #3730A3;
+  --brand-soft-bg: #EEF2FF;
+
+  /* Semantic */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --error: #DC2626;
+  --info: #2563EB;
+
+  /* Deal Status Suggestion */
+  --status-new: #EEF2FF;
+  --status-progress: #DBEAFE;
+  --status-awaiting: #FEF3C7;
+  --status-completed: #DCFCE7;
+
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+
+  color-scheme: light;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* Global Reset Utilities */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+button {
+  font-family: inherit;
 }
 </file>
 

@@ -1,13 +1,74 @@
 :root {
+  /* Core Neutrals */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+  --surface-card: #F2F4F7;
+  --border-divider: #E4E7EC;
+
+  /* Text */
+  --text-primary: #101828;
+  --text-secondary: #667085;
+  --text-disabled: #98A2B3;
+
+  /* Brand Indigo */
+  --brand-primary: #4F46E5;
+  --brand-hover: #4338CA;
+  --brand-active: #3730A3;
+  --brand-soft-bg: #EEF2FF;
+
+  /* Semantic */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --error: #DC2626;
+  --info: #2563EB;
+
+  /* Deal Status Suggestion */
+  --status-new: #EEF2FF;
+  --status-progress: #DBEAFE;
+  --status-awaiting: #FEF3C7;
+  --status-completed: #DCFCE7;
+
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+
+  color-scheme: light;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* Global Reset Utilities */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+button {
+  font-family: inherit;
 }
