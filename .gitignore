@@ -17,6 +17,9 @@ build/
 .next/
 out/
 coverage/
+**/dist/
+**/build/
+**/coverage/
 
 # IDE
 .idea/
