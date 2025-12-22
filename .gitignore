@@ -1,35 +1,18 @@
-# Config files
-.env
-.env.local
-.DS_Store
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Node modules
+# Strict Ignore Rules
+**/node_modules/
 node_modules/
-
-# Build artifacts
-dist/
-build/
-.next/
-out/
-coverage/
 **/dist/
+dist/
 **/build/
+build/
 **/coverage/
-
-# IDE
-.idea/
-.vscode/
-
-# Project specifics
-repomix.md
+coverage/
+**/.next/
+**/.turbo/
+**/.DS_Store
 *.tsbuildinfo
 
-# Env strict
+# Env
 .env
 .env.*
 !.env.example

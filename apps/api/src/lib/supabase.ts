@@ -15,8 +15,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('⚠️ Missing Supabase environment variables in API')
 }
 
-// Default to empty string if missing to allow server start, but calls will fail
-export const supabase = createClient(
-    supabaseUrl || '',
-    supabaseAnonKey || ''
-)
+// Default to null if missing to allow server start
+export const supabase = (supabaseUrl && supabaseAnonKey)
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;

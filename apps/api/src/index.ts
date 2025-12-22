@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 // import { createClient } from '@supabase/supabase-js';
 import { API_VERSION } from '@alino/shared';
-import { supabase } from './lib/supabase';
+import { supabase } from './lib/supabase.ts';
 
 dotenv.config();
 
