@@ -43,6 +43,10 @@ The content is organized as follows:
 scripts/
   backup.ts
 src/
+  auth/
+    AuthProvider.tsx
+  components/
+    RequireAuth.tsx
   landing/
     components/
       Audience.tsx
@@ -54,9 +58,24 @@ src/
       HowItWorks.tsx
       PricingUnlock.tsx
       ProblemSolution.tsx
+      RoleSelectModal.tsx
     LandingPage.tsx
   lib/
     supabaseClient.ts
+  pages/
+    app/
+      AppGate.tsx
+      BrandHome.tsx
+      CreatorHome.tsx
+    auth/
+      AuthCallbackPage.tsx
+      AuthPage.tsx
+      LoginPage.tsx
+      ResetPasswordPage.tsx
+      SignupPage.tsx
+      UpdatePasswordPage.tsx
+    onboarding/
+      RoleOnboardingPage.tsx
   shared/
     index.ts
   App.tsx
@@ -77,6 +96,810 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/auth/AuthProvider.tsx">
+import { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient';
+
+interface AuthContextType {
+    session: Session | null;
+    user: User | null;
+    loading: boolean;
+    signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+    session: null,
+    user: null,
+    loading: true,
+    signOut: async () => { },
+});
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [session, setSession] = useState<Session | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                setSession(session);
+                setUser(session?.user ?? null);
+            } catch (error) {
+                console.error('Error fetching session:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    const signOut = async () => {
+        await supabase.auth.signOut();
+    };
+
+    return (
+        <AuthContext.Provider value={{ session, user, loading, signOut }}>
+            {!loading && children}
+        </AuthContext.Provider>
+    );
+};
+</file>
+
+<file path="src/components/RequireAuth.tsx">
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../auth/AuthProvider';
+
+const RequireAuth = ({ children }: { children: JSX.Element }) => {
+    const { session, loading } = useAuth();
+    const location = useLocation();
+
+    // Trong lúc AuthProvider đang sync session (hoặc vừa login callback),
+    // đừng redirect vội.
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-bg">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
+            </div>
+        );
+    }
+
+    if (!session) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    return children;
+};
+
+export default RequireAuth;
+</file>
+
+<file path="src/landing/components/RoleSelectModal.tsx">
+import { useRef, useEffect } from "react";
+
+interface RoleSelectModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSelect: (role: 'creator' | 'brand') => void;
+}
+
+const RoleSelectModal = ({ isOpen, onClose, onSelect }: RoleSelectModalProps) => {
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    // Close on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" />
+
+            {/* Modal Card */}
+            <div
+                ref={modalRef}
+                className="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-auto overflow-hidden animate-fade-in-up"
+            >
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+
+                <div className="p-8 md:p-12 text-center">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Bạn muốn bắt đầu với vai trò gì?</h2>
+                    <p className="text-gray-500 mb-10 max-w-lg mx-auto">Chọn vai trò phù hợp nhất để chúng tôi tối ưu trải nghiệm cho bạn.</p>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {/* Creator Option */}
+                        <button
+                            onClick={() => onSelect('creator')}
+                            className="group relative flex flex-col items-center p-8 rounded-2xl border-2 border-gray-100 hover:border-brand bg-gray-50/50 hover:bg-white hover:shadow-xl transition-all duration-300"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-indigo-100 text-brand flex items-center justify-center text-4xl mb-6 shadow-sm group-hover:scale-110 transition-transform">
+                                🎨
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Nhà sáng tạo nội dung</h3>
+                            <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                                Tạo hồ sơ chuyên nghiệp, quản lý booking, hợp đồng và nhận thanh toán.
+                            </p>
+                            <span className="mt-auto inline-flex items-center text-brand font-bold group-hover:gap-2 transition-all">
+                                Chọn Creator <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-1">&rarr;</span>
+                            </span>
+                        </button>
+
+                        {/* Brand Option */}
+                        <button
+                            onClick={() => onSelect('brand')}
+                            className="group relative flex flex-col items-center p-8 rounded-2xl border-2 border-gray-100 hover:border-purple-500 bg-gray-50/50 hover:bg-white hover:shadow-xl transition-all duration-300"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-4xl mb-6 shadow-sm group-hover:scale-110 transition-transform">
+                                🏢
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Nhãn hàng / Agency</h3>
+                            <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                                Tìm kiếm Influencer, quản lý chiến dịch và thanh toán tập trung.
+                            </p>
+                            <span className="mt-auto inline-flex items-center text-purple-600 font-bold group-hover:gap-2 transition-all">
+                                Chọn Brand <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-1">&rarr;</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default RoleSelectModal;
+</file>
+
+<file path="src/pages/app/AppGate.tsx">
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthProvider';
+import { supabase } from '../../lib/supabaseClient';
+
+const AppGate = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [checking, setChecking] = useState(true);
+
+    useEffect(() => {
+        const checkRole = async () => {
+            if (!user) {
+                setChecking(false);
+                return;
+            }
+
+            try {
+                let { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (!profile) {
+                    const { data: newProfile, error: upsertError } = await supabase
+                        .from('profiles')
+                        .upsert({ id: user.id, email: user.email }, { onConflict: 'id' })
+                        .select('role')
+                        .single();
+
+                    if (upsertError) throw upsertError;
+                    profile = newProfile;
+                }
+
+                if (!profile.role) {
+                    const pendingRole = localStorage.getItem('pendingRole');
+                    if (pendingRole === 'creator' || pendingRole === 'brand') {
+                        const { error: updateError } = await supabase
+                            .from('profiles')
+                            .update({ role: pendingRole })
+                            .eq('id', user.id);
+
+                        if (!updateError) {
+                            profile.role = pendingRole;
+                            localStorage.removeItem('pendingRole');
+                        }
+                    }
+                }
+
+                if (profile.role === 'creator') navigate('/app/creator', { replace: true });
+                else if (profile.role === 'brand') navigate('/app/brand', { replace: true });
+                else navigate('/onboarding/role', { replace: true });
+            } catch (err) {
+                console.error('Error checking role:', err);
+                navigate('/onboarding/role', { replace: true });
+            } finally {
+                setChecking(false);
+            }
+        };
+
+        checkRole();
+    }, [user, navigate]);
+
+    if (checking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-bg">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
+            </div>
+        );
+    }
+
+    return null;
+};
+
+export default AppGate;
+</file>
+
+<file path="src/pages/app/BrandHome.tsx">
+import { useAuth } from '../../auth/AuthProvider';
+
+const BrandHome = () => {
+    const { user, signOut } = useAuth();
+
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans">
+            <nav className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <div className="font-bold text-purple-600 text-xl">ALINO <span className="text-gray-400 text-sm font-normal">for Brands</span></div>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">{user?.email}</span>
+                    <button onClick={signOut} className="text-sm text-red-600 hover:text-red-700 font-medium">Đăng xuất</button>
+                </div>
+            </nav>
+            <main className="p-8 max-w-6xl mx-auto">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center py-20">
+                    <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">🏢</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Brand Dashboard</h1>
+                    <p className="text-gray-500">Quản lý chiến dịch của bạn tại đây.</p>
+                </div>
+            </main>
+        </div>
+    );
+};
+
+export default BrandHome;
+</file>
+
+<file path="src/pages/app/CreatorHome.tsx">
+import { useAuth } from '../../auth/AuthProvider';
+
+const CreatorHome = () => {
+    const { user, signOut } = useAuth();
+
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans">
+            <nav className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <div className="font-bold text-brand text-xl">ALINO <span className="text-gray-400 text-sm font-normal">for Creators</span></div>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">{user?.email}</span>
+                    <button onClick={signOut} className="text-sm text-red-600 hover:text-red-700 font-medium">Đăng xuất</button>
+                </div>
+            </nav>
+            <main className="p-8 max-w-6xl mx-auto">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center py-20">
+                    <div className="w-16 h-16 bg-indigo-50 text-brand rounded-full flex items-center justify-center text-3xl mx-auto mb-4">🎨</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Creator Dashboard</h1>
+                    <p className="text-gray-500">Chào mừng bạn quay trở lại! Các tính năng đang được phát triển.</p>
+                </div>
+            </main>
+        </div>
+    );
+};
+
+export default CreatorHome;
+</file>
+
+<file path="src/pages/auth/AuthCallbackPage.tsx">
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+
+const AuthCallbackPage = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        (async () => {
+            const { error } = await supabase.auth.exchangeCodeForSession(
+                window.location.href
+            );
+
+            if (error) {
+                console.error('OAuth exchange error:', error.message);
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            navigate('/app', { replace: true });
+        })();
+    }, [navigate]);
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-bg">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
+        </div>
+    );
+};
+
+export default AuthCallbackPage;
+</file>
+
+<file path="src/pages/auth/AuthPage.tsx">
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../auth/AuthProvider';
+
+interface AuthPageProps {
+    view: "sign_in" | "sign_up";
+    title?: string;
+    subtitle?: string;
+    onSignupClick?: () => void; // Add this prop
+}
+
+const AuthPage = ({ view, title, subtitle, onSignupClick }: AuthPageProps) => {
+    const { session } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (session) {
+            navigate('/app');
+        }
+    }, [session, navigate]);
+
+    return (
+        <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-border p-8">
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-bold text-primary mb-2">{title || "Chào mừng trở lại"}</h1>
+                    {subtitle && <p className="text-secondary text-sm">{subtitle}</p>}
+                </div>
+
+                <Auth
+                    supabaseClient={supabase}
+                    view={view}
+                    showLinks={false}
+                    appearance={{
+                        theme: ThemeSupa,
+                        variables: {
+                            default: {
+                                colors: {
+                                    brand: '#4F46E5',
+                                    brandAccent: '#4338CA',
+                                },
+                            },
+                        },
+                        className: {
+                            button: 'rounded-lg font-semibold',
+                            input: 'rounded-lg border-gray-300',
+                        }
+                    }}
+                    providers={['google']}
+                    redirectTo={`${window.location.origin}/auth/callback`}
+                    onlyThirdPartyProviders={false}
+                    localization={{
+                        variables: {
+                            sign_in: {
+                                email_label: 'Địa chỉ Email',
+                                password_label: 'Mật khẩu',
+                                button_label: 'Đăng nhập',
+                                loading_button_label: 'Đang đăng nhập...',
+                            },
+                            sign_up: {
+                                email_label: 'Địa chỉ Email',
+                                password_label: 'Mật khẩu',
+                                button_label: 'Đăng ký',
+                                loading_button_label: 'Đang đăng ký...',
+                            }
+                        }
+                    }}
+                />
+
+                <div className="mt-4 flex flex-col gap-2 text-center text-sm">
+                    {/* Manual Links Replacement */}
+                    {view === 'sign_in' ? (
+                        <>
+                            {onSignupClick ? (
+                                <button
+                                    onClick={onSignupClick}
+                                    className="text-secondary hover:text-brand hover:underline bg-transparent border-none p-0 cursor-pointer w-full"
+                                >
+                                    Chưa có tài khoản? Đăng ký
+                                </button>
+                            ) : (
+                                <Link to="/signup" className="text-secondary hover:text-brand hover:underline">
+                                    Chưa có tài khoản? Đăng ký
+                                </Link>
+                            )}
+
+                            <Link to="/reset-password" className="text-secondary hover:text-brand hover:underline">
+                                Quên mật khẩu?
+                            </Link>
+                        </>
+                    ) : (
+                        <Link to="/login" className="text-secondary hover:text-brand hover:underline">
+                            Đã có tài khoản? Đăng nhập
+                        </Link>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AuthPage;
+</file>
+
+<file path="src/pages/auth/LoginPage.tsx">
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AuthPage from './AuthPage';
+import RoleSelectModal from '../../landing/components/RoleSelectModal';
+
+const LoginPage = () => {
+    const navigate = useNavigate();
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+    const handleSignupClick = () => {
+        setIsRoleModalOpen(true);
+    };
+
+    const handleRoleSelect = (role: 'creator' | 'brand') => {
+        setIsRoleModalOpen(false);
+        navigate(`/signup?role=${role}`);
+    };
+
+    return (
+        <>
+            <AuthPage
+                view="sign_in"
+                title="Đăng nhập Alino"
+                subtitle="Quản lý công việc Creator chuyên nghiệp"
+                onSignupClick={handleSignupClick}
+            />
+
+            {/* Role Selection Modal */}
+            <RoleSelectModal
+                isOpen={isRoleModalOpen}
+                onClose={() => setIsRoleModalOpen(false)}
+                onSelect={handleRoleSelect}
+            />
+        </>
+    );
+};
+
+export default LoginPage;
+</file>
+
+<file path="src/pages/auth/ResetPasswordPage.tsx">
+import { useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+
+const ResetPasswordPage = () => {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+        setError('');
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/update-password`,
+        });
+
+        if (error) {
+            setError(error.message);
+        } else {
+            setMessage('Vui lòng kiểm tra email để đặt lại mật khẩu.');
+        }
+        setLoading(false);
+    };
+
+    return (
+        <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-border p-8">
+                <h1 className="text-2xl font-bold text-primary mb-2 text-center">Quên mật khẩu</h1>
+                <p className="text-secondary text-sm text-center mb-6">Nhập email để nhận link đặt lại mật khẩu</p>
+
+                {message && (
+                    <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                        {message}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleReset} className="flex flex-col gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-primary mb-1">Email</label>
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand hover:bg-brandHover text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                        {loading ? 'Đang gửi...' : 'Gửi link reset'}
+                    </button>
+                    <a href="/login" className="text-center text-sm text-brand hover:underline mt-2">
+                        Quay lại Đăng nhập
+                    </a>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default ResetPasswordPage;
+</file>
+
+<file path="src/pages/auth/SignupPage.tsx">
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import AuthPage from './AuthPage';
+import { supabase } from '../../lib/supabaseClient';
+
+const SignupPage = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [subtitle, setSubtitle] = useState("Bắt đầu hành trình Creator chuyên nghiệp cùng Alino");
+
+    useEffect(() => {
+        // Parse role from query params
+        const queryParams = new URLSearchParams(location.search);
+        const role = queryParams.get('role');
+
+        // Dynamically set subtitle based on role
+        if (role === 'brand') {
+            setSubtitle("Giải pháp Influencer Marketing toàn diện cho doanh nghiệp");
+        } else if (role === 'creator') {
+            setSubtitle("Xây dựng Profile chuyên nghiệp & Gia tăng thu nhập");
+        }
+
+        // Store role in localStorage for OAuth survival
+        if (role) {
+            localStorage.setItem('pendingRole', role);
+        }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+                // If there's a specific role intent in the URL, apply it
+                if (role && (role === 'creator' || role === 'brand')) {
+                    try {
+                        const { error } = await supabase
+                            .from('profiles')
+                            .update({ role })
+                            .eq('id', session.user.id);
+
+                        if (error) {
+                            console.error('Error auto-updating role:', error);
+                        } else {
+                            // Clear pending role if successful
+                            localStorage.removeItem('pendingRole');
+                        }
+                    } catch (err) {
+                        console.error('Exception updating role:', err);
+                    }
+                }
+
+                // Navigate to app which will handle redirection based on role
+                navigate('/app');
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [location.search, navigate]);
+
+    return (
+        <AuthPage
+            view="sign_up"
+            title="Đăng ký tài khoản"
+            subtitle={subtitle}
+        />
+    );
+};
+
+export default SignupPage;
+</file>
+
+<file path="src/pages/auth/UpdatePasswordPage.tsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+
+const UpdatePasswordPage = () => {
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        const { error } = await supabase.auth.updateUser({ password });
+
+        if (error) {
+            setError(error.message);
+            setLoading(false);
+        } else {
+            navigate('/app');
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-border p-8">
+                <h1 className="text-2xl font-bold text-primary mb-6 text-center">Đặt mật khẩu mới</h1>
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleUpdate} className="flex flex-col gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-primary mb-1">Mật khẩu mới</label>
+                        <input
+                            type="password"
+                            required
+                            minLength={6}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand hover:bg-brandHover text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                        {loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default UpdatePasswordPage;
+</file>
+
+<file path="src/pages/onboarding/RoleOnboardingPage.tsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthProvider';
+import { supabase } from '../../lib/supabaseClient';
+
+const RoleOnboardingPage = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    const handleSelectRole = async (role: 'creator' | 'brand') => {
+        if (!user) return;
+        setLoading(true);
+
+        const { error } = await supabase
+            .from('profiles')
+            .upsert(
+                { id: user.id, email: user.email, role },
+                { onConflict: 'id' }
+            );
+
+        if (error) {
+            console.error('Error updating role:', error);
+            alert('Có lỗi xảy ra, vui lòng thử lại.');
+            setLoading(false);
+            return;
+        }
+
+        navigate('/app');
+    };
+
+    return (
+        <div className="min-h-screen bg-bg p-6 flex flex-col items-center justify-center">
+            <div className="max-w-4xl w-full text-center">
+                <h1 className="text-3xl lg:text-4xl font-bold text-primary mb-4">Chào mừng đến với Alino!</h1>
+                <p className="text-secondary text-lg mb-12">Bạn muốn sử dụng Alino với vai trò gì?</p>
+
+                <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+                    {/* Creator Card */}
+                    <button
+                        onClick={() => handleSelectRole('creator')}
+                        disabled={loading}
+                        className="group relative bg-white rounded-2xl p-8 border-2 border-transparent hover:border-brand shadow-xl hover:shadow-2xl transition-all text-left flex flex-col items-center md:items-start"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-indigo-50 text-brand flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                            🎨
+                        </div>
+                        <h3 className="text-xl font-bold text-primary mb-2">Nhà sáng tạo nội dung</h3>
+                        <p className="text-secondary text-sm leading-relaxed mb-6 text-center md:text-left">
+                            Tạo hồ sơ, quản lý booking, hợp đồng và nhận thanh toán chuyên nghiệp.
+                        </p>
+                        <span className="mt-auto text-brand font-semibold group-hover:underline">Tôi là Creator &rarr;</span>
+                    </button>
+
+                    {/* Brand Card */}
+                    <button
+                        onClick={() => handleSelectRole('brand')}
+                        disabled={loading}
+                        className="group relative bg-white rounded-2xl p-8 border-2 border-transparent hover:border-purple-500 shadow-xl hover:shadow-2xl transition-all text-left flex flex-col items-center md:items-start"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                            🏢
+                        </div>
+                        <h3 className="text-xl font-bold text-primary mb-2">Nhãn hàng / Agency</h3>
+                        <p className="text-secondary text-sm leading-relaxed mb-6 text-center md:text-left">
+                            Tìm kiếm Creator, quản lý chiến dịch và thanh toán tập trung.
+                        </p>
+                        <span className="mt-auto text-purple-600 font-semibold group-hover:underline">Tôi là Brand &rarr;</span>
+                    </button>
+                </div>
+            </div>
+            {loading && (
+                <div className="fixed inset-0 bg-white/50 z-50 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default RoleOnboardingPage;
+</file>
 
 <file path="src/landing/components/FAQ.tsx">
 import { useState } from 'react';
@@ -187,7 +1010,11 @@ export default FAQ;
 <file path="src/landing/components/PricingUnlock.tsx">
 import { useState } from 'react';
 
-const PricingUnlock = () => {
+interface PricingUnlockProps {
+    onSignupClick: () => void;
+}
+
+const PricingUnlock = ({ onSignupClick }: PricingUnlockProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
@@ -232,7 +1059,10 @@ const PricingUnlock = () => {
                             ))}
                         </ul>
 
-                        <button className="w-full py-4 bg-brand hover:bg-brandHover text-white rounded-xl font-bold shadow-lg shadow-brand/20 transition-all transform hover:-translate-y-0.5">
+                        <button
+                            onClick={onSignupClick}
+                            className="w-full py-4 bg-brand hover:bg-brandHover text-white rounded-xl font-bold shadow-lg shadow-brand/20 transition-all transform hover:-translate-y-0.5 block text-center"
+                        >
                             Tạo trang Alino miễn phí
                         </button>
                     </div>
@@ -335,6 +1165,71 @@ const PricingUnlock = () => {
 export default PricingUnlock;
 </file>
 
+<file path="src/lib/supabaseClient.ts">
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+console.log("SUPABASE URL:", supabaseUrl)
+console.log("SUPABASE KEY:", supabaseAnonKey?.slice(0, 20))
+
+if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY")
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+    },
+})
+</file>
+
+<file path="src/shared/index.ts">
+export type User = {
+    id: string;
+    email: string;
+};
+
+export const API_VERSION = 'v1';
+</file>
+
+<file path="src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>,
+)
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alino MVP</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
 <file path="postcss.config.js">
 export default {
   plugins: {
@@ -395,20 +1290,63 @@ export default {
 };
 </file>
 
-<file path="src/landing/components/Audience.tsx">
-const Audience = () => {
-    return (
-        <section className="py-24 bg-white" id="for-brands">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<file path="tsconfig.node.json">
+{
+    "compilerOptions": {
+        "composite": true,
+        "skipLibCheck": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true
+    },
+    "include": [
+        "vite.config.ts"
+    ]
+}
+</file>
 
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+    plugins: [react()],
+    server: {
+        host: true,
+        port: 5173,
+        strictPort: true,
+    },
+})
+</file>
+
+<file path="src/landing/components/Audience.tsx">
+interface AudienceProps {
+    onSignupClick: (role?: 'creator' | 'brand') => void;
+}
+
+const Audience = ({ onSignupClick }: AudienceProps) => {
+    return (
+        <section className="py-24 bg-white" id="audience">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl font-bold text-primary mb-4">Dành cho ai?</h2>
+                    <p className="text-lg text-secondary">Hệ sinh thái kết nối nhu cầu thực tế của cả hai phía.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                     {/* For Creators */}
-                    <div className="relative group bg-bgAlt rounded-3xl p-8 sm:p-12 border border-border overflow-hidden hover:border-brand/30 transition-colors">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-brand/10 transition-colors"></div>
+                    <div className="group relative rounded-3xl p-8 lg:p-10 bg-white border border-border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
                         <div className="relative z-10">
-                            <span className="inline-block text-brand font-bold tracking-wider text-sm uppercase mb-4 bg-brandSoft px-3 py-1 rounded-full">For Creators</span>
-                            <h3 className="text-3xl font-bold text-primary mb-6">Làm việc chuyên nghiệp hơn</h3>
+                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl mb-6 text-green-600">
+                                🎨
+                            </div>
+                            <h3 className="text-2xl font-bold text-primary mb-2">Nhà sáng tạo nội dung</h3>
+                            <p className="text-secondary mb-8 leading-relaxed">
+                                Bạn muốn chuyên nghiệp hóa hình ảnh, quản lý công việc khoa học và không muốn bị cuốn vào quy trình thủ công.
+                            </p>
+
                             <ul className="space-y-4">
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</div>
@@ -416,39 +1354,41 @@ const Audience = () => {
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</div>
-                                    <span className="text-secondary text-lg">Media Kit & Báo giá rõ ràng, chuyên nghiệp</span>
+                                    <span className="text-secondary text-lg">Báo giá dịch vụ minh bạch</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</div>
-                                    <span className="text-secondary text-lg">Workflow quản lý deadline tự động nhắc nhở</span>
+                                    <span className="text-secondary text-lg">Quản lý Booking & Hợp đồng online</span>
                                 </li>
                             </ul>
 
-                            <div className="mt-10">
-                                <a href="#" className="inline-flex items-center font-semibold text-brand hover:underline">
-                                    Tạo hồ sơ Creator
-                                    <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                                </a>
-                            </div>
+                            <button onClick={() => onSignupClick('creator')} className="inline-block mt-8 text-green-600 font-bold hover:underline cursor-pointer">
+                                Tạo hồ sơ Creator &rarr;
+                            </button>
                         </div>
                     </div>
 
                     {/* For Brands */}
-                    <div className="relative group bg-primary text-white rounded-3xl p-8 sm:p-12 overflow-hidden shadow-2xl">
-                        {/* Abstract shapes */}
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -ml-16 -mb-16"></div>
+                    <div className="group relative rounded-3xl p-8 lg:p-10 bg-slate-900 text-white shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
                         <div className="relative z-10">
-                            <span className="inline-block text-indigo-300 font-bold tracking-wider text-sm uppercase mb-4 bg-white/10 px-3 py-1 rounded-full">For Brands</span>
-                            <h3 className="text-3xl font-bold text-white mb-6">Booking dễ dàng & minh bạch</h3>
+                            <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center text-2xl mb-6 text-white shadow-lg">
+                                🏢
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Nhãn hàng / Agency</h3>
+                            <p className="text-slate-300 mb-8 leading-relaxed">
+                                Bạn cần tìm kiếm KOL/KOC chất lượng, quản lý chiến dịch hiệu quả và minh bạch hóa quy trình thanh toán.
+                            </p>
+
                             <ul className="space-y-4">
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">✓</div>
-                                    <span className="text-indigo-100 text-lg">Xem hồ sơ & báo giá chuẩn (đã xác thực)</span>
+                                    <span className="text-indigo-100 text-lg">Tìm kiếm Creator theo filter chuyên sâu</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">✓</div>
-                                    <span className="text-indigo-100 text-lg">Gửi request theo mẫu, không thiếu info</span>
+                                    <span className="text-indigo-100 text-lg">Quản lý Campaign Real-time</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">✓</div>
@@ -456,15 +1396,11 @@ const Audience = () => {
                                 </li>
                             </ul>
 
-                            <div className="mt-10">
-                                <a href="#" className="inline-flex items-center font-semibold text-white hover:text-indigo-200 transition-colors">
-                                    Tìm hiểu cho Brand
-                                    <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                                </a>
-                            </div>
+                            <a href="#brands" className="inline-block mt-8 text-white font-bold hover:underline">
+                                Tìm hiểu cho Brand &rarr;
+                            </a>
                         </div>
                     </div>
-
                 </div>
             </div>
         </section>
@@ -771,13 +1707,19 @@ export default Footer;
 </file>
 
 <file path="src/landing/components/Header.tsx">
-const Header = () => {
+import { Link } from 'react-router-dom';
+
+interface HeaderProps {
+    onSignupClick: () => void;
+}
+
+const Header = ({ onSignupClick }: HeaderProps) => {
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 h-18 transition-all duration-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
                 <div className="flex items-center justify-between h-full pt-4 pb-4">
                     {/* Logo & Brand */}
-                    <div className="flex items-center gap-2.5 cursor-pointer group">
+                    <Link to="/" className="flex items-center gap-2.5 cursor-pointer group">
                         <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all duration-300">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
@@ -786,7 +1728,7 @@ const Header = () => {
                             </svg>
                         </div>
                         <span className="font-bold text-xl tracking-tight text-gray-900 group-hover:text-brand transition-colors">ALINO</span>
-                    </div>
+                    </Link>
 
                     {/* Centered Navigation */}
                     <nav className="hidden md:flex items-center gap-8 lg:gap-10">
@@ -810,8 +1752,17 @@ const Header = () => {
 
                     {/* Right CTA */}
                     <div className="flex items-center gap-4">
-                        <button className="bg-brand hover:bg-brandHover active:bg-brandActive text-white px-5 py-2.5 rounded-full text-[15px] font-semibold shadow-lg shadow-brand/25 hover:shadow-brand/40 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer ring-offset-2 focus:ring-2 ring-brand">
-                            Tạo trang Alino miễn phí
+                        <Link
+                            to="/login"
+                            className="text-[15px] font-medium text-gray-600 hover:text-brand transition-colors hidden sm:block"
+                        >
+                            Đăng nhập
+                        </Link>
+                        <button
+                            onClick={onSignupClick}
+                            className="bg-brand hover:bg-brandHover active:bg-brandActive text-white px-5 py-2.5 rounded-full text-[15px] font-semibold shadow-lg shadow-brand/25 hover:shadow-brand/40 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer ring-offset-2 focus:ring-2 ring-brand inline-block text-center"
+                        >
+                            Tạo trang miễn phí
                         </button>
                     </div>
                 </div>
@@ -824,7 +1775,11 @@ export default Header;
 </file>
 
 <file path="src/landing/components/Hero.tsx">
-const Hero = () => {
+interface HeroProps {
+    onSignupClick: () => void;
+}
+
+const Hero = ({ onSignupClick }: HeroProps) => {
     return (
         <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-white">
             {/* Background Gradients - Softer & More Modern */}
@@ -859,7 +1814,10 @@ const Hero = () => {
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-12">
-                            <button className="w-full sm:w-auto h-12 px-8 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-semibold shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            <button
+                                onClick={onSignupClick}
+                                className="w-full sm:w-auto h-12 px-8 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-semibold shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                            >
                                 Tạo trang miễn phí
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
                             </button>
@@ -1232,6 +2190,8 @@ export default ProblemSolution;
 </file>
 
 <file path="src/landing/LandingPage.tsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ProblemSolution from './components/ProblemSolution';
@@ -1241,15 +2201,36 @@ import Audience from './components/Audience';
 import PricingUnlock from './components/PricingUnlock';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
+import RoleSelectModal from './components/RoleSelectModal';
 
 const LandingPage = () => {
+    const navigate = useNavigate();
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+    // Handlers
+    const openRoleModal = () => setIsRoleModalOpen(true);
+
+    const handleRoleSelect = (role: 'creator' | 'brand') => {
+        setIsRoleModalOpen(false);
+        navigate(`/signup?role=${role}`);
+    };
+
+    // Specific handler for Audience card which might pass specific role
+    const handleSignup = (role?: 'creator' | 'brand') => {
+        if (role) {
+            navigate(`/signup?role=${role}`);
+        } else {
+            openRoleModal();
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white text-gray-900 font-sans antialiased selection:bg-brand/20 selection:text-brand">
-            <Header />
+            <Header onSignupClick={openRoleModal} />
 
             <main className="flex flex-col pt-18">
                 {/* Hero section handles its own spacing */}
-                <Hero />
+                <Hero onSignupClick={openRoleModal} />
 
                 {/* Problem & Solution Flow */}
                 <ProblemSolution />
@@ -1263,10 +2244,10 @@ const LandingPage = () => {
                 </div>
 
                 {/* Target Audience Split */}
-                <Audience />
+                <Audience onSignupClick={handleSignup} />
 
                 {/* Trust/Pricing Gate */}
-                <PricingUnlock />
+                <PricingUnlock onSignupClick={openRoleModal} />
 
                 {/* Objection Handling */}
                 <FAQ />
@@ -1281,7 +2262,10 @@ const LandingPage = () => {
                             Tham gia cùng hàng ngàn Creator đang sử dụng Alino để quản lý booking và phát triển sự nghiệp.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <button className="w-full sm:w-auto px-10 py-4 bg-brand hover:bg-brandHover text-white rounded-full text-lg font-bold shadow-xl shadow-brand/20 hover:shadow-brand/30 transition-all transform hover:-translate-y-1">
+                            <button
+                                onClick={openRoleModal}
+                                className="w-full sm:w-auto px-10 py-4 bg-brand hover:bg-brandHover text-white rounded-full text-lg font-bold shadow-xl shadow-brand/20 hover:shadow-brand/30 transition-all transform hover:-translate-y-1 block sm:inline-block"
+                            >
                                 Tạo trang Alino miễn phí
                             </button>
                             <button className="w-full sm:w-auto px-10 py-4 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 rounded-full text-lg font-semibold transition-all">
@@ -1293,289 +2277,18 @@ const LandingPage = () => {
             </main>
 
             <Footer />
+
+            {/* Role Selection Modal */}
+            <RoleSelectModal
+                isOpen={isRoleModalOpen}
+                onClose={() => setIsRoleModalOpen(false)}
+                onSelect={handleRoleSelect}
+            />
         </div>
     );
 };
 
 export default LandingPage;
-</file>
-
-<file path="src/lib/supabaseClient.ts">
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-</file>
-
-<file path="src/shared/index.ts">
-export type User = {
-    id: string;
-    email: string;
-};
-
-export const API_VERSION = 'v1';
-</file>
-
-<file path="src/main.tsx">
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>,
-)
-</file>
-
-<file path="src/vite-env.d.ts">
-/// <reference types="vite/client" />
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alino MVP</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-</file>
-
-<file path="tsconfig.node.json">
-{
-    "compilerOptions": {
-        "composite": true,
-        "skipLibCheck": true,
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "allowSyntheticDefaultImports": true
-    },
-    "include": [
-        "vite.config.ts"
-    ]
-}
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// https://vitejs.dev/config/
-export default defineConfig({
-    plugins: [react()],
-})
-</file>
-
-<file path="src/App.tsx">
-import { useState, useEffect } from 'react'
-import { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabaseClient'
-import LandingPage from './landing/LandingPage'
-
-function App() {
-    const [session, setSession] = useState<Session | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [showLogin, setShowLogin] = useState(false)
-
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session)
-            setLoading(false)
-        })
-
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session)
-        })
-
-        return () => subscription.unsubscribe()
-    }, [])
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault()
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
-
-        if (error) {
-            alert(error.message)
-        }
-    }
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
-    }
-
-    if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-                Loading...
-            </div>
-        )
-    }
-
-    if (session) {
-        return (
-            <div style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '600px', margin: '0 auto' }}>
-                <h1>Alino MVP</h1>
-                <div style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9', color: '#333' }}>
-                    <div>
-                        <h2>Dashboard</h2>
-                        <p><strong>Status:</strong> Authenticated</p>
-                        <p><strong>Email:</strong> {session.user.email}</p>
-                        <p><strong>User ID:</strong> {session.user.id}</p>
-                        <button
-                            onClick={handleLogout}
-                            style={{ padding: '8px 16px', background: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                            Sign Out
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    // Simple Auth View Toggle for demo purposes
-    if (showLogin) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--bg-secondary)' }}>
-                <div style={{ padding: '2rem', background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', width: '100%', maxWidth: '400px' }}>
-                    <button onClick={() => setShowLogin(false)} style={{ marginBottom: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>← Back to Home</button>
-                    <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Login to Alino</h2>
-                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-divider)' }}
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-divider)' }}
-                        />
-                        <button
-                            type="submit"
-                            style={{ padding: '0.75rem', background: 'var(--brand-primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            Log In
-                        </button>
-                    </form>
-                </div>
-            </div>
-        )
-    }
-
-    return (
-        <>
-            <LandingPage />
-        </>
-    )
-}
-
-export default App
-</file>
-
-<file path="src/index.css">
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  /* Core Neutrals */
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #FAFAFA;
-
-  /* Text */
-  --text-primary: #101828;
-  --text-secondary: #667085;
-
-  /* Brand */
-  --brand-primary: #4F46E5;
-  --brand-soft-bg: #EEF2FF;
-
-  /* Semantic */
-  --success: #16A34A;
-  --error: #DC2626;
-
-  /* Borders */
-  --border-divider: #E4E7EC;
-
-  /* Deal Statuses */
-  --status-new: #EEF2FF;
-  --status-progress: #DBEAFE;
-  --status-awaiting: #FEF3C7;
-  --status-completed: #DCFCE7;
-}
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-@layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-
-  .rotate-y-n5 {
-    transform: rotateY(-5deg);
-  }
-
-  .rotate-x-5 {
-    transform: rotateX(5deg);
-  }
-
-  .animate-bounce-slow {
-    animation: bounce 3s infinite;
-  }
-
-  .animate-fade-in-up {
-    animation: fadeInUp 0.3s ease-out forwards;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
 </file>
 
 <file path="scripts/backup.ts">
@@ -1692,6 +2405,156 @@ function backup() {
 }
 
 backup();
+</file>
+
+<file path="src/App.tsx">
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthProvider';
+import RequireAuth from './components/RequireAuth';
+
+// Pages
+import LandingPage from './landing/LandingPage';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
+import RoleOnboardingPage from './pages/onboarding/RoleOnboardingPage';
+import AuthCallbackPage from './pages/auth/AuthCallbackPage';
+import AppGate from './pages/app/AppGate';
+import CreatorHome from './pages/app/CreatorHome';
+import BrandHome from './pages/app/BrandHome';
+
+function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/update-password" element={<UpdatePasswordPage />} />
+                    <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+                    {/* Private Routes */}
+                    <Route
+                        path="/app"
+                        element={
+                            <RequireAuth>
+                                <AppGate />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/onboarding/role"
+                        element={
+                            <RequireAuth>
+                                <RoleOnboardingPage />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/app/creator"
+                        element={
+                            <RequireAuth>
+                                <CreatorHome />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path="/app/brand"
+                        element={
+                            <RequireAuth>
+                                <BrandHome />
+                            </RequireAuth>
+                        }
+                    />
+                </Routes>
+            </AuthProvider>
+        </BrowserRouter>
+    );
+}
+
+export default App;
+</file>
+
+<file path="src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Core Neutrals */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+
+  /* Text */
+  --text-primary: #101828;
+  --text-secondary: #667085;
+
+  /* Brand */
+  --brand-primary: #4F46E5;
+  --brand-soft-bg: #EEF2FF;
+
+  /* Semantic */
+  --success: #16A34A;
+  --error: #DC2626;
+
+  /* Borders */
+  --border-divider: #E4E7EC;
+
+  /* Deal Statuses */
+  --status-new: #EEF2FF;
+  --status-progress: #DBEAFE;
+  --status-awaiting: #FEF3C7;
+  --status-completed: #DCFCE7;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .rotate-y-n5 {
+    transform: rotateY(-5deg);
+  }
+
+  .rotate-x-5 {
+    transform: rotateX(5deg);
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 3s infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
 </file>
 
 <file path="README.md">
@@ -1830,10 +2693,13 @@ repomix.md
     "repomix": "repomix"
   },
   "dependencies": {
+    "@supabase/auth-ui-react": "^0.4.7",
+    "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.39.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.11.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

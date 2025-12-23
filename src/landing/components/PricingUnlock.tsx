@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
-const PricingUnlock = () => {
+interface PricingUnlockProps {
+    onSignupClick: () => void;
+}
+
+const PricingUnlock = ({ onSignupClick }: PricingUnlockProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
@@ -45,7 +49,10 @@ const PricingUnlock = () => {
                             ))}
                         </ul>
 
-                        <button className="w-full py-4 bg-brand hover:bg-brandHover text-white rounded-xl font-bold shadow-lg shadow-brand/20 transition-all transform hover:-translate-y-0.5">
+                        <button
+                            onClick={onSignupClick}
+                            className="w-full py-4 bg-brand hover:bg-brandHover text-white rounded-xl font-bold shadow-lg shadow-brand/20 transition-all transform hover:-translate-y-0.5 block text-center"
+                        >
                             Tạo trang Alino miễn phí
                         </button>
                     </div>
