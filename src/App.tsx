@@ -110,12 +110,6 @@ function App() {
     return (
         <>
             <LandingPage />
-            {/* Dev helper to reach login */}
-            <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 9999 }}>
-                <button onClick={() => setShowLogin(true)} style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '20px', fontSize: '0.8rem', cursor: 'pointer' }}>
-                    Login (Dev)
-                </button>
-            </div>
         </>
     )
 }

@@ -46,13 +46,14 @@ src/
   landing/
     components/
       Audience.tsx
+      FAQ.tsx
       Features.tsx
       Footer.tsx
       Header.tsx
       Hero.tsx
       HowItWorks.tsx
+      PricingUnlock.tsx
       ProblemSolution.tsx
-    landing.module.css
     LandingPage.tsx
   lib/
     supabaseClient.ts
@@ -66,7 +67,9 @@ src/
 .gitignore
 index.html
 package.json
+postcss.config.js
 README.md
+tailwind.config.js
 tsconfig.json
 tsconfig.node.json
 vite.config.ts
@@ -75,65 +78,391 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
-<file path="src/landing/components/Audience.tsx">
-import styles from '../landing.module.css';
+<file path="src/landing/components/FAQ.tsx">
+import { useState } from 'react';
 
+const FAQItem = ({ question, answer }: { question: string, answer: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="border border-gray-200 rounded-xl bg-white overflow-hidden transition-all duration-200 hover:border-brand/30 hover:shadow-sm">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full text-left flex justify-between items-start p-5 bg-transparent border-0 cursor-pointer group"
+            >
+                <span className={`text-[15px] font-semibold pr-4 leading-snug transition-colors ${isOpen ? 'text-brand' : 'text-gray-900 group-hover:text-brand'}`}>
+                    {question}
+                </span>
+                <span className={`shrink-0 transform transition-transform duration-200 text-gray-400 mt-0.5 ${isOpen ? 'rotate-180 text-brand' : ''}`}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </span>
+            </button>
+            <div
+                className={`overflow-hidden transition-all duration-300 ease-in-out bg-gray-50/50 ${isOpen ? 'max-h-96 opacity-100 border-t border-gray-100' : 'max-h-0 opacity-0'}`}
+            >
+                <p className="text-gray-600 text-sm leading-relaxed p-5 pt-4">
+                    {answer}
+                </p>
+            </div>
+        </div>
+    );
+};
+
+const FAQ = () => {
+    const faqs = [
+        {
+            q: "Alino có miễn phí không?",
+            a: "Có. Alino miễn phí trọn đời cho Creator với các tính năng: Tạo hồ sơ, Bảng giá, Quản lý đơn booking. Chúng tôi chỉ thu phí nhỏ khi bạn phát sinh giao dịch nhận tiền qua nền tảng (nếu dùng)."
+        },
+        {
+            q: "Content Creator có cần trả phí để tạo trang không?",
+            a: "Hoàn toàn không. Bạn có thể tạo trang hồ sơ, Hồ sơ và bảng giá dịch vụ miễn phí vĩnh viễn trên Alino."
+        },
+        {
+            q: "Brand có cần tạo tài khoản để gửi booking không?",
+            a: "Không bắt buộc. Brand có thể xem hồ sơ và gửi yêu cầu booking thông qua form mà không cần đăng nhập. Tuy nhiên, việc tạo tài khoản sẽ giúp Brand quản lý lịch sử đơn hàng tốt hơn."
+        },
+        {
+            q: "Tiền booking được thanh toán như thế nào?",
+            a: "Bạn có thể nhận tiền trực tiếp từ Brand (CK, Momo) hoặc dùng cổng thanh toán an toàn của Alino. Nếu dùng Alino, tiền sẽ được tạm giữ và giải ngân khi công việc hoàn thành."
+        },
+        {
+            q: "Tôi có thể dùng tên miền riêng cho trang Alino không?",
+            a: "Có. Với gói nâng cao (sắp ra mắt), bạn có thể trỏ tên miền riêng (ví dụ: booking.minhhoa.com) về trang Alino của mình để tăng tính chuyên nghiệp."
+        },
+        {
+            q: "Alino có hỗ trợ hợp đồng và lưu lịch sử làm việc không?",
+            a: "Có. Hệ thống tự động lưu trữ toàn bộ lịch sử trao đổi, file đã gửi và trạng thái công việc. Bạn có thể xuất hợp đồng mẫu điện tử ngay trên nền tảng."
+        },
+        {
+            q: "Nội dung gửi duyệt có bị trôi hoặc mất không?",
+            a: "Không. Tính năng Duyệt nội dung của Alino lưu trữ tập trung từng phiên bản (V1, V2...) và comment phản hồi ngay tại chỗ, giúp bạn không bao giờ bị trôi tin nhắn."
+        },
+        {
+            q: "Alino có nhắc thanh toán cho Brand không?",
+            a: "Có. Hệ thống có tính năng gửi email nhắc nhở thanh toán tự động tới Brand khi đến hạn, giúp Creator đỡ ngại khi phải đi đòi tiền."
+        },
+        {
+            q: "Dữ liệu hợp đồng và báo giá có được bảo mật không?",
+            a: "Tuyệt đối bảo mật. Chỉ có bạn và Brand trong giao dịch đó mới xem được các thông tin nhạy cảm về giá và hợp đồng."
+        },
+        {
+            q: "Tôi có thể sử dụng Alino cho nhiều Brand cùng lúc không?",
+            a: "Được chứ. Bạn có thể quản lý không giới hạn số lượng đơn hàng và Brand trên cùng một Dashboard duy nhất."
+        }
+    ];
+
+    return (
+        <section className="py-24 bg-gray-50" id="faq">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Câu hỏi thường gặp</h2>
+                    <p className="text-gray-500 max-w-2xl mx-auto">
+                        Giải đáp những thắc mắc phổ biến nhất để bạn yên tâm sử dụng Alino.
+                    </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+                    {/* Left Column */}
+                    <div className="space-y-4">
+                        {faqs.slice(0, 5).map((item, idx) => (
+                            <FAQItem key={idx} question={item.q} answer={item.a} />
+                        ))}
+                    </div>
+                    {/* Right Column */}
+                    <div className="space-y-4">
+                        {faqs.slice(5, 10).map((item, idx) => (
+                            <FAQItem key={idx + 5} question={item.q} answer={item.a} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default FAQ;
+</file>
+
+<file path="src/landing/components/PricingUnlock.tsx">
+import { useState } from 'react';
+
+const PricingUnlock = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    return (
+        <section className="py-24 bg-white" id="pricing">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-3xl font-bold text-primary mb-4">Bảng giá minh bạch</h2>
+                    <p className="text-lg text-secondary">
+                        Chọn gói phù hợp với nhu cầu phát triển của bạn.
+                    </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto relative">
+                    {/* Plan 1: Content Creator (Visible) */}
+                    <div className="border border-border rounded-2xl p-8 bg-white shadow-sm hover:shadow-lg transition-shadow relative z-10 flex flex-col">
+                        <div className="mb-6">
+                            <span className="bg-brand/10 text-brand px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                Phổ biến nhất
+                            </span>
+                        </div>
+                        <h3 className="text-2xl font-bold text-primary mb-2">Content Creator</h3>
+                        <div className="flex items-baseline gap-1 mb-6">
+                            <span className="text-4xl font-extrabold text-primary">0đ</span>
+                            <span className="text-secondary font-medium">/ trọn đời</span>
+                        </div>
+                        <p className="text-secondary mb-8 text-sm leading-relaxed">
+                            Dành cho cá nhân muốn xây dựng hồ sơ chuyên nghiệp và quản lý công việc hiệu quả.
+                        </p>
+
+                        <ul className="space-y-4 mb-8 flex-1">
+                            {[
+                                "Tạo Profile & Hồ sơ chuyên nghiệp",
+                                "Quản lý Booking & Hợp đồng",
+                                "Đăng bài viết & Blog cá nhân",
+                                "Nhận thanh toán qua QR Code",
+                                "Kho template hợp đồng mẫu"
+                            ].map((feature, i) => (
+                                <li key={i} className="flex items-start gap-3">
+                                    <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                    <span className="text-sm text-gray-700">{feature}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <button className="w-full py-4 bg-brand hover:bg-brandHover text-white rounded-xl font-bold shadow-lg shadow-brand/20 transition-all transform hover:-translate-y-0.5">
+                            Tạo trang Alino miễn phí
+                        </button>
+                    </div>
+
+                    {/* Plan 2: Brand / Agency (Blurred Content) */}
+                    <div className="border border-border rounded-2xl p-8 bg-gray-50 relative overflow-hidden flex flex-col">
+
+                        {/* The Actual Content (Blurred) */}
+                        <div className="filter blur-sm select-none opacity-50 flex flex-col h-full pointer-events-none">
+                            <div className="mb-6 h-6"></div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Brand & Agency</h3>
+                            <div className="flex items-baseline gap-1 mb-6">
+                                <span className="text-4xl font-extrabold text-gray-900">$$$</span>
+                                <span className="text-gray-500 font-medium">/ tháng</span>
+                            </div>
+                            <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+                                Giải pháp toàn diện cho doanh nghiệp quản lý chiến dịch Influencer Marketing quy mô lớn.
+                            </p>
+                            <ul className="space-y-4 mb-8 flex-1">
+                                {[
+                                    "Tìm kiếm & Booking Creator không giới hạn",
+                                    "Hệ thống báo cáo & Analytics chuyên sâu",
+                                    "Quản lý thanh toán tập trung",
+                                    "API Integration & Export dữ liệu",
+                                    "Support 1:1 từ Alino Team"
+                                ].map((feature, i) => (
+                                    <li key={i} className="flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span className="text-sm text-gray-500">{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <button className="w-full py-4 bg-gray-300 text-gray-500 rounded-xl font-bold cursor-not-allowed">
+                                Liên hệ tư vấn
+                            </button>
+                        </div>
+
+                        {/* Overlay Content (Clear) */}
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-white/40 backdrop-blur-[2px]">
+                            <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 max-w-xs w-full text-center">
+                                <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Dành cho Brand / Agency?</h3>
+                                <p className="text-sm text-gray-500 mb-6">
+                                    Để xem bảng giá chi tiết cho doanh nghiệp, vui lòng để lại thông tin.
+                                </p>
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="w-full py-3 bg-white border-2 border-brand text-brand hover:bg-brand hover:text-white rounded-xl font-bold transition-all"
+                                >
+                                    Xem chi tiết bảng giá
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Modal */}
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => setIsModalOpen(false)}
+                        ></div>
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-fade-in-up">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h3 className="font-bold text-lg text-gray-900">Nhận báo giá Enterprise</h3>
+                                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Cảm ơn bạn! Chúng tôi sẽ liên hệ sớm."); setIsModalOpen(false); }}>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email doanh nghiệp</label>
+                                        <input type="email" required className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none" placeholder="name@company.com" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tên Brand / Agency</label>
+                                        <input type="text" required className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none" placeholder="VD: Alino Media" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                                        <input type="tel" className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none" placeholder="090..." />
+                                    </div>
+                                    <button className="w-full py-3 bg-brand hover:bg-brandHover text-white rounded-lg font-bold shadow-lg mt-2">
+                                        Gửi yêu cầu
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+};
+
+export default PricingUnlock;
+</file>
+
+<file path="postcss.config.js">
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        // Neutrals
+        bg: "#FFFFFF",
+        bgAlt: "#FAFAFA",
+        surface: "#F2F4F7",
+        border: "#E4E7EC",
+
+        // Text
+        primary: "#101828",
+        secondary: "#667085",
+        muted: "#98A2B3",
+
+        // Brand Indigo
+        brand: "#4F46E5",
+        brandHover: "#4338CA",
+        brandActive: "#3730A3",
+        brandSoft: "#EEF2FF",
+
+        // Semantic
+        success: "#16A34A",
+        warning: "#F59E0B",
+        error: "#DC2626",
+        info: "#2563EB",
+
+        // Deal status
+        dealNew: "#EEF2FF",
+        dealProgress: "#DBEAFE",
+        dealFeedback: "#FEF3C7",
+        dealDone: "#DCFCE7",
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(16,24,40,0.04)",
+        card: "0 4px 12px rgba(16,24,40,0.08)",
+        lift: "0 12px 24px rgba(16,24,40,0.12)",
+      },
+      borderRadius: {
+        lg: "12px",
+        xl: "16px",
+      },
+    },
+  },
+  plugins: [],
+};
+</file>
+
+<file path="src/landing/components/Audience.tsx">
 const Audience = () => {
     return (
-        <section className={styles.section} id="for-brands">
-            <div className={styles.container}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem' }}>
+        <section className="py-24 bg-white" id="for-brands">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
                     {/* For Creators */}
-                    <div className={styles.card} style={{ borderColor: 'var(--brand-primary)', backgroundColor: '#F8FAFC' }}>
-                        <div style={{
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            color: 'var(--brand-primary)',
-                            fontWeight: 700,
-                            fontSize: '0.875rem',
-                            marginBottom: '1rem'
-                        }}>
-                            For Creators
+                    <div className="relative group bg-bgAlt rounded-3xl p-8 sm:p-12 border border-border overflow-hidden hover:border-brand/30 transition-colors">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-brand/10 transition-colors"></div>
+
+                        <div className="relative z-10">
+                            <span className="inline-block text-brand font-bold tracking-wider text-sm uppercase mb-4 bg-brandSoft px-3 py-1 rounded-full">For Creators</span>
+                            <h3 className="text-3xl font-bold text-primary mb-6">Làm việc chuyên nghiệp hơn</h3>
+                            <ul className="space-y-4">
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</div>
+                                    <span className="text-secondary text-lg">Hồ sơ đẹp, load nhanh, chuẩn SEO</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</div>
+                                    <span className="text-secondary text-lg">Media Kit & Báo giá rõ ràng, chuyên nghiệp</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</div>
+                                    <span className="text-secondary text-lg">Workflow quản lý deadline tự động nhắc nhở</span>
+                                </li>
+                            </ul>
+
+                            <div className="mt-10">
+                                <a href="#" className="inline-flex items-center font-semibold text-brand hover:underline">
+                                    Tạo hồ sơ Creator
+                                    <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                </a>
+                            </div>
                         </div>
-                        <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>Làm việc chuyên nghiệp hơn</h3>
-                        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <li style={{ display: 'flex', gap: '0.5rem' }}>
-                                <span style={{ color: 'var(--success)' }}>✔</span> Portfolio đẹp, load nhanh
-                            </li>
-                            <li style={{ display: 'flex', gap: '0.5rem' }}>
-                                <span style={{ color: 'var(--success)' }}>✔</span> Media Kit & Báo giá rõ ràng
-                            </li>
-                            <li style={{ display: 'flex', gap: '0.5rem' }}>
-                                <span style={{ color: 'var(--success)' }}>✔</span> Workflow quản lý deadline tự động
-                            </li>
-                        </ul>
                     </div>
 
                     {/* For Brands */}
-                    <div className={styles.card} style={{ borderColor: 'var(--text-secondary)' }}>
-                        <div style={{
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            color: 'var(--text-secondary)',
-                            fontWeight: 700,
-                            fontSize: '0.875rem',
-                            marginBottom: '1rem'
-                        }}>
-                            For Brands
+                    <div className="relative group bg-primary text-white rounded-3xl p-8 sm:p-12 overflow-hidden shadow-2xl">
+                        {/* Abstract shapes */}
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -ml-16 -mb-16"></div>
+
+                        <div className="relative z-10">
+                            <span className="inline-block text-indigo-300 font-bold tracking-wider text-sm uppercase mb-4 bg-white/10 px-3 py-1 rounded-full">For Brands</span>
+                            <h3 className="text-3xl font-bold text-white mb-6">Booking dễ dàng & minh bạch</h3>
+                            <ul className="space-y-4">
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">✓</div>
+                                    <span className="text-indigo-100 text-lg">Xem hồ sơ & báo giá chuẩn (đã xác thực)</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">✓</div>
+                                    <span className="text-indigo-100 text-lg">Gửi request theo mẫu, không thiếu info</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">✓</div>
+                                    <span className="text-indigo-100 text-lg">Duyệt nội dung & lịch sử phản hồi tập trung</span>
+                                </li>
+                            </ul>
+
+                            <div className="mt-10">
+                                <a href="#" className="inline-flex items-center font-semibold text-white hover:text-indigo-200 transition-colors">
+                                    Tìm hiểu cho Brand
+                                    <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                </a>
+                            </div>
                         </div>
-                        <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>Booking dễ dàng & minh bạch</h3>
-                        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <li style={{ display: 'flex', gap: '0.5rem' }}>
-                                <span style={{ color: 'var(--brand-primary)' }}>✔</span> Xem hồ sơ & báo giá chuẩn
-                            </li>
-                            <li style={{ display: 'flex', gap: '0.5rem' }}>
-                                <span style={{ color: 'var(--brand-primary)' }}>✔</span> Gửi request theo mẫu, không thiếu info
-                            </li>
-                            <li style={{ display: 'flex', gap: '0.5rem' }}>
-                                <span style={{ color: 'var(--brand-primary)' }}>✔</span> Duyệt nội dung & lịch sử feedback
-                            </li>
-                        </ul>
                     </div>
 
                 </div>
@@ -146,13 +475,11 @@ export default Audience;
 </file>
 
 <file path="src/landing/components/Features.tsx">
-import styles from '../landing.module.css';
-
 const Features = () => {
     const features = [
         {
             title: "Hồ sơ cá nhân",
-            desc: "Portfolio chuyên nghiệp, thể hiện phong cách riêng với custom URL.",
+            desc: "Hồ sơ chuyên nghiệp, thể hiện phong cách riêng với tùy chỉnh URL.",
             icon: "👤"
         },
         {
@@ -161,43 +488,165 @@ const Features = () => {
             icon: "🏷️"
         },
         {
-            title: "Đặt dịch vụ",
-            desc: "Form đặt hàng chuẩn hoá, giúp Brand gửi yêu cầu đầy đủ thông tin.",
-            icon: "🛒"
+            title: "Form Booking chuẩn",
+            desc: "Giúp Brand gửi yêu cầu đầy đủ thông tin, tránh hỏi đi hỏi lại.",
+            icon: "📝"
         },
         {
             title: "Quản lý hợp đồng",
             desc: "Theo dõi trạng thái từng deal: Mới, Đang làm, Chờ duyệt, Hoàn tất.",
-            icon: "📝"
+            icon: "📊"
         },
         {
             title: "Duyệt nội dung",
-            desc: "Feedback tập trung ngay trên từng phiên bản nội dung.",
+            desc: "Phản hồi tập trung ngay trên từng phiên bản nội dung video/ảnh.",
             icon: "👀"
         },
         {
-            title: "Thanh toán",
-            desc: "Lưu lịch sử giao dịch, hỗ trợ tạo QR thanh toán và nhắc nợ.",
+            title: "Thanh toán & QR",
+            desc: "Lưu lịch sử giao dịch, hỗ trợ tạo QR thanh toán và nhắc nợ tự động.",
             icon: "💸"
         }
     ];
 
     return (
-        <section className={styles.section} id="features">
-            <div className={styles.container}>
-                <div className={styles.sectionTitle}>
-                    <h2>Alino gom tất cả về một chỗ</h2>
-                    <p>Mọi công cụ bạn cần để vận hành công việc sáng tạo nội dung.</p>
+        <section className="py-20 bg-white" id="features">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-3xl font-bold text-primary mb-4">Mọi công cụ bạn cần để làm nghề</h2>
+                    <p className="text-lg text-secondary">
+                        Không còn dùng Excel, Note hay Chat để quản lý công việc. Alino gom tất cả về một chỗ.
+                    </p>
                 </div>
 
-                <div className={styles.featureGrid}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 mb-24">
                     {features.map((item, idx) => (
-                        <div key={idx} className={styles.card}>
-                            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{item.icon}</div>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.75rem' }}>{item.title}</h3>
-                            <p>{item.desc}</p>
+                        <div key={idx} className="flex gap-5 group">
+                            <div className="w-12 h-12 rounded-xl bg-bgAlt border border-border flex items-center justify-center text-2xl shadow-sm group-hover:border-brand/50 group-hover:bg-brandSoft transition-colors">
+                                {item.icon}
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-primary mb-2 group-hover:text-brand transition-colors">
+                                    {item.title}
+                                </h3>
+                                <p className="text-secondary leading-relaxed text-sm">
+                                    {item.desc}
+                                </p>
+                            </div>
                         </div>
                     ))}
+                </div>
+
+                {/* Content Review Mockup Section */}
+                <div className="bg-bgAlt rounded-3xl p-8 lg:p-12 border border-border">
+                    <div className="lg:grid lg:grid-cols-5 gap-12 items-center">
+                        <div className="lg:col-span-2 mb-8 lg:mb-0">
+                            <h3 className="text-2xl font-bold text-primary mb-4">Duyệt nội dung & Phản hồi tập trung</h3>
+                            <p className="text-secondary mb-6 leading-relaxed">
+                                Không còn cơn ác mộng phản hồi trôi trong tin nhắn. Brand có thể bình luận trực tiếp lên từng video, hình ảnh. Creator biết chính xác cần sửa gì.
+                            </p>
+                            <ul className="space-y-3">
+                                <li className="flex items-center gap-3 text-sm font-medium text-primary">
+                                    <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</span>
+                                    Bình luận theo thời gian thực
+                                </li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-primary">
+                                    <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</span>
+                                    Lịch sử phiên bản (V1, V2, Final)
+                                </li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-primary">
+                                    <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">✓</span>
+                                    Nút "Duyệt" chính thức từ Brand
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Mockup */}
+                        <div className="lg:col-span-3">
+                            <div className="bg-white rounded-xl shadow-2xl border border-border overflow-hidden flex flex-col md:flex-row h-[400px]">
+                                {/* Left: Content Preview */}
+                                <div className="flex-1 bg-black relative flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                    <span className="text-white/50 font-bold text-xl tracking-widest">PREVIEW VIDEO</span>
+
+                                    {/* Play Button */}
+                                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center absolute hover:scale-110 transition-transform cursor-pointer">
+                                        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[20px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+                                    </div>
+
+                                    {/* Version Label */}
+                                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white border border-white/20">
+                                        Version 2.0
+                                    </div>
+                                </div>
+
+                                {/* Right: Comments Panel */}
+                                <div className="w-full md:w-80 bg-white border-l border-border flex flex-col">
+                                    <div className="p-4 border-b border-border flex justify-between items-center bg-bgAlt">
+                                        <span className="font-bold text-sm">Comments (3)</span>
+                                        <div className="flex gap-2">
+                                            <button className="text-xs bg-white border border-border px-2 py-1 rounded hover:bg-gray-50">Upload New</button>
+                                            <button className="text-xs bg-brand text-white px-3 py-1 rounded font-medium shadow hover:bg-brandHover">Approve</button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                        {/* Comment 1 */}
+                                        <div className="flex gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">BM</div>
+                                            <div>
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-xs font-bold text-primary">Brand Manager</span>
+                                                    <span className="text-[10px] text-muted">10:30 AM</span>
+                                                </div>
+                                                <p className="text-xs text-secondary mt-1 bg-gray-50 p-2 rounded-lg border border-border">
+                                                    Đoạn intro hơi dài, em cắt ngắn bớt 3s nhé. Logo brand cần hiện rõ hơn ở giây thứ 5.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Comment 2 */}
+                                        <div className="flex gap-3 flex-row-reverse">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-brand flex items-center justify-center text-xs font-bold shrink-0">ME</div>
+                                            <div className="text-right">
+                                                <div className="flex items-baseline gap-2 justify-end">
+                                                    <span className="text-[10px] text-muted">10:45 AM</span>
+                                                    <span className="text-xs font-bold text-primary">Me</span>
+                                                </div>
+                                                <p className="text-xs text-white bg-brand p-2 rounded-lg mt-1 text-left">
+                                                    Dạ vâng, em sẽ chỉnh lại ánh sáng chỗ đó luôn ạ.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Comment 3 */}
+                                        <div className="flex gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">BM</div>
+                                            <div>
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-xs font-bold text-primary">Brand Manager</span>
+                                                    <span className="text-[10px] text-muted">Now</span>
+                                                </div>
+                                                <p className="text-xs text-secondary mt-1 bg-gray-50 p-2 rounded-lg border border-border">
+                                                    Màu áo này lên hình đẹp đó! 👍
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Input */}
+                                    <div className="p-3 border-t border-border">
+                                        <div className="relative">
+                                            <input type="text" placeholder="Write a comment..." className="w-full pl-3 pr-8 py-2 text-xs border border-border rounded-md focus:border-brand focus:ring-1 focus:ring-brand outline-none" />
+                                            <button className="absolute right-2 top-2 text-brand hover:text-brandHover">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -208,84 +657,109 @@ export default Features;
 </file>
 
 <file path="src/landing/components/Footer.tsx">
-import { useState } from 'react';
-import styles from '../landing.module.css';
-
-const FAQItem = ({ question, answer }: { question: string, answer: string }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-        <div style={{ borderBottom: '1px solid var(--border-divider)', padding: '1rem 0' }}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    width: '100%',
-                    textAlign: 'left',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    padding: 0
-                }}
-            >
-                {question}
-                <span style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
-            </button>
-            {isOpen && <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>{answer}</p>}
-        </div>
-    );
-};
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok, FaYoutube } from 'react-icons/fa';
 
 const Footer = () => {
     return (
-        <footer className={styles.footer} id="faq">
-            <div className={styles.container}>
+        <footer className="bg-white border-t border-gray-100 pt-20 pb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12 mb-16">
+                    {/* Column 1: Brand (Span 2 columns) */}
+                    <div className="col-span-2 md:col-span-2">
+                        <div className="flex items-center gap-2 mb-6">
+                            <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white shadow-lg shadow-brand/20">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
+                                    <path d="M2 17L12 22L22 17"></path>
+                                    <path d="M2 12L12 17L22 12"></path>
+                                </svg>
+                            </div>
+                            <span className="font-extrabold text-xl text-gray-900 tracking-tight">ALINO</span>
+                        </div>
+                        <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-xs">
+                            Hệ điều hành tích hợp "All-in-one" dành cho cộng đồng Nhà sáng tạo nội dung tại Việt Nam.
+                        </p>
 
-                {/* FAQ */}
-                <div style={{ maxWidth: '800px', margin: '0 auto 5rem' }}>
-                    <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Câu hỏi thường gặp</h2>
-                    <FAQItem
-                        question="Alino có miễn phí không?"
-                        answer="Có, Alino miễn phí trọn đời cho các tính năng cơ bản giúp bạn tạo hồ sơ và quản lý công việc."
-                    />
-                    <FAQItem
-                        question="Brand có cần tạo tài khoản để xem hồ sơ không?"
-                        answer="Không. Brand có thể xem hồ sơ public và gửi yêu cầu mà không cần đăng nhập."
-                    />
-                    <FAQItem
-                        question="Dữ liệu của tôi có được bảo mật không?"
-                        answer="Chắc chắn. Alino cam kết bảo mật thông tin hợp đồng và báo giá của bạn."
-                    />
+                        {/* Social Icons */}
+                        <div className="flex gap-3">
+                            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all duration-300">
+                                <FaFacebookF className="w-4 h-4" />
+                            </a>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-pink-500 hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-red-500 hover:to-purple-500 hover:text-white transition-all duration-300">
+                                <FaInstagram className="w-4 h-4" />
+                            </a>
+                            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-[#0A66C2] hover:bg-[#0A66C2] hover:text-white transition-all duration-300">
+                                <FaLinkedinIn className="w-4 h-4" />
+                            </a>
+                            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-black hover:bg-black hover:text-white transition-all duration-300">
+                                <FaTiktok className="w-4 h-4" />
+                            </a>
+                            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-[#FF0000] hover:bg-[#FF0000] hover:text-white transition-all duration-300">
+                                <FaYoutube className="w-4 h-4" />
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Column 2: Sản phẩm */}
+                    <div className="col-span-1">
+                        <h4 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">Sản phẩm</h4>
+                        <ul className="space-y-3 text-sm text-gray-500">
+                            <li><a href="#features" className="hover:text-brand transition-colors">Tính năng</a></li>
+                            <li><a href="#pricing" className="hover:text-brand transition-colors">Bảng giá</a></li>
+                            <li><a href="#creators" className="hover:text-brand transition-colors">Cho Creators</a></li>
+                            <li><a href="#brands" className="hover:text-brand transition-colors">Cho Brands</a></li>
+                            <li><a href="#" className="hover:text-brand transition-colors">Tải ứng dụng</a></li>
+                        </ul>
+                    </div>
+
+                    {/* Column 3: Công ty */}
+                    <div className="col-span-1">
+                        <h4 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">Công ty</h4>
+                        <ul className="space-y-3 text-sm text-gray-500">
+                            <li><a href="#" className="hover:text-brand transition-colors">Về Alino</a></li>
+                            <li><a href="#" className="hover:text-brand transition-colors">Tuyển dụng</a></li>
+                            <li><a href="#" className="hover:text-brand transition-colors">Blog</a></li>
+                            <li><a href="#" className="hover:text-brand transition-colors">Đối tác</a></li>
+                        </ul>
+                    </div>
+
+                    {/* Column 4: Hỗ trợ (Contact) */}
+                    <div className="col-span-2 md:col-span-1 min-w-[160px]">
+                        <h4 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">Liên hệ</h4>
+                        <ul className="space-y-4 text-sm text-gray-500">
+                            <li>
+                                <a href="tel:0707970216" className="flex items-center gap-2 hover:text-brand transition-colors group">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-brand group-hover:text-white transition-colors">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                    </div>
+                                    <span className="font-medium">0707 970 216</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="mailto:contact@alino.net" className="flex items-center gap-2 hover:text-brand transition-colors group">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-brand group-hover:text-white transition-colors">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                    <span className="font-medium">contact@alino.net</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
-                {/* Final CTA */}
-                <div className={styles.ctaBand}>
-                    <h2>Bắt đầu làm việc chuyên nghiệp hơn với Alino</h2>
-                    <p>Thiết lập trong 5 phút · Không cần biết thiết kế · Dùng ngay</p>
-                    <button className={styles.btnWhite}>
-                        Tạo trang Alino miễn phí
-                    </button>
-                </div>
-
-                {/* Links */}
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    flexWrap: 'wrap',
-                    gap: '1rem'
-                }}>
-                    <div>© 2024 Alino. All rights reserved.</div>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        <a href="#">Terms</a>
-                        <a href="#">Privacy</a>
-                        <a href="#">Contact</a>
+                <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-sm text-gray-400">
+                        © 2024 Alino Technologies Inc.
+                    </p>
+                    <div className="flex gap-6 text-sm font-medium text-gray-500">
+                        <a href="#" className="hover:text-gray-900 transition-colors">Điều khoản</a>
+                        <a href="#" className="hover:text-gray-900 transition-colors">Bảo mật</a>
+                        <a href="#" className="hover:text-gray-900 transition-colors">Cookie</a>
                     </div>
                 </div>
             </div>
@@ -297,65 +771,49 @@ export default Footer;
 </file>
 
 <file path="src/landing/components/Header.tsx">
-import styles from '../landing.module.css';
-
 const Header = () => {
     return (
-        <header className={styles.header}>
-            <div className={styles.container}>
-                <div className={styles.headerContent}>
-                    <div className={styles.logo}>
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M12 2L2 7L12 12L22 7L12 2Z"
-                                fill="#4F46E5"
-                                stroke="#4F46E5"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                            <path
-                                d="M2 17L12 22L22 17"
-                                stroke="#4F46E5"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                            <path
-                                d="M2 12L12 17L22 12"
-                                stroke="#4F46E5"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
-                        <span>ALINO</span>
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 h-18 transition-all duration-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+                <div className="flex items-center justify-between h-full pt-4 pb-4">
+                    {/* Logo & Brand */}
+                    <div className="flex items-center gap-2.5 cursor-pointer group">
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all duration-300">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
+                                <path d="M2 17L12 22L22 17"></path>
+                                <path d="M2 12L12 17L22 12"></path>
+                            </svg>
+                        </div>
+                        <span className="font-bold text-xl tracking-tight text-gray-900 group-hover:text-brand transition-colors">ALINO</span>
                     </div>
 
-                    <nav className={styles.nav}>
-                        <a href="#features" className={styles.navLink}>
-                            Features
+                    {/* Centered Navigation */}
+                    <nav className="hidden md:flex items-center gap-8 lg:gap-10">
+                        <a href="#about" className="text-[15px] font-medium text-gray-600 hover:text-brand transition-colors relative group py-2">
+                            Giới thiệu
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand transition-all duration-300 group-hover:w-full"></span>
                         </a>
-                        <a href="#how-it-works" className={styles.navLink}>
-                            How it works
+                        <a href="#features" className="text-[15px] font-medium text-gray-600 hover:text-brand transition-colors relative group py-2">
+                            Giải pháp
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand transition-all duration-300 group-hover:w-full"></span>
                         </a>
-                        <a href="#for-brands" className={styles.navLink}>
-                            For Brands
+                        <a href="#careers" className="text-[15px] font-medium text-gray-600 hover:text-brand transition-colors relative group py-2">
+                            Tuyển dụng
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand transition-all duration-300 group-hover:w-full"></span>
                         </a>
-                        <a href="#faq" className={styles.navLink}>
-                            FAQ
+                        <a href="#blog" className="text-[15px] font-medium text-gray-600 hover:text-brand transition-colors relative group py-2">
+                            Tin tức
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand transition-all duration-300 group-hover:w-full"></span>
                         </a>
                     </nav>
 
-                    <button className={styles.btnPrimary}>
-                        Tạo trang Alino miễn phí
-                    </button>
+                    {/* Right CTA */}
+                    <div className="flex items-center gap-4">
+                        <button className="bg-brand hover:bg-brandHover active:bg-brandActive text-white px-5 py-2.5 rounded-full text-[15px] font-semibold shadow-lg shadow-brand/25 hover:shadow-brand/40 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer ring-offset-2 focus:ring-2 ring-brand">
+                            Tạo trang Alino miễn phí
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -366,114 +824,158 @@ export default Header;
 </file>
 
 <file path="src/landing/components/Hero.tsx">
-import styles from '../landing.module.css';
-
 const Hero = () => {
     return (
-        <section className={styles.hero}>
-            <div className={styles.container}>
-                <div className={styles.heroContent}>
-                    <div className={styles.heroText}>
-                        <div style={{
-                            display: 'inline-block',
-                            padding: '4px 12px',
-                            background: 'var(--brand-soft-bg)',
-                            color: 'var(--brand-primary)',
-                            borderRadius: '20px',
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
-                            marginBottom: '1.5rem'
-                        }}>
-                            MVP Release 1.0
-                        </div>
-                        <h1>
-                            Chốt hợp đồng quảng cáo <span style={{ color: 'var(--brand-primary)' }}>gọn trong một nơi</span>
+        <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-white">
+            {/* Background Gradients - Softer & More Modern */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-[1440px] pointer-events-none z-0">
+                <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-indigo-50/80 rounded-full blur-[120px] mix-blend-multiply" />
+                <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] bg-purple-50/80 rounded-full blur-[120px] mix-blend-multiply" />
+            </div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+
+                    {/* Left: Text Content */}
+                    <div className="flex-1 text-center lg:text-left max-w-2xl lg:max-w-none">
+
+                        {/* Notify Badge - Pill Shape */}
+                        <a href="#" className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-xs font-semibold mb-8 hover:border-brand/30 hover:text-brand transition-colors group">
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
+                            </span>
+                            Phiên bản mới Alino 2.0 đã ra mắt
+                            <svg className="w-3 h-3 text-slate-400 group-hover:text-brand group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+
+                        <h1 className="text-5xl lg:text-[4rem] leading-[1.1] font-extrabold tracking-tight text-slate-900 mb-8">
+                            Hệ điều hành cho <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-indigo-600">Creator Economy</span>
                         </h1>
-                        <p className={styles.sub}>
-                            Nền tảng “tất cả trong một” giúp Content Creator và Brand làm việc chuyên nghiệp.
-                            Từ yêu cầu tới thanh toán — không trôi tin nhắn, không thất lạc tập tin.
+
+                        <p className="text-xl text-slate-500 mb-10 leading-relaxed font-light lg:max-w-xl">
+                            Nền tảng tất cả-trong-một giúp Creator tạo hồ sơ chuyên nghiệp, quản lý booking, hợp đồng và nhận thanh toán minh bạch.
                         </p>
 
-                        <div className={styles.heroBullets}>
-                            <div className={styles.bullet}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Không trôi tin nhắn
-                            </div>
-                            <div className={styles.bullet}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Không thất lạc tập tin
-                            </div>
-                            <div className={styles.bullet}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Minh bạch tiến độ
-                            </div>
+                        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-12">
+                            <button className="w-full sm:w-auto h-12 px-8 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-semibold shadow-xl shadow-slate-200 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                Tạo trang miễn phí
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            </button>
+                            <button className="w-full sm:w-auto h-12 px-8 bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 rounded-full font-semibold transition-all flex items-center justify-center gap-2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-slate-400"><path d="M8 5v14l11-7z" /></svg>
+                                Xem Video Demo
+                            </button>
                         </div>
 
-                        <div className={styles.ctaGroup}>
-                            <button className={styles.btnPrimary}>
-                                Tạo trang Alino miễn phí
-                            </button>
-                            <button className={styles.btnSecondary}>
-                                Xem Alino hoạt động
-                            </button>
+                        {/* Social Proof / Trusted By */}
+                        <div className="border-t border-slate-100 pt-8">
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Được tin dùng bởi 1,000+ Creator</p>
+                            <div className="flex items-center justify-center lg:justify-start gap-6 grayscale opacity-60">
+                                {/* Simple text logos for now */}
+                                <span className="font-bold text-lg text-slate-400">Schannel</span>
+                                <span className="font-bold text-lg text-slate-400">VCCorp</span>
+                                <span className="font-bold text-lg text-slate-400">Yeah1</span>
+                                <span className="font-bold text-lg text-slate-400">BoxStudio</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className={styles.heroImage}>
-                        {/* Mockup Placeholder - Replacing with pure CSS structure for now */}
-                        <div style={{
-                            background: 'white',
-                            borderRadius: '8px',
-                            padding: '1rem',
-                            border: '1px solid var(--border-divider)',
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '1rem'
-                        }}>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', borderBottom: '1px solid var(--border-divider)', paddingBottom: '1rem' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#eee' }}></div>
-                                <div>
-                                    <div style={{ width: '120px', height: '12px', background: '#eee', marginBottom: '4px', borderRadius: '4px' }}></div>
-                                    <div style={{ width: '80px', height: '10px', background: '#f5f5f5', borderRadius: '4px' }}></div>
+                    {/* Right: Hero Visual (App Shell Mockup) */}
+                    <div className="flex-1 w-full relative">
+                        {/* Decorative blob behind */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-indigo-100/50 to-white rounded-full blur-3xl -z-10"></div>
+
+                        {/* Glassmorphism Card Stack */}
+                        <div className="relative z-10 perspective-1000">
+                            {/* Main Card: Profile/Dashboard Hybrid */}
+                            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform rotate-y-n5 rotate-x-5 hover:rotate-0 transition-transform duration-700 ease-out">
+
+                                {/* Fake Browser Bar */}
+                                <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 flex items-center gap-4">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                                    </div>
+                                    <div className="flex-1 bg-white border border-slate-200 rounded-md h-6 w-full max-w-[200px] mx-auto shadow-sm"></div>
                                 </div>
-                                <div style={{ marginLeft: 'auto', padding: '4px 12px', background: 'var(--brand-primary)', color: 'white', borderRadius: '4px', fontSize: '12px' }}>Hire Me</div>
+
+                                {/* App Content */}
+                                <div className="p-6">
+                                    {/* Header Part */}
+                                    <div className="flex items-start justify-between mb-8">
+                                        <div className="flex gap-4">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-lg">
+                                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                                                    <span className="text-xl">👩‍🎨</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-slate-900">Sarah Mitchell</h3>
+                                                <p className="text-slate-500 text-sm">Nhà thiết kế nội dung</p>
+                                                <div className="flex gap-2 mt-2">
+                                                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Đang tìm việc</span>
+                                                    <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">Top Rated</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Doanh thu</p>
+                                            <p className="text-2xl font-bold text-slate-900">200.000.000 VND</p>
+                                            <p className="text-xs text-green-600 font-medium flex items-center justify-end gap-1">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                                12% vs last month
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Active Deals List */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-semibold text-slate-900 mb-2">Dự án đang chạy</h4>
+
+                                        {[
+                                            { brand: "Nike Air Campaign", status: "Đang chạy", color: "bg-blue-50 text-blue-600", amount: "2.500.000 VND" },
+                                            { brand: "Spotify Playlist Reel", status: "Đánh giá", color: "bg-yellow-50 text-yellow-600", amount: "800.000 VND" },
+                                            { brand: "Uniqlo Lookbook", status: "Yêu cầu mới", color: "bg-purple-50 text-purple-600", amount: "1.200.000 VND" }
+                                        ].map((item, i) => (
+                                            <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-brand/30 hover:bg-white transition-colors cursor-pointer group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-lg shadow-sm">
+                                                        ⚡️
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900 group-hover:text-brand transition-colors">{item.brand}</p>
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${item.color}`}>{item.status}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-slate-700">{item.amount}</p>
+                                                    <p className="text-[10px] text-slate-400">Hạn chót</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <div style={{ flex: 1, padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
-                                    <div style={{ width: '100%', height: '8px', background: '#e5e5e5', marginBottom: '8px', borderRadius: '4px' }}></div>
-                                    <div style={{ width: '60%', height: '8px', background: '#e5e5e5', borderRadius: '4px' }}></div>
-                                </div>
-                                <div style={{ flex: 1, padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
-                                    <div style={{ width: '100%', height: '8px', background: '#e5e5e5', marginBottom: '8px', borderRadius: '4px' }}></div>
-                                    <div style={{ width: '60%', height: '8px', background: '#e5e5e5', borderRadius: '4px' }}></div>
+                            {/* Floating Notification Element - Decoration */}
+                            <div className="absolute -right-8 top-20 bg-white p-4 rounded-xl shadow-xl border border-slate-100 animate-bounce-slow hidden lg:block">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-900">Thanh toán</p>
+                                        <p className="text-[10px] text-slate-500">Bạn nhận được 2.500.000 VND từ Nike</p>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Deal Pipeline Mini-Mockup */}
-                            <div style={{ marginTop: 'auto' }}>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Deal Pipeline</div>
-                                <div style={{ display: 'flex', gap: '0.5rem', overflow: 'hidden' }}>
-                                    <div style={{ flex: 1, padding: '8px', background: 'var(--status-new)', borderRadius: '4px', fontSize: '10px' }}>
-                                        New Request
-                                    </div>
-                                    <div style={{ flex: 1, padding: '8px', background: 'var(--status-progress)', borderRadius: '4px', fontSize: '10px' }}>
-                                        Processing
-                                    </div>
-                                    <div style={{ flex: 1, padding: '8px', background: 'var(--status-awaiting)', borderRadius: '4px', fontSize: '10px' }}>
-                                        Review
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </section>
@@ -484,31 +986,165 @@ export default Hero;
 </file>
 
 <file path="src/landing/components/HowItWorks.tsx">
-import styles from '../landing.module.css';
-
 const HowItWorks = () => {
     return (
-        <section className={`${styles.section} ${styles.problemSection}`} id="how-it-works">
-            <div className={styles.container}>
-                <div className={styles.sectionTitle}>
-                    <h2>Bắt đầu đơn giản trong 3 bước</h2>
+        <section className="py-20 lg:py-32 overflow-hidden" id="how-it-works">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-3xl font-bold text-primary mb-4">Quy trình làm việc chuẩn SaaS</h2>
+                    <p className="text-lg text-secondary">
+                        Từ lúc tạo trang đến khi nhận tiền về túi, mọi thứ đều minh bạch.
+                    </p>
                 </div>
 
-                <div className={styles.steps}>
-                    <div>
-                        <div className={styles.stepNumber}>1</div>
-                        <h3 style={{ marginBottom: '0.5rem' }}>Tạo trang Alino</h3>
-                        <p>Thiết lập hồ sơ, portfolio và bảng giá dịch vụ chỉ trong 5 phút.</p>
-                    </div>
-                    <div>
-                        <div className={styles.stepNumber}>2</div>
-                        <h3 style={{ marginBottom: '0.5rem' }}>Nhận Booking</h3>
-                        <p>Chia sẻ link Alino. Brand xem hồ sơ và gửi yêu cầu theo mẫu chuẩn.</p>
-                    </div>
-                    <div>
-                        <div className={styles.stepNumber}>3</div>
-                        <h3 style={{ marginBottom: '0.5rem' }}>Quản lý & Thanh toán</h3>
-                        <p>Theo dõi tiến độ, duyệt nội dung và nhận thanh toán minh bạch.</p>
+                {/* Steps Timeline - Desktop */}
+                <div className="hidden lg:grid grid-cols-4 gap-8 mb-20 relative">
+                    {/* Line connector */}
+                    <div className="absolute top-8 left-[10%] right-[10%] h-0.5 bg-border -z-10"></div>
+
+                    {[
+                        { title: "Tạo trang", desc: "Thiết lập hồ sơ & Bảng giá" },
+                        { title: "Nhận Yêu cầu", desc: "Nhãn hàng gửi kịch bản qua Form" },
+                        { title: "Theo dõi", desc: "Cập nhật tiến độ & phản hồi" },
+                        { title: "Thanh toán", desc: "Nhận tiền minh bạch" }
+                    ].map((step, i) => (
+                        <div key={i} className="text-center bg-bg">
+                            <div className="w-16 h-16 mx-auto bg-white border-2 border-brand rounded-full flex items-center justify-center text-xl font-bold text-brand shadow-lg mb-4">
+                                {i + 1}
+                            </div>
+                            <h3 className="text-lg font-bold text-primary mb-2">{step.title}</h3>
+                            <p className="text-sm text-secondary px-4">{step.desc}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Mobile Steps (Vertical) */}
+                <div className="space-y-6 lg:hidden mb-16">
+                    {[
+                        { title: "Tạo trang", desc: "Thiết lập Profile & Bảng giá" },
+                        { title: "Nhận Yêu cầu", desc: "Brand gửi Brief qua Form chuẩn" },
+                        { title: "Theo dõi", desc: "Cập nhật tiến độ & Phản hồi" },
+                        { title: "Thanh toán", desc: "Nhận tiền minh bạch" }
+                    ].map((step, i) => (
+                        <div key={i} className="flex gap-4 items-start">
+                            <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm shrink-0 mt-1">
+                                {i + 1}
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-primary">{step.title}</h3>
+                                <p className="text-sm text-secondary">{step.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Visual: Kanban Board Mockup */}
+                <div className="relative max-w-5xl mx-auto">
+                    {/* Background decorations */}
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-100 rounded-full blur-3xl opacity-50"></div>
+                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+
+                    <div className="bg-surface rounded-xl border border-border p-4 sm:p-8 shadow-2xl relative">
+                        {/* Header Mockup */}
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-primary">Dự án</h3>
+                                <span className="bg-white border border-border px-2 py-0.5 rounded text-xs text-secondary">All deals</span>
+                            </div>
+                            <button className="bg-brand text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+                                + Tạo dự án mới
+                            </button>
+                        </div>
+
+                        {/* Board Columns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Column 1: New */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Đã ký</span>
+                                    <span className="text-xs bg-gray-200 text-gray-600 px-1.5 rounded">2</span>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-xs font-bold">LV</div>
+                                        <span className="px-1.5 py-0.5 bg-dealNew text-brand text-[10px] rounded font-medium">Mới</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary mb-1">Lookbook Campaign</p>
+                                    <p className="text-xs text-muted">Hạn chót: 28/12/2025</p>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-xs font-bold">CO</div>
+                                        <span className="px-1.5 py-0.5 bg-dealNew text-brand text-[10px] rounded font-medium">Mới</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary mb-1">Coffee Reel Q4</p>
+                                    <p className="text-xs text-muted">Hạn chót: 30/12/2025</p>
+                                </div>
+                            </div>
+
+                            {/* Column 2: In Progress */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Đang làm</span>
+                                    <span className="text-xs bg-dealProgress text-blue-700 px-1.5 rounded">1</span>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-brand">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="w-8 h-8 rounded bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold">SK</div>
+                                        <span className="px-1.5 py-0.5 bg-dealProgress text-blue-700 text-[10px] rounded font-medium">Đang làm</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary mb-1">Skincare Review</p>
+                                    <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2">
+                                        <div className="bg-brand h-1.5 rounded-full w-2/3"></div>
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-1">
+                                        <div className="w-5 h-5 rounded-full bg-gray-200 border-2 border-white"></div>
+                                        <div className="w-5 h-5 rounded-full bg-gray-300 border-2 border-white -ml-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Column 3: Feedback */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Chờ duyệt</span>
+                                    <span className="text-xs bg-dealFeedback text-yellow-700 px-1.5 rounded">1</span>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="w-8 h-8 rounded bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">TE</div>
+                                        <span className="px-1.5 py-0.5 bg-dealFeedback text-yellow-700 text-[10px] rounded font-medium">Chờ duyệt</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary mb-1">Tech Unboxing</p>
+                                    <p className="text-xs text-muted mb-2">Phiên bản 2</p>
+                                    <div className="flex gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                                        <span className="text-[10px] text-secondary">1 phản hồi</span>
+                                    </div>
+                                </div>
+                                {/* Placeholder slot */}
+                                <div className="h-20 border-2 border-dashed border-border rounded-lg flex items-center justify-center text-xs text-muted">
+                                    Trống
+                                </div>
+                            </div>
+
+                            {/* Column 4: Completed */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Thanh toán</span>
+                                    <span className="text-xs bg-dealDone text-green-700 px-1.5 rounded">5</span>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-border shadow-sm opacity-75">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="w-8 h-8 rounded bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">✓</div>
+                                        <span className="px-1.5 py-0.5 bg-dealDone text-green-700 text-[10px] rounded font-medium">Đã thanh toán</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary mb-1">Fashion Haul</p>
+                                    <p className="text-xs text-success font-bold">+15.000.000</p>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -520,68 +1156,70 @@ export default HowItWorks;
 </file>
 
 <file path="src/landing/components/ProblemSolution.tsx">
-import styles from '../landing.module.css';
-
 const ProblemSolution = () => {
     const problems = [
         {
             icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                     <polyline points="22,6 12,13 2,6"></polyline>
                 </svg>
             ),
-            title: "Gửi hồ sơ qua tin nhắn",
-            desc: "Nội dung & file nằm rải rác khắp nơi, brand khó tìm lại, dễ bị trôi tin."
+            title: "Gửi hồ sơ rải rác",
+            desc: "Hồ sơ, bảng giá, file nằm lung tung trên Drive, Notion, Chat... Brand khó tìm, dễ trôi tin."
         },
         {
             icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
             ),
             title: "Yêu cầu thiếu thông tin",
-            desc: "Phải hỏi đi hỏi lại quy cách, deadline, ngân sách... mất thời gian đôi bên."
+            desc: "Trao đổi qua lại hàng chục lần mới chốt được quy cách, deadline, ngân sách. Mất thời gian đôi bên."
         },
         {
             icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
             ),
-            title: "Góp ý bị trôi",
-            desc: "Comment qua lại trên Zalo/Messenger/Email khiến việc tổng hợp sửa đổi thành ác mộng."
+            title: "Phản hồi bị trôi",
+            desc: "Góp ý sửa đổi nằm lộn xộn trong các đoạn chat dài dằng dặc, rất dễ sót hoặc làm sai ý."
         },
         {
             icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                     <line x1="1" y1="10" x2="23" y2="10"></line>
                 </svg>
             ),
-            title: "Tới lúc thanh toán ngại nhắc tiền",
-            desc: "Không có workflow nhắc nhở tự động, Creator thường phải tự đi đòi thanh toán."
+            title: "Ngại nhắc thanh toán",
+            desc: "Không có quy trình nhắc hẹn tự động, Creator thường xuyên phải tự đi đòi tiền rất ngại."
         }
     ];
 
     return (
-        <section className={`${styles.section} ${styles.problemSection}`}>
-            <div className={styles.container}>
-                <div className={styles.sectionTitle}>
-                    <h2>Làm việc chuyên nghiệp không nên bắt đầu bằng "Check ib em nhé"</h2>
-                    <p>Những vấn đề khiến bạn mất nhiều thời gian quản lý hơn là sáng tạo.</p>
+        <section className="py-20 lg:py-32 bg-bgAlt">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-3xl font-bold text-primary mb-4">
+                        Sự chuyên nghiệp bắt đầu từ cách bạn <br /> <span className="text-brand">tiếp nhận và xử lý yêu cầu</span>
+                    </h2>
+                    <p className="text-lg text-secondary">
+                        Những vấn đề "nhỏ nhặt" đang âm thầm ngốn hàng giờ đồng hồ quản lý mỗi ngày của bạn.
+                    </p>
                 </div>
 
-                <div className={styles.grid4}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {problems.map((item, idx) => (
-                        <div key={idx} className={styles.card}>
-                            <div className={styles.iconBox} style={{ color: 'var(--error)', background: '#FEF2F2' }}>
+                        <div key={idx} className="bg-white p-6 rounded-2xl border border-border shadow-sm hover:shadow-card transition-shadow">
+                            <div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center mb-4">
                                 {item.icon}
                             </div>
-                            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>{item.title}</h3>
-                            <p style={{ fontSize: '0.95rem' }}>{item.desc}</p>
+                            <h3 className="text-lg font-semibold text-primary mb-2 min-h-[56px] flex items-center">{item.title}</h3>
+                            <p className="text-sm text-secondary leading-relaxed">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -593,325 +1231,67 @@ const ProblemSolution = () => {
 export default ProblemSolution;
 </file>
 
-<file path="src/landing/landing.module.css">
-/* Container */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    width: 100%;
-}
-
-.section {
-    padding: 4rem 0;
-    width: 100%;
-}
-
-/* Header */
-.header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border-divider);
-    padding: 1rem 0;
-}
-
-.headerContent {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.nav {
-    display: flex;
-    gap: 2rem;
-}
-
-.navLink {
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.95rem;
-}
-
-.navLink:hover {
-    color: var(--brand-primary);
-}
-
-/* Hero */
-.hero {
-    padding: 5rem 0 4rem;
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-}
-
-.heroContent {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 3rem;
-    align-items: center;
-}
-
-@media (min-width: 900px) {
-    .heroContent {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-.heroText h1 {
-    font-size: 2.5rem;
-    line-height: 1.2;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    letter-spacing: -0.02em;
-}
-
-@media (min-width: 768px) {
-    .heroText h1 {
-        font-size: 3.5rem;
-    }
-}
-
-.heroText .sub {
-    font-size: 1.125rem;
-    line-height: 1.6;
-    margin-bottom: 2rem;
-    max-width: 500px;
-}
-
-.heroBullets {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.bullet {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.ctaGroup {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.btnPrimary {
-    background-color: var(--brand-primary);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);
-}
-
-.btnPrimary:hover {
-    background-color: var(--brand-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
-}
-
-.btnSecondary {
-    background-color: white;
-    color: var(--text-secondary);
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    border: 1px solid var(--border-divider);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btnSecondary:hover {
-    border-color: var(--text-secondary);
-    color: var(--text-primary);
-}
-
-.heroImage {
-    background: var(--surface-card);
-    border-radius: 12px;
-    border: 1px solid var(--border-divider);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    padding: 1.5rem;
-    min-height: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-/* Problem/Solution */
-.problemSection {
-    background-color: var(--bg-secondary);
-}
-
-.sectionTitle {
-    text-align: center;
-    max-width: 700px;
-    margin: 0 auto 4rem;
-}
-
-.sectionTitle h2 {
-    font-size: 2.25rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    letter-spacing: -0.01em;
-}
-
-.grid4 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-}
-
-.card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid var(--border-divider);
-    transition: all 0.2s;
-}
-
-.card:hover {
-    border-color: var(--brand-active);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    transform: translateY(-2px);
-}
-
-.iconBox {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    background-color: var(--brand-soft-bg);
-    color: var(--brand-primary);
-}
-
-/* Features Grid */
-.featureGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-}
-
-/* How it works */
-.steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
-    text-align: center;
-}
-
-.stepNumber {
-    font-size: 4rem;
-    font-weight: 800;
-    color: var(--brand-soft-bg);
-    line-height: 1;
-    margin-bottom: 1rem;
-}
-
-/* Footer */
-.footer {
-    border-top: 1px solid var(--border-divider);
-    padding: 4rem 0 2rem;
-    background: var(--bg-secondary);
-}
-
-.ctaBand {
-    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-hover) 100%);
-    padding: 4rem 2rem;
-    text-align: center;
-    border-radius: 20px;
-    color: white;
-    margin-bottom: 4rem;
-}
-
-.ctaBand h2 {
-    color: white;
-    margin-bottom: 1rem;
-}
-
-.ctaBand p {
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 2rem;
-}
-
-.btnWhite {
-    background: white;
-    color: var(--brand-primary);
-    padding: 0.75rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.btnWhite:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Mobile Nav */
-.mobileMenuBtn {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-@media (max-width: 768px) {
-    .nav {
-        display: none;
-    }
-
-    .mobileMenuBtn {
-        display: block;
-    }
-}
-</file>
-
 <file path="src/landing/LandingPage.tsx">
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ProblemSolution from './components/ProblemSolution';
-import Features from './components/Features';
 import HowItWorks from './components/HowItWorks';
+import Features from './components/Features';
 import Audience from './components/Audience';
+import PricingUnlock from './components/PricingUnlock';
+import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 
 const LandingPage = () => {
     return (
-        <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+        <div className="min-h-screen bg-white text-gray-900 font-sans antialiased selection:bg-brand/20 selection:text-brand">
             <Header />
-            <main>
+
+            <main className="flex flex-col pt-18">
+                {/* Hero section handles its own spacing */}
                 <Hero />
+
+                {/* Problem & Solution Flow */}
                 <ProblemSolution />
-                <Features />
+
+                {/* Visual Break - Workflow */}
                 <HowItWorks />
+
+                {/* Feature Deep Dive */}
+                <div className="bg-gray-50/50">
+                    <Features />
+                </div>
+
+                {/* Target Audience Split */}
                 <Audience />
+
+                {/* Trust/Pricing Gate */}
+                <PricingUnlock />
+
+                {/* Objection Handling */}
+                <FAQ />
+
+                {/* Final Call to Action - Distinct from Footer */}
+                <section className="py-24 bg-white text-center">
+                    <div className="max-w-4xl mx-auto px-4">
+                        <h2 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-6">
+                            Sẵn sàng chuyên nghiệp hóa công việc?
+                        </h2>
+                        <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
+                            Tham gia cùng hàng ngàn Creator đang sử dụng Alino để quản lý booking và phát triển sự nghiệp.
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <button className="w-full sm:w-auto px-10 py-4 bg-brand hover:bg-brandHover text-white rounded-full text-lg font-bold shadow-xl shadow-brand/20 hover:shadow-brand/30 transition-all transform hover:-translate-y-1">
+                                Tạo trang Alino miễn phí
+                            </button>
+                            <button className="w-full sm:w-auto px-10 py-4 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 rounded-full text-lg font-semibold transition-all">
+                                Liên hệ tư vấn
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </main>
+
             <Footer />
         </div>
     );
@@ -940,6 +1320,64 @@ export type User = {
 };
 
 export const API_VERSION = 'v1';
+</file>
+
+<file path="src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>,
+)
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alino MVP</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="tsconfig.node.json">
+{
+    "compilerOptions": {
+        "composite": true,
+        "skipLibCheck": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true
+    },
+    "include": [
+        "vite.config.ts"
+    ]
+}
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+    plugins: [react()],
+})
 </file>
 
 <file path="src/App.tsx">
@@ -1055,12 +1493,6 @@ function App() {
     return (
         <>
             <LandingPage />
-            {/* Dev helper to reach login */}
-            <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 9999 }}>
-                <button onClick={() => setShowLogin(true)} style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '20px', fontSize: '0.8rem', cursor: 'pointer' }}>
-                    Login (Dev)
-                </button>
-            </div>
         </>
     )
 }
@@ -1069,138 +1501,81 @@ export default App
 </file>
 
 <file path="src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Core Neutrals */
   --bg-primary: #FFFFFF;
   --bg-secondary: #FAFAFA;
-  --surface-card: #F2F4F7;
-  --border-divider: #E4E7EC;
 
   /* Text */
   --text-primary: #101828;
   --text-secondary: #667085;
-  --text-disabled: #98A2B3;
 
-  /* Brand Indigo */
+  /* Brand */
   --brand-primary: #4F46E5;
-  --brand-hover: #4338CA;
-  --brand-active: #3730A3;
   --brand-soft-bg: #EEF2FF;
 
   /* Semantic */
   --success: #16A34A;
-  --warning: #F59E0B;
   --error: #DC2626;
-  --info: #2563EB;
 
-  /* Deal Status Suggestion */
+  /* Borders */
+  --border-divider: #E4E7EC;
+
+  /* Deal Statuses */
   --status-new: #EEF2FF;
   --status-progress: #DBEAFE;
   --status-awaiting: #FEF3C7;
   --status-completed: #DCFCE7;
-
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-/* Global Reset Utilities */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
   color: var(--text-primary);
 }
 
-p {
-  margin: 0;
-  color: var(--text-secondary);
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .rotate-y-n5 {
+    transform: rotateY(-5deg);
+  }
+
+  .rotate-x-5 {
+    transform: rotateX(5deg);
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 3s infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
-
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: color 0.2s;
-}
-
-button {
-  font-family: inherit;
-}
-</file>
-
-<file path="src/main.tsx">
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>,
-)
-</file>
-
-<file path="src/vite-env.d.ts">
-/// <reference types="vite/client" />
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alino MVP</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-</file>
-
-<file path="tsconfig.node.json">
-{
-    "compilerOptions": {
-        "composite": true,
-        "skipLibCheck": true,
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "allowSyntheticDefaultImports": true
-    },
-    "include": [
-        "vite.config.ts"
-    ]
-}
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// https://vitejs.dev/config/
-export default defineConfig({
-    plugins: [react()],
-})
 </file>
 
 <file path="scripts/backup.ts">
@@ -1457,15 +1832,19 @@ repomix.md
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.23",
     "eslint": "^8.0.0",
+    "postcss": "^8.5.6",
     "prettier": "^3.0.0",
+    "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.1",
     "tsx": "^4.21.0",
     "typescript": "^5.0.0",
