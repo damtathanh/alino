@@ -2525,6 +2525,15 @@ const Landing = () => {
 export default Landing;
 </file>
 
+<file path="src/shared/index.ts">
+export type User = {
+    id: string;
+    email: string;
+};
+
+export const API_VERSION = 'v1';
+</file>
+
 <file path="src/shared/routes.ts">
 export const ROUTES = {
     HOME: '/',
@@ -2564,26 +2573,6 @@ export interface Profile {
     created_at?: string;
     updated_at?: string;
 }
-</file>
-
-<file path="vercel.json">
-{
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/"
-        }
-    ]
-}
-</file>
-
-<file path="src/shared/index.ts">
-export type User = {
-    id: string;
-    email: string;
-};
-
-export const API_VERSION = 'v1';
 </file>
 
 <file path="src/main.tsx">
@@ -2694,18 +2683,15 @@ export default {
 }
 </file>
 
-<file path="vite.config.ts">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-    plugins: [react()],
-    server: {
-        host: true,
-        port: 5173,
-        strictPort: true,
-    },
-})
+<file path="vercel.json">
+{
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "/"
+        }
+    ]
+}
 </file>
 
 <file path="scripts/backup.ts">
@@ -2974,26 +2960,53 @@ Single-root React + Vite + Supabase application.
 }
 </file>
 
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+    plugins: [react()],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'src'),
+        },
+    },
+    server: {
+        host: true,
+        port: 5173,
+        strictPort: true,
+    },
+})
+</file>
+
+<file path=".env.example">
+VITE_SUPABASE_URL=https://ehzgylclklpbfmynacvn.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmZteW5hY3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzODUwMzMsImV4cCI6MjA4MTk2MTAzM30.gyjP51A9Gsa3Rwu0yjWVVZKAQwLG0kgUr5x8Dczrhj4
+</file>
+
 <file path="src/App.tsx">
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './app/providers/AuthProvider';
-import RequireAuth from './features/auth/components/RequireAuth';
-import { ROUTES } from './shared/routes';
+import { AuthProvider } from '@/app/providers/AuthProvider';
+import RequireAuth from '@/features/auth/components/RequireAuth';
+import { ROUTES } from '@/shared/routes';
 
-// Pages
-import Landing from './pages/Landing';
-import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
-import ResetPassword from './pages/auth/ResetPassword';
-import UpdatePassword from './pages/auth/UpdatePassword';
-import AuthCallback from './pages/auth/AuthCallback';
+// Public pages
+import Landing from '@/pages/Landing';
+import Login from '@/pages/auth/Login';
+import Signup from '@/pages/auth/Signup';
+import ResetPassword from '@/pages/auth/ResetPassword';
+import UpdatePassword from '@/pages/auth/UpdatePassword';
+import AuthCallback from '@/pages/auth/AuthCallback';
 
-import Onboarding from './pages/onboarding/Onboarding';
-import RoleSelection from './pages/onboarding/RoleSelection';
+// Onboarding
+import Onboarding from '@/pages/onboarding/Onboarding';
+import RoleSelection from '@/pages/onboarding/RoleSelection';
 
-import AppGate from './pages/dashboard/AppGate';
-import CreatorDashboard from './pages/dashboard/CreatorDashboard';
-import BrandDashboard from './pages/dashboard/BrandDashboard';
+// App / Dashboard
+import AppGate from '@/pages/dashboard/AppGate';
+import CreatorDashboard from '@/pages/dashboard/CreatorDashboard';
+import BrandDashboard from '@/pages/dashboard/BrandDashboard';
 
 function App() {
     return (
@@ -3008,7 +3021,7 @@ function App() {
                     <Route path={ROUTES.UPDATE_PASSWORD} element={<UpdatePassword />} />
                     <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
 
-                    {/* Private Routes */}
+                    {/* App Gate */}
                     <Route
                         path={ROUTES.APP}
                         element={
@@ -3018,6 +3031,7 @@ function App() {
                         }
                     />
 
+                    {/* Onboarding */}
                     <Route
                         path={ROUTES.ONBOARDING}
                         element={
@@ -3035,7 +3049,7 @@ function App() {
                         }
                     />
 
-                    {/* Dashboard Routes */}
+                    {/* Dashboards */}
                     <Route
                         path={ROUTES.APP_CREATOR}
                         element={
@@ -3059,11 +3073,6 @@ function App() {
 }
 
 export default App;
-</file>
-
-<file path=".env.example">
-VITE_SUPABASE_URL=https://ehzgylclklpbfmynacvn.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmZteW5hY3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzODUwMzMsImV4cCI6MjA4MTk2MTAzM30.gyjP51A9Gsa3Rwu0yjWVVZKAQwLG0kgUr5x8Dczrhj4
 </file>
 
 <file path=".gitignore">
