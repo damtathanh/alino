@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../app/providers/AuthProvider';
-import { isProfileComplete } from '@/lib/profileCompleteness';
+import { getProfile, upsertProfile, updateProfile } from '../../lib/supabase/profile';
+import { isProfileComplete } from '../../lib/profileCompleteness';
 import type { Role } from '../../shared/types';
 import { ROUTES } from '../../shared/routes';
 

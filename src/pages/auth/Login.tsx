@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthPage from './AuthPage';
-import RoleSelectModal from '../../landing/components/RoleSelectModal';
+import AuthWrapper from '../../features/auth/components/AuthWrapper';
+import RoleSelectModal from '../../features/auth/components/RoleSelectModal';
+import { ROUTES } from '../../shared/routes';
+import type { Role } from '../../shared/types';
 
-const LoginPage = () => {
+const Login = () => {
     const navigate = useNavigate();
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
@@ -11,21 +13,20 @@ const LoginPage = () => {
         setIsRoleModalOpen(true);
     };
 
-    const handleRoleSelect = (role: 'creator' | 'brand') => {
+    const handleRoleSelect = (role: Role) => {
         setIsRoleModalOpen(false);
-        navigate(`/signup?role=${role}`);
+        navigate(`${ROUTES.SIGNUP}?role=${role}`);
     };
 
     return (
         <>
-            <AuthPage
+            <AuthWrapper
                 view="sign_in"
                 title="Đăng nhập Alino"
                 subtitle="Quản lý công việc Creator chuyên nghiệp"
                 onSignupClick={handleSignupClick}
             />
 
-            {/* Role Selection Modal */}
             <RoleSelectModal
                 isOpen={isRoleModalOpen}
                 onClose={() => setIsRoleModalOpen(false)}
@@ -35,4 +36,4 @@ const LoginPage = () => {
     );
 };
 
-export default LoginPage;
+export default Login;

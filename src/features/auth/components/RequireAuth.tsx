@@ -1,12 +1,11 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useLocation, Navigate } from 'react-router-dom';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { ROUTES } from '../../../shared/routes';
 
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
     const { session, loading } = useAuth();
     const location = useLocation();
 
-    // Trong lúc AuthProvider đang sync session (hoặc vừa login callback),
-    // đừng redirect vội.
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-bg">
@@ -16,7 +15,7 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
     }
 
     if (!session) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
     }
 
     return children;

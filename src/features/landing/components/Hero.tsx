@@ -2,10 +2,11 @@ interface HeroProps {
     onSignupClick: () => void;
 }
 
+
 const Hero = ({ onSignupClick }: HeroProps) => {
     return (
         <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-white">
-            {/* Background Gradients - Softer & More Modern */}
+            {/* Background Gradients */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-[1440px] pointer-events-none z-0">
                 <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-indigo-50/80 rounded-full blur-[120px] mix-blend-multiply" />
                 <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] bg-purple-50/80 rounded-full blur-[120px] mix-blend-multiply" />
@@ -17,7 +18,7 @@ const Hero = ({ onSignupClick }: HeroProps) => {
                     {/* Left: Text Content */}
                     <div className="flex-1 text-center lg:text-left max-w-2xl lg:max-w-none">
 
-                        {/* Notify Badge - Pill Shape */}
+                        {/* Notify Badge */}
                         <a href="#" className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-xs font-semibold mb-8 hover:border-brand/30 hover:text-brand transition-colors group">
                             <span className="flex h-2 w-2 relative">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
@@ -50,11 +51,10 @@ const Hero = ({ onSignupClick }: HeroProps) => {
                             </button>
                         </div>
 
-                        {/* Social Proof / Trusted By */}
+                        {/* Social Proof */}
                         <div className="border-t border-slate-100 pt-8">
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Được tin dùng bởi 1,000+ Creator</p>
                             <div className="flex items-center justify-center lg:justify-start gap-6 grayscale opacity-60">
-                                {/* Simple text logos for now */}
                                 <span className="font-bold text-lg text-slate-400">Schannel</span>
                                 <span className="font-bold text-lg text-slate-400">VCCorp</span>
                                 <span className="font-bold text-lg text-slate-400">Yeah1</span>
@@ -63,17 +63,14 @@ const Hero = ({ onSignupClick }: HeroProps) => {
                         </div>
                     </div>
 
-                    {/* Right: Hero Visual (App Shell Mockup) */}
+                    {/* Right: Hero Visual */}
                     <div className="flex-1 w-full relative">
-                        {/* Decorative blob behind */}
+                        {/* Blob */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-indigo-100/50 to-white rounded-full blur-3xl -z-10"></div>
 
-                        {/* Glassmorphism Card Stack */}
+                        {/* Card Stack */}
                         <div className="relative z-10 perspective-1000">
-                            {/* Main Card: Profile/Dashboard Hybrid */}
                             <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform rotate-y-n5 rotate-x-5 hover:rotate-0 transition-transform duration-700 ease-out">
-
-                                {/* Fake Browser Bar */}
                                 <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 flex items-center gap-4">
                                     <div className="flex gap-1.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
@@ -83,9 +80,7 @@ const Hero = ({ onSignupClick }: HeroProps) => {
                                     <div className="flex-1 bg-white border border-slate-200 rounded-md h-6 w-full max-w-[200px] mx-auto shadow-sm"></div>
                                 </div>
 
-                                {/* App Content */}
                                 <div className="p-6">
-                                    {/* Header Part */}
                                     <div className="flex items-start justify-between mb-8">
                                         <div className="flex gap-4">
                                             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-lg">
@@ -112,7 +107,6 @@ const Hero = ({ onSignupClick }: HeroProps) => {
                                         </div>
                                     </div>
 
-                                    {/* Active Deals List */}
                                     <div className="space-y-4">
                                         <h4 className="text-sm font-semibold text-slate-900 mb-2">Dự án đang chạy</h4>
 
@@ -141,7 +135,7 @@ const Hero = ({ onSignupClick }: HeroProps) => {
                                 </div>
                             </div>
 
-                            {/* Floating Notification Element - Decoration */}
+                            {/* Floating Notification */}
                             <div className="absolute -right-8 top-20 bg-white p-4 rounded-xl shadow-xl border border-slate-100 animate-bounce-slow hidden lg:block">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">

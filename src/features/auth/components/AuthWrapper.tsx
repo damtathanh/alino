@@ -2,23 +2,24 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '../../lib/supabaseClient';
-import { useAuth } from '../../auth/AuthProvider';
+import { supabase } from '../../../lib/supabase/client';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { ROUTES } from '../../../shared/routes';
 
-interface AuthPageProps {
+interface AuthWrapperProps {
     view: "sign_in" | "sign_up";
     title?: string;
     subtitle?: string;
-    onSignupClick?: () => void; // Add this prop
+    onSignupClick?: () => void;
 }
 
-const AuthPage = ({ view, title, subtitle, onSignupClick }: AuthPageProps) => {
+const AuthWrapper = ({ view, title, subtitle, onSignupClick }: AuthWrapperProps) => {
     const { session } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         if (session) {
-            navigate('/app');
+            navigate(ROUTES.APP, { replace: true });
         }
     }, [session, navigate]);
 
@@ -50,7 +51,7 @@ const AuthPage = ({ view, title, subtitle, onSignupClick }: AuthPageProps) => {
                         }
                     }}
                     providers={['google']}
-                    redirectTo={`${window.location.origin}/auth/callback`}
+                    redirectTo={`${window.location.origin}${ROUTES.AUTH_CALLBACK}`}
                     onlyThirdPartyProviders={false}
                     localization={{
                         variables: {
@@ -71,7 +72,6 @@ const AuthPage = ({ view, title, subtitle, onSignupClick }: AuthPageProps) => {
                 />
 
                 <div className="mt-4 flex flex-col gap-2 text-center text-sm">
-                    {/* Manual Links Replacement */}
                     {view === 'sign_in' ? (
                         <>
                             {onSignupClick ? (
@@ -82,17 +82,17 @@ const AuthPage = ({ view, title, subtitle, onSignupClick }: AuthPageProps) => {
                                     Chưa có tài khoản? Đăng ký
                                 </button>
                             ) : (
-                                <Link to="/signup" className="text-secondary hover:text-brand hover:underline">
+                                <Link to={ROUTES.SIGNUP} className="text-secondary hover:text-brand hover:underline">
                                     Chưa có tài khoản? Đăng ký
                                 </Link>
                             )}
 
-                            <Link to="/reset-password" className="text-secondary hover:text-brand hover:underline">
+                            <Link to={ROUTES.RESET_PASSWORD} className="text-secondary hover:text-brand hover:underline">
                                 Quên mật khẩu?
                             </Link>
                         </>
                     ) : (
-                        <Link to="/login" className="text-secondary hover:text-brand hover:underline">
+                        <Link to={ROUTES.LOGIN} className="text-secondary hover:text-brand hover:underline">
                             Đã có tài khoản? Đăng nhập
                         </Link>
                     )}
@@ -102,4 +102,4 @@ const AuthPage = ({ view, title, subtitle, onSignupClick }: AuthPageProps) => {
     );
 };
 
-export default AuthPage;
+export default AuthWrapper;

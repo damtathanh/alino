@@ -1,32 +1,34 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './components/Header';
-import Hero from './components/Hero';
-import ProblemSolution from './components/ProblemSolution';
-import HowItWorks from './components/HowItWorks';
-import Features from './components/Features';
-import Audience from './components/Audience';
-import PricingUnlock from './components/PricingUnlock';
-import FAQ from './components/FAQ';
-import Footer from './components/Footer';
-import RoleSelectModal from './components/RoleSelectModal';
+import Header from '../features/landing/components/Header';
+import Hero from '../features/landing/components/Hero';
+import ProblemSolution from '../features/landing/components/ProblemSolution';
+import HowItWorks from '../features/landing/components/HowItWorks';
+import Features from '../features/landing/components/Features';
+import Audience from '../features/landing/components/Audience';
+import PricingUnlock from '../features/landing/components/PricingUnlock';
+import FAQ from '../features/landing/components/FAQ';
+import Footer from '../features/landing/components/Footer';
+import RoleSelectModal from '../features/auth/components/RoleSelectModal';
+import { ROUTES } from '../shared/routes';
+import type { Role } from '../shared/types';
 
-const LandingPage = () => {
+const Landing = () => {
     const navigate = useNavigate();
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
     // Handlers
     const openRoleModal = () => setIsRoleModalOpen(true);
 
-    const handleRoleSelect = (role: 'creator' | 'brand') => {
+    const handleRoleSelect = (role: Role) => {
         setIsRoleModalOpen(false);
-        navigate(`/signup?role=${role}`);
+        navigate(`${ROUTES.SIGNUP}?role=${role}`);
     };
 
-    // Specific handler for Audience card which might pass specific role
-    const handleSignup = (role?: 'creator' | 'brand') => {
+    // Specific handler for Audience card
+    const handleSignup = (role?: Role) => {
         if (role) {
-            navigate(`/signup?role=${role}`);
+            navigate(`${ROUTES.SIGNUP}?role=${role}`);
         } else {
             openRoleModal();
         }
@@ -36,31 +38,17 @@ const LandingPage = () => {
         <div className="min-h-screen bg-white text-gray-900 font-sans antialiased selection:bg-brand/20 selection:text-brand">
             <Header onSignupClick={openRoleModal} />
 
-            <main className="flex flex-col pt-18">
-                {/* Hero section handles its own spacing */}
+            <main className="flex flex-col pt-16">
                 <Hero onSignupClick={openRoleModal} />
-
-                {/* Problem & Solution Flow */}
                 <ProblemSolution />
-
-                {/* Visual Break - Workflow */}
                 <HowItWorks />
-
-                {/* Feature Deep Dive */}
                 <div className="bg-gray-50/50">
                     <Features />
                 </div>
-
-                {/* Target Audience Split */}
                 <Audience onSignupClick={handleSignup} />
-
-                {/* Trust/Pricing Gate */}
                 <PricingUnlock onSignupClick={openRoleModal} />
-
-                {/* Objection Handling */}
                 <FAQ />
 
-                {/* Final Call to Action - Distinct from Footer */}
                 <section className="py-24 bg-white text-center">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-6">
@@ -86,7 +74,6 @@ const LandingPage = () => {
 
             <Footer />
 
-            {/* Role Selection Modal */}
             <RoleSelectModal
                 isOpen={isRoleModalOpen}
                 onClose={() => setIsRoleModalOpen(false)}
@@ -96,4 +83,4 @@ const LandingPage = () => {
     );
 };
 
-export default LandingPage;
+export default Landing;

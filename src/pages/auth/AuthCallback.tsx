@@ -1,24 +1,28 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabase/client';
+import { ROUTES } from '../../shared/routes';
 
-const AuthCallbackPage = () => {
+const AuthCallback = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        (async () => {
+        const handleCallback = async () => {
             const { error } = await supabase.auth.exchangeCodeForSession(
                 window.location.href
             );
 
             if (error) {
                 console.error('OAuth exchange error:', error.message);
-                navigate('/login', { replace: true });
+                navigate(ROUTES.LOGIN, { replace: true });
                 return;
             }
 
-            navigate('/app', { replace: true });
-        })();
+            // Always go to AppGate for routing decision
+            navigate(ROUTES.APP, { replace: true });
+        };
+
+        handleCallback();
     }, [navigate]);
 
     return (
@@ -28,4 +32,4 @@ const AuthCallbackPage = () => {
     );
 };
 
-export default AuthCallbackPage;
+export default AuthCallback;

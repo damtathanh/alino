@@ -1,9 +1,10 @@
 import { useRef, useEffect } from "react";
+import type { Role } from "../../../shared/types";
 
 interface RoleSelectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelect: (role: 'creator' | 'brand') => void;
+    onSelect: (role: Role) => void;
 }
 
 const RoleSelectModal = ({ isOpen, onClose, onSelect }: RoleSelectModalProps) => {

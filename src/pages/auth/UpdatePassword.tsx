@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabase/client';
+import { ROUTES } from '../../shared/routes';
 
-const UpdatePasswordPage = () => {
+const UpdatePassword = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -19,7 +20,7 @@ const UpdatePasswordPage = () => {
             setError(error.message);
             setLoading(false);
         } else {
-            navigate('/app');
+            navigate(ROUTES.APP, { replace: true });
         }
     };
 
@@ -59,4 +60,4 @@ const UpdatePasswordPage = () => {
     );
 };
 
-export default UpdatePasswordPage;
+export default UpdatePassword;

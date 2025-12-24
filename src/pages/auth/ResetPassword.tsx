@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabase/client';
+import { ROUTES } from '../../shared/routes';
 
-const ResetPasswordPage = () => {
+const ResetPassword = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -14,7 +15,7 @@ const ResetPasswordPage = () => {
         setError('');
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/update-password`,
+            redirectTo: `${window.location.origin}${ROUTES.UPDATE_PASSWORD}`,
         });
 
         if (error) {
@@ -61,7 +62,7 @@ const ResetPasswordPage = () => {
                     >
                         {loading ? 'Đang gửi...' : 'Gửi link reset'}
                     </button>
-                    <a href="/login" className="text-center text-sm text-brand hover:underline mt-2">
+                    <a href={ROUTES.LOGIN} className="text-center text-sm text-brand hover:underline mt-2">
                         Quay lại Đăng nhập
                     </a>
                 </form>
@@ -70,4 +71,4 @@ const ResetPasswordPage = () => {
     );
 };
 
-export default ResetPasswordPage;
+export default ResetPassword;
