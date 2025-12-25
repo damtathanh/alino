@@ -95,7 +95,7 @@ const Footer = () => {
 
                 <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-gray-400">
-                        © 2024 Alino Technologies Inc.
+                        © 2025 Alino All rights reserved.
                     </p>
                     <div className="flex gap-6 text-sm font-medium text-gray-500">
                         <a href="#" className="hover:text-gray-900 transition-colors">Điều khoản</a>

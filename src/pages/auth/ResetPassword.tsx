@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { ROUTES } from '../../shared/routes';
+import { getSiteUrl } from '../../lib/siteUrl';
 
 const ResetPassword = () => {
     const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const ResetPassword = () => {
         setError('');
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}${ROUTES.UPDATE_PASSWORD}`,
+            redirectTo: `${getSiteUrl()}${ROUTES.UPDATE_PASSWORD}`,
         });
 
         if (error) {

@@ -7,13 +7,26 @@ export function isProfileComplete(p: Profile | null): boolean {
     if (!p.role) return false;
     if (!p.full_name) return false;
     if (!p.city) return false;
+    if (p.onboarding_completed !== true) return false;
 
     if (p.role === 'creator') {
-        return !!p.birth_year && !!p.creator_type && hasItems(p.platforms) && hasItems(p.goals) && p.onboarding_completed === true;
+        // required “thật” cho creator
+
+        if (!p.creator_type) return false;
+        if (!hasItems(p.platforms)) return false;
+        if (!hasItems(p.goals)) return false;
+        if (!hasItems(p.content_categories)) return false;
+        return true;
     }
 
     if (p.role === 'brand') {
-        return !!p.company_name && !!p.company_domain && !!p.company_type && !!p.job_title && hasItems(p.goals) && p.onboarding_completed === true;
+        // required “thật” cho brand
+        if (!p.company_name) return false;
+        if (!p.company_domain) return false;
+        if (!p.company_type) return false;
+        if (!p.job_title) return false;
+        if (!hasItems(p.goals)) return false;
+        return true;
     }
 
     return false;
@@ -26,12 +39,14 @@ export function getMissingFields(p: Profile | null): string[] {
     if (!p.role) missing.push('role');
     if (!p.full_name) missing.push('full_name');
     if (!p.city) missing.push('city');
+    if (p.onboarding_completed !== true) missing.push('onboarding_completed');
 
     if (p.role === 'creator') {
-        if (!p.birth_year) missing.push('birth_year');
+
         if (!p.creator_type) missing.push('creator_type');
         if (!hasItems(p.platforms)) missing.push('platforms');
         if (!hasItems(p.goals)) missing.push('goals');
+        if (!hasItems(p.content_categories)) missing.push('content_categories');
     }
 
     if (p.role === 'brand') {
@@ -42,6 +57,5 @@ export function getMissingFields(p: Profile | null): string[] {
         if (!hasItems(p.goals)) missing.push('goals');
     }
 
-    if (p.onboarding_completed !== true) missing.push('onboarding_completed');
     return missing;
 }

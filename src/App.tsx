@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/app/providers/AuthProvider';
 import RequireAuth from '@/features/auth/components/RequireAuth';
 import { ROUTES } from '@/shared/routes';
+import AppLayout from '@/components/layout/AppLayout';
 
 // Public pages
 import Landing from '@/pages/Landing';
@@ -10,10 +11,13 @@ import Signup from '@/pages/auth/Signup';
 import ResetPassword from '@/pages/auth/ResetPassword';
 import UpdatePassword from '@/pages/auth/UpdatePassword';
 import AuthCallback from '@/pages/auth/AuthCallback';
+import VerifyEmailPending from '@/pages/auth/VerifyEmailPending';
 
 // Onboarding
 import Onboarding from '@/pages/onboarding/Onboarding';
 import RoleSelection from '@/pages/onboarding/RoleSelection';
+
+import ProfilePage from '@/pages/profile/Profile';
 
 // App / Dashboard
 import AppGate from '@/pages/dashboard/AppGate';
@@ -25,59 +29,45 @@ function App() {
         <BrowserRouter>
             <AuthProvider>
                 <Routes>
-                    {/* Public Routes */}
+                    {/* Public Routes - Landing (No AppLayout) */}
                     <Route path={ROUTES.HOME} element={<Landing />} />
-                    <Route path={ROUTES.LOGIN} element={<Login />} />
-                    <Route path={ROUTES.SIGNUP} element={<Signup />} />
-                    <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
-                    <Route path={ROUTES.UPDATE_PASSWORD} element={<UpdatePassword />} />
-                    <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
 
-                    {/* App Gate */}
-                    <Route
-                        path={ROUTES.APP}
-                        element={
-                            <RequireAuth>
-                                <AppGate />
-                            </RequireAuth>
-                        }
-                    />
+                    {/* Shared Layout Routes */}
+                    <Route element={<AppLayout />}>
+                        {/* Auth Pages */}
+                        <Route path={ROUTES.LOGIN} element={<Login />} />
+                        <Route path={ROUTES.SIGNUP} element={<Signup />} />
+                        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+                        <Route path={ROUTES.UPDATE_PASSWORD} element={<UpdatePassword />} />
+                        <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
+                        <Route path={ROUTES.VERIFY_EMAIL_PENDING} element={<VerifyEmailPending />} />
 
-                    {/* Onboarding */}
-                    <Route
-                        path={ROUTES.ONBOARDING}
-                        element={
-                            <RequireAuth>
-                                <Onboarding />
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path={ROUTES.ONBOARDING_ROLE}
-                        element={
-                            <RequireAuth>
-                                <RoleSelection />
-                            </RequireAuth>
-                        }
-                    />
+                        {/* Protected Routes */}
+                        <Route path={ROUTES.APP} element={<RequireAuth><AppGate /></RequireAuth>} />
+                        <Route path={ROUTES.PROFILE} element={<RequireAuth><ProfilePage /></RequireAuth>} />
 
-                    {/* Dashboards */}
-                    <Route
-                        path={ROUTES.APP_CREATOR}
-                        element={
-                            <RequireAuth>
-                                <CreatorDashboard />
-                            </RequireAuth>
-                        }
-                    />
-                    <Route
-                        path={ROUTES.APP_BRAND}
-                        element={
-                            <RequireAuth>
-                                <BrandDashboard />
-                            </RequireAuth>
-                        }
-                    />
+                        {/* Onboarding */}
+                        <Route path={ROUTES.ONBOARDING} element={<RequireAuth><Onboarding /></RequireAuth>} />
+                        <Route path={ROUTES.ONBOARDING_ROLE} element={<RequireAuth><RoleSelection /></RequireAuth>} />
+
+                        {/* Dashboards */}
+                        <Route
+                            path={ROUTES.APP_CREATOR}
+                            element={
+                                <RequireAuth>
+                                    <CreatorDashboard />
+                                </RequireAuth>
+                            }
+                        />
+                        <Route
+                            path={ROUTES.APP_BRAND}
+                            element={
+                                <RequireAuth>
+                                    <BrandDashboard />
+                                </RequireAuth>
+                            }
+                        />
+                    </Route>
                 </Routes>
             </AuthProvider>
         </BrowserRouter>

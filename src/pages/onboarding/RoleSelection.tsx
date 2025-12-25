@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../app/providers/AuthProvider';
-import { upsertProfile } from '../../lib/supabase/profile';
 import { ROUTES } from '../../shared/routes';
 import RoleSelectModal from '../../features/auth/components/RoleSelectModal';
 import type { Role } from '../../shared/types';
+import { updateProfile } from '../../lib/supabase/profile';
 
 const RoleSelection = () => {
     const { user } = useAuth();
@@ -16,7 +16,7 @@ const RoleSelection = () => {
         setLoading(true);
 
         try {
-            await upsertProfile({ id: user.id, email: user.email, role });
+            await updateProfile(user.id, { role });
             navigate(ROUTES.APP, { replace: true });
         } catch (err) {
             console.error(err);

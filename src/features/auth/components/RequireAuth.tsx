@@ -18,6 +18,11 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
         return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
     }
 
+    // ✅ CHUẨN SUPABASE: check email_confirmed_at
+    if (!session.user.email_confirmed_at) {
+        return <Navigate to={ROUTES.VERIFY_EMAIL_PENDING} replace />;
+    }
+
     return children;
 };
 

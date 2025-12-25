@@ -1,20 +1,24 @@
-import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { getProfile } from '@/lib/supabase/profile';
 import { supabase } from '@/lib/supabase/client';
 import { ROUTES } from '@/shared/routes';
 import AppLogo from '@/shared/components/AppLogo';
 
-const Header = ({ onSignupClick }: { onSignupClick: () => void }) => {
+const AppHeader = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [displayName, setDisplayName] = useState('User');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const isBrand = location.pathname.startsWith('/app/brand');
+    const isCreator = location.pathname.startsWith('/app/creator');
 
     useEffect(() => {
         if (!user) return;
@@ -47,49 +51,17 @@ const Header = ({ onSignupClick }: { onSignupClick: () => void }) => {
         <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 backdrop-blur border-b border-border">
             <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
 
-                {/* LEFT */}
-                <div className="flex items-center gap-10">
-                    <AppLogo />
+                {/* LOGO */}
+                <AppLogo
+                    subtitle={
+                        isBrand ? 'For Brands' :
+                            isCreator ? 'For Creators' :
+                                undefined
+                    }
+                />
 
-                    {!user && (
-                        <nav className="hidden md:flex items-center gap-6">
-                            {[
-                                ['Về Alino', '#about'],
-                                ['Tính năng', '#features'],
-                                ['Creator', '#creators'],
-                                ['Brand', '#brands'],
-                                ['Tin tức', '#news'],
-                            ].map(([label, href]) => (
-                                <a
-                                    key={label}
-                                    href={href}
-                                    className="text-sm font-medium text-secondary hover:text-primary transition"
-                                >
-                                    {label}
-                                </a>
-                            ))}
-                        </nav>
-                    )}
-                </div>
-
-                {/* RIGHT */}
-                {!user ? (
-                    <div className="flex items-center gap-4">
-                        <Link
-                            to={ROUTES.LOGIN}
-                            className="text-sm font-medium text-secondary hover:text-primary"
-                        >
-                            Đăng nhập
-                        </Link>
-
-                        <button
-                            onClick={onSignupClick}
-                            className="bg-brand hover:bg-brandHover text-white px-4 py-2 rounded-full text-sm font-semibold"
-                        >
-                            Tạo trang miễn phí
-                        </button>
-                    </div>
-                ) : (
+                {/* USER MENU */}
+                {user && (
                     <div ref={dropdownRef} className="relative group">
                         <button
                             onClick={() => setOpen(v => !v)}
@@ -98,6 +70,7 @@ const Header = ({ onSignupClick }: { onSignupClick: () => void }) => {
                             {avatarUrl ? (
                                 <img
                                     src={avatarUrl}
+                                    alt="Avatar"
                                     className="w-8 h-8 rounded-full object-cover"
                                 />
                             ) : (
@@ -105,11 +78,12 @@ const Header = ({ onSignupClick }: { onSignupClick: () => void }) => {
                                     {displayName.charAt(0).toUpperCase()}
                                 </div>
                             )}
-                            <span className="hidden sm:block text-sm font-medium text-primary">
+                            <span className="hidden sm:block text-sm font-medium text-primary max-w-[140px] truncate">
                                 {displayName}
                             </span>
                         </button>
 
+                        {/* DROPDOWN */}
                         <div
                             className={`
                                 absolute right-0 mt-2 w-52 bg-white border border-border
@@ -121,14 +95,14 @@ const Header = ({ onSignupClick }: { onSignupClick: () => void }) => {
                         >
                             <button
                                 onClick={() => navigate(ROUTES.APP)}
-                                className="w-full px-4 py-2.5 text-sm hover:bg-bgAlt text-left"
+                                className="w-full px-4 py-2.5 text-sm text-primary hover:bg-bgAlt text-left"
                             >
                                 Quản lý dự án
                             </button>
 
                             <button
                                 onClick={() => navigate(ROUTES.PROFILE)}
-                                className="w-full px-4 py-2.5 text-sm hover:bg-bgAlt text-left"
+                                className="w-full px-4 py-2.5 text-sm text-primary hover:bg-bgAlt text-left"
                             >
                                 Hồ sơ
                             </button>
@@ -149,4 +123,4 @@ const Header = ({ onSignupClick }: { onSignupClick: () => void }) => {
     );
 };
 
-export default Header;
+export default AppHeader;

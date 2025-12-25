@@ -1,44 +1,21 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../app/providers/AuthProvider';
-import { ROUTES } from '../../shared/routes';
+
 
 const CreatorDashboard = () => {
-    const { user, signOut } = useAuth();
-    const navigate = useNavigate();
-
-    const handleLogout = async () => {
-        await signOut();
-        navigate(ROUTES.HOME, { replace: true });
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
-            <nav className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                {/* LOGO = quay về trang chủ */}
-                <Link to={ROUTES.HOME} className="font-bold text-brand text-xl">
-                    ALINO <span className="text-gray-400 text-sm font-normal">for Creators</span>
-                </Link>
-
-                <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600">{user?.email}</span>
-                    <button
-                        onClick={handleLogout}
-                        className="text-sm text-red-600 hover:text-red-700 font-medium"
-                    >
-                        Đăng xuất
-                    </button>
-                </div>
-            </nav>
-
-            <main className="p-8 max-w-6xl mx-auto">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center py-20">
-                    <div className="w-16 h-16 bg-indigo-50 text-brand rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+            <main className="p-8 max-w-6xl mx-auto pt-10">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center max-w-2xl mx-auto">
+                    <div className="w-20 h-20 bg-gray-100 text-black rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
                         🎨
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-1">
                         Creator Dashboard
                     </h1>
-                    <p className="text-gray-500">
+                    <p className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-6">
+                        Alino For Creators
+                    </p>
+                    <p className="text-gray-500 text-lg">
                         Chào mừng bạn quay trở lại! Các tính năng đang được phát triển.
                     </p>
                 </div>

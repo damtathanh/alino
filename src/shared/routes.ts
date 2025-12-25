@@ -5,10 +5,13 @@ export const ROUTES = {
     RESET_PASSWORD: '/reset-password',
     UPDATE_PASSWORD: '/update-password',
     AUTH_CALLBACK: '/auth/callback',
+    VERIFY_EMAIL_PENDING: '/verify-email-pending',
 
     APP: '/app',
     APP_CREATOR: '/app/creator',
     APP_BRAND: '/app/brand',
+
+    PROFILE: '/profile',
 
     ONBOARDING: '/onboarding',
     ONBOARDING_ROLE: '/onboarding/role',

@@ -17,7 +17,6 @@ const Landing = () => {
     const navigate = useNavigate();
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
-    // Handlers
     const openRoleModal = () => setIsRoleModalOpen(true);
 
     const handleRoleSelect = (role: Role) => {
@@ -25,7 +24,6 @@ const Landing = () => {
         navigate(`${ROUTES.SIGNUP}?role=${role}`);
     };
 
-    // Specific handler for Audience card
     const handleSignup = (role?: Role) => {
         if (role) {
             navigate(`${ROUTES.SIGNUP}?role=${role}`);
@@ -48,28 +46,7 @@ const Landing = () => {
                 <Audience onSignupClick={handleSignup} />
                 <PricingUnlock onSignupClick={openRoleModal} />
                 <FAQ />
-
-                <section className="py-24 bg-white text-center">
-                    <div className="max-w-4xl mx-auto px-4">
-                        <h2 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-6">
-                            Sẵn sàng chuyên nghiệp hóa công việc?
-                        </h2>
-                        <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
-                            Tham gia cùng hàng ngàn Creator đang sử dụng Alino để quản lý booking và phát triển sự nghiệp.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <button
-                                onClick={openRoleModal}
-                                className="w-full sm:w-auto px-10 py-4 bg-brand hover:bg-brandHover text-white rounded-full text-lg font-bold shadow-xl shadow-brand/20 hover:shadow-brand/30 transition-all transform hover:-translate-y-1 block sm:inline-block"
-                            >
-                                Tạo trang Alino miễn phí
-                            </button>
-                            <button className="w-full sm:w-auto px-10 py-4 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 rounded-full text-lg font-semibold transition-all">
-                                Liên hệ tư vấn
-                            </button>
-                        </div>
-                    </div>
-                </section>
+                {/* CTA cuối */}
             </main>
 
             <Footer />
