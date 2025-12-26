@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { updateProfile } from '@/lib/supabase/profile';
+import { profileKeys } from '@/lib/queries/useProfile';
 import { ROUTES } from '@/shared/routes';
 import type { Profile } from '@/shared/types';
 import AvatarUploader from '@/components/AvatarUploader';
@@ -47,6 +49,7 @@ interface BrandOnboardingProps {
 const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -107,6 +110,9 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
             };
 
             await updateProfile(user!.id, patch);
+            
+            // FIX BỔ SUNG 1: Invalidate cache để AppGate đọc state mới
+            queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
             
             // FIX 2: KHÔNG redirect thẳng dashboard, giao cho AppGate
             navigate(ROUTES.APP, { replace: true });

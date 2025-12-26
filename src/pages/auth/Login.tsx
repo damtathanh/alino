@@ -10,7 +10,7 @@ const Login = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
     
-    // FIX 1: User có session thì redirect về /app
+    // User có session thì redirect về /app
     useEffect(() => {
         if (session) {
             navigate(ROUTES.APP, { replace: true });

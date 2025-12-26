@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/app/providers/AuthProvider';
 import RequireAuth from '@/features/auth/components/RequireAuth';
@@ -6,6 +7,19 @@ import { ROUTES } from '@/shared/routes';
 import AppLayout from '@/components/layout/AppLayout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { queryClient } from '@/lib/queries/queryClient';
+
+/**
+ * FIX BỔ SUNG 3: Scroll to top on route change
+ */
+function ScrollToTop() {
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [pathname]);
+
+    return null;
+}
 
 // Public pages
 import Landing from '@/pages/Landing';
@@ -51,6 +65,7 @@ function App() {
         <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
                 <BrowserRouter>
+                    <ScrollToTop />
                     <AuthProvider>
                         <Routes>
                         {/* Shared Layout Routes */}
