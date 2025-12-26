@@ -1,99 +1,79 @@
-import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { buildTitle } from "../../seo";
 
 export default function AboutUs() {
-    return (
-        <>
-            <Helmet>
-                <title>{buildTitle("About")}</title>
-                <meta
-                    name="description"
-                    content="Alino giúp brands tìm đúng creator, quản lý chiến dịch rõ ràng và theo dõi hiệu quả bằng dữ liệu."
-                />
-            </Helmet>
+  return (
+    <>
+      <Helmet>
+        <title>{buildTitle("About")}</title>
+        <meta
+          name="description"
+          content="Alino giúp brands và creators làm việc rõ ràng, chuyên nghiệp và đo lường được kết quả."
+        />
+      </Helmet>
 
-            <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-6xl px-6 py-16">
-                    <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start">
-                        {/* Left */}
-                        <div>
-                            <div className="text-sm text-gray-500">About</div>
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          {/* Header */}
+          <div className="mb-10">
+            <span className="inline-block text-sm font-semibold text-indigo-600">Về chúng tôi</span>
+            <h1 className="mt-2 text-5xl font-extrabold tracking-tight">Alino – Nền tảng kết nối Brand và Creator</h1>
+            <p className="mt-4 text-gray-600 leading-relaxed">
+              Alino được xây dựng cho thị trường Việt Nam, giúp đội ngũ marketing và các nhà sáng tạo
+              hợp tác hiệu quả hơn: rõ ràng về mục tiêu, minh bạch về phạm vi công việc, đo lường được
+              tác động. Chúng tôi tập trung vào thực thi, thay vì ồn ào về kênh và định dạng.
+            </p>
+          </div>
 
-                            <h1 className="mt-3 text-5xl font-extrabold leading-tight tracking-tight">
-                                Kết nối <span className="underline">Creators</span> &{" "}
-                                <span className="underline">Brands</span> để tạo tăng trưởng thật
-                            </h1>
+          {/* Two-column: For Brands / For Creators */}
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start">
+            <section>
+              <h2 className="text-xl font-semibold text-gray-900">Dành cho Brand</h2>
+              <p className="mt-3 text-gray-600">
+                Alino giúp đội marketing xác định nhu cầu, tìm kiếm Creator phù hợp, quản lý chiến dịch và theo dõi kết quả.
+                Mục tiêu là rút ngắn thời gian chuẩn bị, giảm sai lệch kỳ vọng, và tăng tỷ lệ hoàn thành đúng chất lượng.
+              </p>
+              <ul className="mt-4 space-y-2 text-gray-600">
+                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Quy trình rõ ràng từ brief đến nghiệm thu.</li>
+                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Theo dõi tiến độ, kiểm soát phạm vi công việc.</li>
+                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tập trung vào kết quả thay vì chỉ số hư danh.</li>
+              </ul>
+            </section>
 
-                            <p className="mt-5 text-gray-600 leading-relaxed">
-                                Alino giúp brands tìm đúng creator, quản lý chiến dịch rõ ràng và theo dõi hiệu quả bằng dữ liệu — để
-                                mọi đồng marketing chi đúng chỗ.
-                            </p>
+            <section>
+              <h2 className="text-xl font-semibold text-gray-900">Dành cho Creator</h2>
+              <p className="mt-3 text-gray-600">
+                Alino hỗ trợ Creator quản lý hồ sơ, làm việc có cấu trúc với Brand, và thể hiện giá trị lao động sáng tạo một cách
+                chuyên nghiệp. Công việc rõ ràng hơn, giao tiếp ít ma sát, và tập trung vào chất lượng nội dung.
+              </p>
+              <ul className="mt-4 space-y-2 text-gray-600">
+                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Hồ sơ nhất quán, dễ hiểu, tập trung vào năng lực.</li>
+                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Quy trình làm việc minh bạch; ít đổi brief phút cuối.</li>
+                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tích lũy uy tín qua hợp tác chất lượng.</li>
+              </ul>
+            </section>
+          </div>
 
-                            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                                <button className="px-5 py-3 rounded-full bg-black text-white">
-                                    Tôi là Brand — Nhận đề xuất creators
-                                </button>
-                                <button className="px-5 py-3 rounded-full border border-gray-200 text-gray-900">
-                                    Tôi là Creator — Nhận job phù hợp
-                                </button>
-                            </div>
-
-                            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                <div className="rounded-2xl border border-gray-200 p-5">
-                                    <div className="text-sm text-gray-500">Matching</div>
-                                    <div className="mt-1 font-semibold">Đúng tệp</div>
-                                    <div className="mt-1 text-sm text-gray-600">Gợi ý creator theo ngành & mục tiêu</div>
-                                </div>
-                                <div className="rounded-2xl border border-gray-200 p-5">
-                                    <div className="text-sm text-gray-500">Workflow</div>
-                                    <div className="mt-1 font-semibold">Minh bạch</div>
-                                    <div className="mt-1 text-sm text-gray-600">Brief → deal → deliver rõ ràng</div>
-                                </div>
-                                <div className="rounded-2xl border border-gray-200 p-5">
-                                    <div className="text-sm text-gray-500">Measurement</div>
-                                    <div className="mt-1 font-semibold">Đo lường</div>
-                                    <div className="mt-1 text-sm text-gray-600">Theo dõi kết quả để tối ưu</div>
-                                </div>
-                            </div>
-
-                            <div className="mt-10 text-sm text-gray-600">
-                                <Link className="underline" to="/">← Về trang chủ</Link>
-                            </div>
-                        </div>
-
-                        {/* Right */}
-                        <div className="rounded-3xl border border-gray-200 p-6 lg:p-8 bg-white">
-                            <h2 className="text-xl font-semibold">Alino phù hợp khi bạn muốn</h2>
-
-                            <div className="mt-6 space-y-4">
-                                <div className="rounded-2xl bg-gray-50 p-5">
-                                    <div className="font-semibold">Chạy campaign nhanh, ít sai sót</div>
-                                    <div className="mt-1 text-gray-600 text-sm">
-                                        Template brief + checklist deliver giúp team vận hành gọn.
-                                    </div>
-                                </div>
-
-                                <div className="rounded-2xl bg-gray-50 p-5">
-                                    <div className="font-semibold">Tìm creator đúng tệp khách hàng</div>
-                                    <div className="mt-1 text-gray-600 text-sm">Filter theo nền tảng, ngành hàng, style nội dung.</div>
-                                </div>
-
-                                <div className="rounded-2xl bg-gray-50 p-5">
-                                    <div className="font-semibold">Có số liệu để ra quyết định</div>
-                                    <div className="mt-1 text-gray-600 text-sm">Tổng hợp kết quả để tối ưu budget.</div>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 rounded-2xl border border-gray-200 px-5 py-4">
-                                <Link className="text-sm text-gray-800" to="/about-alino">
-                                    Tiếp theo: <span className="underline font-medium">Về Alino</span>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          {/* Principles */}
+          <div className="mt-12 border-t border-indigo-50 pt-10">
+            <h2 className="text-xl font-semibold text-gray-900">Nguyên tắc sản phẩm</h2>
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="rounded-2xl border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-indigo-600">Rõ ràng</h3>
+                <p className="mt-2 text-sm text-gray-600">Mỗi bước đều có mục đích và đầu ra cụ thể. Ít lựa chọn hơn, chất lượng cao hơn.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-indigo-600">Minh bạch</h3>
+                <p className="mt-2 text-sm text-gray-600">Kỳ vọng, phạm vi, tiến độ và nghiệm thu được ghi nhận rõ ràng để tránh sai lệch.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-indigo-600">Tập trung kết quả</h3>
+                <p className="mt-2 text-sm text-gray-600">Ưu tiên tác động thực tế lên mục tiêu truyền thông, thay vì chỉ số bề nổi.</p>
+              </div>
             </div>
-        </>
-    );
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }

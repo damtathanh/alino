@@ -133,12 +133,10 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 /* ================= SECURITY TAB ================= */
 
 const SecurityTab = () => {
-    const { user, session } = useAuth();
+    const { session } = useAuth();
 
     const providers = session?.user?.app_metadata?.providers as string[] | undefined;
     const hasPassword = Array.isArray(providers) ? providers.includes('email') : (session?.user?.app_metadata?.provider === 'email');
-    const provider = session?.user?.app_metadata?.provider;
-
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
