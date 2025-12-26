@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import Header from '../features/landing/components/Header';
+
 import Hero from '../features/landing/components/Hero';
 import ProblemSolution from '../features/landing/components/ProblemSolution';
 import HowItWorks from '../features/landing/components/HowItWorks';
@@ -40,9 +40,7 @@ const Landing = () => {
 
     return (
         <div className="min-h-screen bg-white text-gray-900 font-sans antialiased selection:bg-brand/20 selection:text-brand">
-            <Header onSignupClick={openRoleModal} />
-
-            <main className="flex flex-col pt-16">
+            <main className="flex flex-col">
                 <Hero onSignupClick={openRoleModal} />
                 <ProblemSolution />
                 <HowItWorks />

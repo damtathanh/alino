@@ -5,25 +5,28 @@ import { getProfile } from '@/lib/supabase/profile';
 import { supabase } from '@/lib/supabase/client';
 import { ROUTES } from '@/shared/routes';
 import AppLogo from '@/shared/components/AppLogo';
+import LandingNav from './LandingNav';
+import RoleSelectModal from '@/features/auth/components/RoleSelectModal';
 
 const AppHeader = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    const isLanding = location.pathname === ROUTES.HOME;
     const isOnboarding = location.pathname.startsWith('/onboarding');
 
     const [displayName, setDisplayName] = useState('User');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [open, setOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [roleModalOpen, setRoleModalOpen] = useState(false);
 
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const isBrand = location.pathname.startsWith('/app/brand');
-    const isCreator = location.pathname.startsWith('/app/creator');
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!user) return;
-        getProfile(user.id).then(profile => {
+
+        getProfile(user.id).then((profile) => {
             setDisplayName(
                 profile?.full_name ||
                 profile?.company_name ||
@@ -35,8 +38,8 @@ const AppHeader = () => {
 
     useEffect(() => {
         const close = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setOpen(false);
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setMenuOpen(false);
             }
         };
         document.addEventListener('mousedown', close);
@@ -52,26 +55,24 @@ const AppHeader = () => {
         <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 backdrop-blur border-b border-border">
             <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
 
-                {/* LOGO */}
-                <AppLogo
-                    subtitle={
-                        isBrand ? 'For Brands' :
-                            isCreator ? 'For Creators' :
-                                undefined
-                    }
-                />
+                {/* LEFT */}
+                <div className="flex items-center gap-10">
+                    <AppLogo />
 
-                {/* USER MENU */}
-                {user && (
-                    <div ref={dropdownRef} className="relative group">
+                    {/* 👉 Navigation chỉ hiện ở Landing & chưa login */}
+                    {isLanding && <LandingNav />}
+                </div>
+
+                {/* RIGHT */}
+                {user ? (
+                    <div ref={ref} className="relative">
                         <button
-                            onClick={() => setOpen(v => !v)}
+                            onClick={() => setMenuOpen(v => !v)}
                             className="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-bgAlt transition"
                         >
                             {avatarUrl ? (
                                 <img
                                     src={avatarUrl}
-                                    alt="Avatar"
                                     className="w-8 h-8 rounded-full object-cover"
                                 />
                             ) : (
@@ -86,43 +87,31 @@ const AppHeader = () => {
 
                         {/* DROPDOWN */}
                         <div
-                            className={`
-                                absolute right-0 mt-2 w-52 bg-white border border-border
-                                rounded-xl shadow-card overflow-hidden
-                                transition-all duration-150
-                                ${open ? 'opacity-100 visible' : 'opacity-0 invisible'}
-                                group-hover:opacity-100 group-hover:visible
-                            `}
+                            className={`absolute right-0 mt-2 w-52 bg-white border border-border
+                rounded-xl shadow-card overflow-hidden transition
+                ${menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
+              `}
                         >
                             <button
-                                onClick={() => !isOnboarding && navigate(ROUTES.APP)}
                                 disabled={isOnboarding}
-                                className={`w-full px-4 py-2.5 text-sm text-left
-                                    ${isOnboarding
-                                        ? 'text-gray-400 cursor-not-allowed'
-                                        : 'text-primary hover:bg-bgAlt'}`}
+                                onClick={() => navigate(ROUTES.APP)}
+                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
                             >
                                 Quản lý dự án
                             </button>
 
                             <button
-                                onClick={() => !isOnboarding && navigate(ROUTES.PROFILE)}
                                 disabled={isOnboarding}
-                                className={`w-full px-4 py-2.5 text-sm text-left
-                                    ${isOnboarding
-                                        ? 'text-gray-400 cursor-not-allowed'
-                                        : 'text-primary hover:bg-bgAlt'}`}
+                                onClick={() => navigate(ROUTES.PROFILE)}
+                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
                             >
                                 Trang cá nhân
                             </button>
 
                             <button
-                                onClick={() => !isOnboarding && navigate(ROUTES.SETTINGS)}
                                 disabled={isOnboarding}
-                                className={`w-full px-4 py-2.5 text-sm text-left
-                                    ${isOnboarding
-                                        ? 'text-gray-400 cursor-not-allowed'
-                                        : 'text-primary hover:bg-bgAlt'}`}
+                                onClick={() => navigate(ROUTES.SETTINGS)}
+                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
                             >
                                 Cài đặt
                             </button>
@@ -137,8 +126,34 @@ const AppHeader = () => {
                             </button>
                         </div>
                     </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate(ROUTES.LOGIN)}
+                            className="text-sm font-medium text-secondary hover:text-primary"
+                        >
+                            Đăng nhập
+                        </button>
+
+                        <button
+                            onClick={() => setRoleModalOpen(true)}
+                            className="bg-brand hover:bg-brandHover text-white px-4 py-2 rounded-full text-sm font-semibold"
+                        >
+                            Tạo trang miễn phí
+                        </button>
+                    </div>
                 )}
             </div>
+
+            {/* ROLE MODAL */}
+            <RoleSelectModal
+                isOpen={roleModalOpen}
+                onClose={() => setRoleModalOpen(false)}
+                onSelect={(role) => {
+                    setRoleModalOpen(false);
+                    navigate(`${ROUTES.SIGNUP}?role=${role}`);
+                }}
+            />
         </header>
     );
 };

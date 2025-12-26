@@ -5,7 +5,7 @@ interface HeroProps {
 
 const Hero = ({ onSignupClick }: HeroProps) => {
     return (
-        <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-white">
+        <section className="relative pt-20 pb-20 lg:pt-24 lg:pb-28 overflow-hidden bg-white">
             {/* Background Gradients */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-[1440px] pointer-events-none z-0">
                 <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-indigo-50/80 rounded-full blur-[120px] mix-blend-multiply" />

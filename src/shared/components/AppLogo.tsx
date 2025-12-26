@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/routes';
 
 type AppLogoProps = {
@@ -6,12 +6,20 @@ type AppLogoProps = {
 };
 
 const AppLogo = ({ subtitle }: AppLogoProps) => {
+    const navigate = useNavigate();
+
+    const goHome = () => {
+        navigate(ROUTES.HOME);
+        // 👇 ÉP scroll lên đầu trang
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     return (
-        <Link
-            to={ROUTES.HOME}
+        <button
+            onClick={goHome}
             className="flex items-center gap-3 hover:opacity-80 transition"
         >
-            {/* LOGO IMAGE – TO HƠN */}
+            {/* LOGO */}
             <img
                 src="/logo/logo.png"
                 alt="Alino Logo"
@@ -19,16 +27,13 @@ const AppLogo = ({ subtitle }: AppLogoProps) => {
             />
 
             {/* TEXT */}
-            <div className="flex flex-col leading-tight">
-                {/* ALINO – TO + ĐẬM HƠN */}
+            <div className="flex flex-col leading-tight text-left">
                 <span
                     className="
-                        text-[20px] font-extrabold
-                        bg-gradient-to-r from-brand to-indigo-600
-                        bg-clip-text text-transparent
-                        transition-all
-                        group-hover:from-indigo-600 group-hover:to-brand
-                    "
+            text-[20px] font-extrabold
+            bg-gradient-to-r from-brand to-indigo-600
+            bg-clip-text text-transparent
+          "
                 >
                     ALINO
                 </span>
@@ -39,7 +44,7 @@ const AppLogo = ({ subtitle }: AppLogoProps) => {
                     </span>
                 )}
             </div>
-        </Link>
+        </button>
     );
 };
 
