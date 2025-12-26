@@ -17,6 +17,8 @@ const RoleSelection = () => {
 
         try {
             await updateProfile(user.id, { role });
+            
+            // FIX 4: Navigate về /app sau khi lưu role (KHÔNG chờ reload)
             navigate(ROUTES.APP, { replace: true });
         } catch (err) {
             console.error(err);

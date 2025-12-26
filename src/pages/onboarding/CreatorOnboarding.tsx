@@ -121,6 +121,8 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
             };
 
             await updateProfile(user!.id, patch);
+            
+            // FIX 2: KHÔNG redirect thẳng dashboard, giao cho AppGate
             navigate(ROUTES.APP, { replace: true });
         } catch (err) {
             const appError = new AppError(

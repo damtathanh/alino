@@ -136,7 +136,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 /* ================= SECURITY TAB ================= */
 
 const SecurityTab = ({ profile }: { profile: any }) => {
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const updateProfileMutation = useUpdateProfile(user!.id);
 
     const [currentPassword, setCurrentPassword] = useState('');
@@ -146,7 +146,9 @@ const SecurityTab = ({ profile }: { profile: any }) => {
     const [error, setError] = useState('');
     const [showToast, setShowToast] = useState(false);
 
-    const hasPassword = profile?.has_password === true;
+    // FIX 3: Email signup = đã có password, Google signup = chưa có
+    const provider = session?.user?.app_metadata?.provider;
+    const hasPassword = provider === 'email' || profile?.has_password === true;
 
     const handleChangePassword = async () => {
         setError('');

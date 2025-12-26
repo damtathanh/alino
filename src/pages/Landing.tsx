@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { useAuth } from '../app/providers/AuthProvider';
 
 import Hero from '../features/landing/components/Hero';
 import ProblemSolution from '../features/landing/components/ProblemSolution';
@@ -17,6 +17,14 @@ import type { Role } from '../shared/types';
 
 const Landing = () => {
     const navigate = useNavigate();
+    const { session } = useAuth();
+    
+    // FIX 1: User có session thì redirect về /app
+    useEffect(() => {
+        if (session) {
+            navigate(ROUTES.APP, { replace: true });
+        }
+    }, [session, navigate]);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
     /* ================== SIGNUP HANDLERS ================== */
