@@ -9,8 +9,7 @@ const AppLogo = ({ subtitle }: AppLogoProps) => {
     const navigate = useNavigate();
 
     const goHome = () => {
-        navigate(ROUTES.HOME);
-        // 👇 ÉP scroll lên đầu trang
+        navigate(ROUTES.HOME, { state: { allowLanding: true } });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 

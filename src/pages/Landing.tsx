@@ -21,12 +21,18 @@ const Landing = () => {
     const { session } = useAuth();
     const { data: profile, isLoading } = useProfile(session?.user?.id);
 
-    // ROOT FIX 1: User có session + chưa hoàn tất onboarding → redirect /app
+    // BUG FIX: User có session → redirect /app NGAY (không đợi profile)
+    // AppGate sẽ handle routing logic (role check, onboarding check, etc.)
     useEffect(() => {
-        if (!session || isLoading) return;
+        if (!session) return;
         
-        // User đã login → check onboarding status
-        if (profile && !profile.onboarding_completed) {
+        // Nếu profile đã load và onboarding_completed = true → cho phép ở landing
+        if (!isLoading && profile?.onboarding_completed === true) {
+            return; // User đã hoàn tất → có thể xem landing
+        }
+        
+        // Các case khác (chưa có profile, đang load, chưa onboarding) → /app
+        if (!isLoading) {
             navigate(ROUTES.APP, { replace: true });
         }
     }, [session, profile, isLoading, navigate]);
