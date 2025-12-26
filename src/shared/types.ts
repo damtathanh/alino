@@ -1,4 +1,7 @@
+import { Role as RoleEnum } from './constants/enums';
+
 export type Role = 'creator' | 'brand';
+export { RoleEnum };
 
 export type SocialLinks = Partial<{
     tiktok: string;

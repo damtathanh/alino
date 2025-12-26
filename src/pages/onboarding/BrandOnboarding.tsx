@@ -6,6 +6,8 @@ import { ROUTES } from '@/shared/routes';
 import type { Profile } from '@/shared/types';
 import AvatarUploader from '@/components/AvatarUploader';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { handleError } from '@/lib/errors/errorHandler';
+import { AppError, ErrorCode } from '@/lib/errors/AppError';
 
 /* ================== OPTIONS ================== */
 
@@ -107,7 +109,13 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
             await updateProfile(user!.id, patch);
             navigate(ROUTES.APP, { replace: true });
         } catch (err) {
-            setError('Không thể lưu thông tin. Vui lòng thử lại.');
+            const appError = new AppError(
+                'Failed to save onboarding data',
+                ErrorCode.PROFILE_UPDATE_FAILED,
+                undefined,
+                err instanceof Error ? err : undefined
+            );
+            setError(handleError(appError));
             setSaving(false);
         }
     };

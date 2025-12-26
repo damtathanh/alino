@@ -3,6 +3,7 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
 import { supabase } from '@/lib/supabase/client';
 import Toast from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 const SettingsPage = () => {
     const { user, session } = useAuth();
@@ -13,8 +14,16 @@ const SettingsPage = () => {
     /* ================= RENDER ================= */
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-sm text-gray-500">Đang tải cài đặt...</div>
+            <div className="min-h-screen bg-gray-50 py-10">
+                <div className="max-w-4xl mx-auto px-4">
+                    <Skeleton className="h-10 w-48 mb-8" />
+                    <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-4">
+                        <Skeleton className="h-6 w-64" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </div>
+                </div>
             </div>
         );
     }

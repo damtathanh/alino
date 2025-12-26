@@ -1,5 +1,7 @@
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/lib/queries/useProfile';
+import { SkeletonProfile } from '@/components/ui/Skeleton';
+import { handleError } from '@/lib/errors/errorHandler';
 
 import CreatorProfile from './CreatorProfile';
 import BrandProfile from './BrandProfile';
@@ -9,18 +11,15 @@ const ProfilePage = () => {
     const { data: profile, isLoading, error } = useProfile(user?.id);
 
     if (!user || isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
-            </div>
-        );
+        return <SkeletonProfile />;
     }
 
     if (error) {
+        const errorMessage = handleError(error);
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-red-600 mb-4">Không thể tải thông tin profile</p>
+                    <p className="text-red-600 mb-4">{errorMessage}</p>
                     <button 
                         onClick={() => window.location.reload()}
                         className="px-4 py-2 bg-black text-white rounded-lg"
@@ -33,11 +32,7 @@ const ProfilePage = () => {
     }
 
     if (!profile) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
-            </div>
-        );
+        return <SkeletonProfile />;
     }
 
     if (profile.role === 'creator') {

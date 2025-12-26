@@ -3,6 +3,8 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Profile } from '@/shared/types';
 import Toast from '@/components/ui/Toast';
+import { handleError } from '@/lib/errors/errorHandler';
+import { ProfileField } from '@/shared/constants/enums';
 
 import {
     COMPANY_TYPES,
@@ -42,13 +44,13 @@ const BrandProfile = ({ profile }: { profile: Profile }) => {
         setShowToast(false);
 
         const checks: [string, boolean][] = [
-            ['companyName', !companyName.trim()],
-            ['domain', !domain.trim()],
-            ['companyType', !companyType],
-            ['teamSize', !teamSize],
-            ['contactName', !contactName.trim()],
-            ['jobTitle', !jobTitle.trim()],
-            ['phone', !phone.trim()],
+            [ProfileField.COMPANY_NAME, !companyName.trim()],
+            [ProfileField.DOMAIN, !domain.trim()],
+            [ProfileField.COMPANY_TYPE, !companyType],
+            [ProfileField.TEAM_SIZE, !teamSize],
+            [ProfileField.CONTACT_NAME, !contactName.trim()],
+            [ProfileField.JOB_TITLE, !jobTitle.trim()],
+            [ProfileField.PHONE, !phone.trim()],
         ];
 
         for (const [field, invalid] of checks) {
@@ -73,8 +75,9 @@ const BrandProfile = ({ profile }: { profile: Profile }) => {
 
             setShowToast(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (error) {
-            console.error('Error updating profile:', error);
+        } catch (err) {
+            const errorMessage = handleError(err);
+            alert(errorMessage); // Simple error display
         }
     };
 

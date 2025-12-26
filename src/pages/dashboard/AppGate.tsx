@@ -5,6 +5,8 @@ import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Role } from '@/shared/types';
 import { ROUTES } from '@/shared/routes';
 import { supabase } from '@/lib/supabase/client';
+import { handleError } from '@/lib/errors/errorHandler';
+import { AppError, ErrorCode } from '@/lib/errors/AppError';
 
 const AppGate = () => {
     const { user } = useAuth();
@@ -74,8 +76,14 @@ const AppGate = () => {
                         : ROUTES.APP_BRAND,
                     { replace: true }
                 );
-            } catch (e) {
-                console.error('AppGate error:', e);
+            } catch (err) {
+                const appError = new AppError(
+                    'Failed to process app gate',
+                    ErrorCode.DATA_FETCH_FAILED,
+                    undefined,
+                    err instanceof Error ? err : undefined
+                );
+                console.error('[AppGate Error]', handleError(appError));
                 navigate(ROUTES.ONBOARDING, { replace: true });
             } finally {
                 setChecking(false);

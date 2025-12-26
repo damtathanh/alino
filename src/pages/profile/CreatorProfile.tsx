@@ -3,6 +3,8 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Profile } from '@/shared/types';
 import Toast from '@/components/ui/Toast';
+import { handleError } from '@/lib/errors/errorHandler';
+import { ProfileField } from '@/shared/constants/enums';
 
 import {
     CREATOR_TYPES,
@@ -47,15 +49,15 @@ const CreatorProfile = ({ profile }: { profile: Profile }) => {
         setShowToast(false);
 
         const checks: [string, boolean][] = [
-            ['fullName', !fullName.trim()],
-            ['city', !city.trim()],
-            ['phone', !phone.trim()],
-            ['gender', !gender],
-            ['birthYear', !birthYear],
-            ['creatorType', !creatorType],
-            ['experience', !experience],
-            ['income', !income],
-            ['goals', !goals || goals.length === 0],
+            [ProfileField.FULL_NAME, !fullName.trim()],
+            [ProfileField.CITY, !city.trim()],
+            [ProfileField.PHONE, !phone.trim()],
+            [ProfileField.GENDER, !gender],
+            [ProfileField.BIRTH_YEAR, !birthYear],
+            [ProfileField.CREATOR_TYPE, !creatorType],
+            [ProfileField.EXPERIENCE, !experience],
+            [ProfileField.INCOME, !income],
+            [ProfileField.GOALS, !goals || goals.length === 0],
         ];
 
         for (const [field, invalid] of checks) {
@@ -82,8 +84,9 @@ const CreatorProfile = ({ profile }: { profile: Profile }) => {
 
             setShowToast(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (error) {
-            console.error('Error updating profile:', error);
+        } catch (err) {
+            const errorMessage = handleError(err);
+            alert(errorMessage); // Simple error display
         }
     };
 
