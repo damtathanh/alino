@@ -33,9 +33,9 @@ const NAV_ITEMS: NavGroup[] = [
     {
         label: "Xu hướng", to: "/trends",
         items: [
-            { label: "Tin tức", href: "#news" },
-            { label: "Sự kiện", href: "#events" },
-            { label: "Blog", href: "#blog" },
+            { label: "Tin tức", href: "/news" },
+            { label: "Sự kiện", href: "/events" },
+            { label: "Blog", href: "/blog" },
         ],
     },
 ];

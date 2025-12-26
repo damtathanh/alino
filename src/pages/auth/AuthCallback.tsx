@@ -79,12 +79,16 @@ const AuthCallback = () => {
              * CASE 2: Chưa có profile → tạo mới
              */
             if (!profile) {
+                // Fix race condition: ensure profile is created before navigating
                 await upsertProfile({
                     id: user.id,
                     email: user.email,
                     full_name: googleName,
                     avatar_url: googleAvatar,
                 });
+
+                // Small delay to ensure database write completes
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 navigate(ROUTES.APP, { replace: true });
                 return;

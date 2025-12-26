@@ -3,6 +3,7 @@ import { AuthProvider } from '@/app/providers/AuthProvider';
 import RequireAuth from '@/features/auth/components/RequireAuth';
 import { ROUTES } from '@/shared/routes';
 import AppLayout from '@/components/layout/AppLayout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Public pages
 import Landing from '@/pages/Landing';
@@ -45,11 +46,12 @@ import BrandDashboard from '@/pages/dashboard/BrandDashboard';
 
 function App() {
     return (
-        <BrowserRouter>
-            <AuthProvider>
-                <Routes>
-                    {/* Shared Layout Routes */}
-                    <Route element={<AppLayout />}>
+        <ErrorBoundary>
+            <BrowserRouter>
+                <AuthProvider>
+                    <Routes>
+                        {/* Shared Layout Routes */}
+                        <Route element={<AppLayout />}>
                         {/* Public Route - Landing */}
                         <Route path={ROUTES.HOME} element={<Landing />} />
 
@@ -96,6 +98,7 @@ function App() {
                 </Routes>
             </AuthProvider>
         </BrowserRouter>
+        </ErrorBoundary>
     );
 }
 

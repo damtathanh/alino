@@ -23,10 +23,15 @@ const AppGate = () => {
 
                 // Tạo profile nếu chưa có
                 if (!profile) {
+                    // Fix race condition: ensure profile creation completes
                     await supabase.from('profiles').insert({
                         id: user.id,
                         email: user.email,
                     });
+                    
+                    // Small delay to ensure database write completes
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
                     profile = await getProfile(user.id);
                 }
 
