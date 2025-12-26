@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/app/providers/AuthProvider';
 import RequireAuth from '@/features/auth/components/RequireAuth';
 import { ROUTES } from '@/shared/routes';
 import AppLayout from '@/components/layout/AppLayout';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { queryClient } from '@/lib/queries/queryClient';
 
 // Public pages
 import Landing from '@/pages/Landing';
@@ -47,9 +49,10 @@ import BrandDashboard from '@/pages/dashboard/BrandDashboard';
 function App() {
     return (
         <ErrorBoundary>
-            <BrowserRouter>
-                <AuthProvider>
-                    <Routes>
+            <QueryClientProvider client={queryClient}>
+                <BrowserRouter>
+                    <AuthProvider>
+                        <Routes>
                         {/* Shared Layout Routes */}
                         <Route element={<AppLayout />}>
                         {/* Public Route - Landing */}
@@ -94,10 +97,11 @@ function App() {
                         {/* Dashboards */}
                         <Route path={ROUTES.APP_CREATOR} element={<RequireAuth><CreatorDashboard /></RequireAuth>} />
                         <Route path={ROUTES.APP_BRAND} element={<RequireAuth><BrandDashboard /></RequireAuth>} />
-                    </Route>
-                </Routes>
-            </AuthProvider>
-        </BrowserRouter>
+                        </Route>
+                    </Routes>
+                </AuthProvider>
+            </BrowserRouter>
+            </QueryClientProvider>
         </ErrorBoundary>
     );
 }

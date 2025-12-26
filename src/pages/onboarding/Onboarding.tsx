@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { getProfile } from '@/lib/supabase/profile';
+import { useProfile } from '@/lib/queries/useProfile';
 import { ROUTES } from '@/shared/routes';
-import type { Profile } from '@/shared/types';
 import CreatorOnboarding from './CreatorOnboarding';
 import BrandOnboarding from './BrandOnboarding';
 
@@ -11,46 +10,26 @@ import BrandOnboarding from './BrandOnboarding';
  * Onboarding Router Component
  * 
  * Responsibilities:
- * - Fetch user profile
+ * - Fetch user profile using React Query
  * - Check if user has role
  * - Route to appropriate onboarding form based on role
- * - Show loading state while fetching
+ * - Show loading/error states
  */
 const Onboarding = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    
+    const { data: profile, isLoading, error } = useProfile(user?.id);
 
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [loading, setLoading] = useState(true);
-
+    // Redirect to role selection if no role
     useEffect(() => {
-        if (!user) return;
-
-        const loadProfile = async () => {
-            try {
-                const p = await getProfile(user.id);
-                
-                // If no role assigned, redirect to role selection
-                if (!p?.role) {
-                    navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
-                    return;
-                }
-
-                setProfile(p);
-            } catch (error) {
-                console.error('Error loading profile:', error);
-                // On error, redirect to role selection as fallback
-                navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadProfile();
-    }, [user, navigate]);
+        if (!isLoading && profile && !profile.role) {
+            navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
+        }
+    }, [profile, isLoading, navigate]);
 
     // Loading state
-    if (!user || loading) {
+    if (!user || isLoading) {
         return (
             <div className="flex justify-center py-20">
                 <div className="animate-spin h-8 w-8 border-b-2 border-black" />
@@ -58,7 +37,14 @@ const Onboarding = () => {
         );
     }
 
-    // No profile or no role - should not reach here due to useEffect redirect
+    // Error state
+    if (error) {
+        console.error('Error loading profile:', error);
+        navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
+        return null;
+    }
+
+    // No profile or no role
     if (!profile || !profile.role) {
         return (
             <div className="flex justify-center py-20">
@@ -76,7 +62,7 @@ const Onboarding = () => {
         return <BrandOnboarding profile={profile} />;
     }
 
-    // Fallback (should never reach here)
+    // Fallback
     return null;
 };
 

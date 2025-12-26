@@ -1,28 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { getProfile, updateProfile } from '@/lib/supabase/profile';
+import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
 import { supabase } from '@/lib/supabase/client';
-import type { Profile } from '@/shared/types';
 import Toast from '@/components/ui/Toast';
 
 const SettingsPage = () => {
     const { user, session } = useAuth();
+    const { data: profile, isLoading } = useProfile(user?.id);
 
     const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    /* ================= LOAD PROFILE ================= */
-    useEffect(() => {
-        if (!user) return;
-
-        getProfile(user.id)
-            .then(p => setProfile(p))
-            .finally(() => setLoading(false));
-    }, [user]);
 
     /* ================= RENDER ================= */
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-sm text-gray-500">Đang tải cài đặt...</div>
@@ -85,7 +74,7 @@ const AccountTab = ({
     profile,
     session,
 }: {
-    profile: Profile;
+    profile: any;
     session: any;
 }) => (
     <div className="space-y-6">
@@ -137,8 +126,9 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 /* ================= SECURITY TAB ================= */
 
-const SecurityTab = ({ profile }: { profile: Profile }) => {
+const SecurityTab = ({ profile }: { profile: any }) => {
     const { user } = useAuth();
+    const updateProfileMutation = useUpdateProfile(user!.id);
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -147,7 +137,7 @@ const SecurityTab = ({ profile }: { profile: Profile }) => {
     const [error, setError] = useState('');
     const [showToast, setShowToast] = useState(false);
 
-    const hasPassword = profile.has_password === true;
+    const hasPassword = profile?.has_password === true;
 
     const handleChangePassword = async () => {
         setError('');
@@ -198,7 +188,7 @@ const SecurityTab = ({ profile }: { profile: Profile }) => {
             }
 
             if (!hasPassword) {
-                await updateProfile(user!.id, { has_password: true });
+                await updateProfileMutation.mutateAsync({ has_password: true });
             }
 
             setShowToast(true);

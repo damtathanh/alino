@@ -1,21 +1,38 @@
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { getProfile } from '@/lib/supabase/profile';
-import type { Profile } from '@/shared/types';
+import { useProfile } from '@/lib/queries/useProfile';
 
 import CreatorProfile from './CreatorProfile';
 import BrandProfile from './BrandProfile';
 
 const ProfilePage = () => {
     const { user } = useAuth();
-    const [profile, setProfile] = useState<Profile | null>(null);
+    const { data: profile, isLoading, error } = useProfile(user?.id);
 
-    useEffect(() => {
-        if (!user) return;
-        getProfile(user.id).then(setProfile);
-    }, [user]);
+    if (!user || isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
+            </div>
+        );
+    }
 
-    if (!user || !profile) {
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-600 mb-4">Không thể tải thông tin profile</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-black text-white rounded-lg"
+                    >
+                        Tải lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!profile) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />

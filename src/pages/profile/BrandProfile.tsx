@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { updateProfile } from '@/lib/supabase/profile';
+import { useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Profile } from '@/shared/types';
 import Toast from '@/components/ui/Toast';
 
@@ -14,6 +14,7 @@ import SectionCard from './sections/SectionCard';
 
 const BrandProfile = ({ profile }: { profile: Profile }) => {
     const { user } = useAuth();
+    const updateProfileMutation = useUpdateProfile(user!.id);
 
     /* ===== STATE ===== */
     const [companyName, setCompanyName] = useState(profile.company_name ?? '');
@@ -26,7 +27,6 @@ const BrandProfile = ({ profile }: { profile: Profile }) => {
     const [phone, setPhone] = useState(profile.phone ?? '');
     const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? null);
 
-    const [saving, setSaving] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [fieldError, setFieldError] = useState<string | null>(null);
 
@@ -59,10 +59,8 @@ const BrandProfile = ({ profile }: { profile: Profile }) => {
             }
         }
 
-        setSaving(true);
-
         try {
-            await updateProfile(user!.id, {
+            await updateProfileMutation.mutateAsync({
                 full_name: contactName,
                 company_name: companyName,
                 company_domain: domain,
@@ -75,8 +73,8 @@ const BrandProfile = ({ profile }: { profile: Profile }) => {
 
             setShowToast(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } finally {
-            setSaving(false);
+        } catch (error) {
+            console.error('Error updating profile:', error);
         }
     };
 
@@ -149,8 +147,8 @@ const BrandProfile = ({ profile }: { profile: Profile }) => {
                 </SectionCard>
 
                 <div className="flex justify-end">
-                    <button onClick={save} disabled={saving} className="px-6 py-3 bg-brand text-white rounded-xl">
-                        {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                    <button onClick={save} disabled={updateProfileMutation.isPending} className="px-6 py-3 bg-brand text-white rounded-xl">
+                        {updateProfileMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
                     </button>
                 </div>
             </div>
