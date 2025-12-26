@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../app/providers/AuthProvider';
+import { useProfile } from '../lib/queries/useProfile';
+import { ROUTES } from '../shared/routes';
+import type { Role } from '../shared/types';
 
 import Hero from '../features/landing/components/Hero';
 import ProblemSolution from '../features/landing/components/ProblemSolution';
@@ -11,12 +15,21 @@ import FAQ from '../features/landing/components/FAQ';
 import Footer from '../features/landing/components/Footer';
 
 import RoleSelectModal from '../features/auth/components/RoleSelectModal';
-import { ROUTES } from '../shared/routes';
-import type { Role } from '../shared/types';
 
 const Landing = () => {
     const navigate = useNavigate();
-    // FIX BỔ SUNG 2: Landing LUÔN accessible, KHÔNG redirect ép
+    const { session } = useAuth();
+    const { data: profile, isLoading } = useProfile(session?.user?.id);
+
+    // ROOT FIX 1: User có session + chưa hoàn tất onboarding → redirect /app
+    useEffect(() => {
+        if (!session || isLoading) return;
+        
+        // User đã login → check onboarding status
+        if (profile && !profile.onboarding_completed) {
+            navigate(ROUTES.APP, { replace: true });
+        }
+    }, [session, profile, isLoading, navigate]);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
     /* ================== SIGNUP HANDLERS ================== */

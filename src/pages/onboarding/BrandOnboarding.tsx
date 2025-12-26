@@ -111,10 +111,11 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
 
             await updateProfile(user!.id, patch);
             
-            // FIX BỔ SUNG 1: Invalidate cache để AppGate đọc state mới
+            // ROOT FIX 2 & 3: Invalidate cache + delay để đảm bảo AppGate fetch fresh
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
+            await new Promise(resolve => setTimeout(resolve, 200));
             
-            // FIX 2: KHÔNG redirect thẳng dashboard, giao cho AppGate
+            // ROOT FIX 2: Navigate /app để AppGate quyết định
             navigate(ROUTES.APP, { replace: true });
         } catch (err) {
             const appError = new AppError(

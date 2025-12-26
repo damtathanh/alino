@@ -79,39 +79,34 @@ const AuthCallback = () => {
              * CASE 2: Chưa có profile → tạo mới
              */
             if (!profile) {
-                // Fix race condition: ensure profile is created before navigating
                 await upsertProfile({
                     id: user.id,
                     email: user.email,
                     full_name: googleName,
                     avatar_url: googleAvatar,
                 });
-
-                // Small delay to ensure database write completes
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                navigate(ROUTES.APP, { replace: true });
-                return;
             }
 
             /**
              * CASE 3: Có profile → update field còn thiếu
              */
-            const patch: Record<string, any> = {};
+            if (profile) {
+                const patch: Record<string, any> = {};
 
-            if (!profile.full_name && googleName) {
-                patch.full_name = googleName;
+                if (!profile.full_name && googleName) {
+                    patch.full_name = googleName;
+                }
+
+                if (!profile.avatar_url && googleAvatar) {
+                    patch.avatar_url = googleAvatar;
+                }
+
+                if (Object.keys(patch).length > 0) {
+                    await updateProfile(user.id, patch);
+                }
             }
 
-            if (!profile.avatar_url && googleAvatar) {
-                patch.avatar_url = googleAvatar;
-            }
-
-            if (Object.keys(patch).length > 0) {
-                await updateProfile(user.id, patch);
-            }
-
-            /* 5. Giao quyền cho AppGate */
+            // ROOT FIX 2: LUÔN navigate /app, AppGate quyết định routing
             navigate(ROUTES.APP, { replace: true });
         };
 

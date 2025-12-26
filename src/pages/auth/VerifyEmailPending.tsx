@@ -1,10 +1,21 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/app/providers/AuthProvider';
 import { supabase } from '@/lib/supabase/client';
-import { useState } from 'react';
+import { ROUTES } from '@/shared/routes';
 
 const VerifyEmailPending = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { session } = useAuth();
     const email = location.state?.email;
+
+    // ROOT FIX 2: Verify xong (có session + email confirmed) → /app
+    useEffect(() => {
+        if (session?.user?.email_confirmed_at) {
+            navigate(ROUTES.APP, { replace: true });
+        }
+    }, [session, navigate]);
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');

@@ -27,7 +27,9 @@ const AppGate = () => {
             if (isLoading) return;
 
             try {
-                let currentProfile = profile;
+                // ROOT FIX 3: LUÔN refetch để đảm bảo data fresh
+                const { data: freshProfile } = await refetch();
+                let currentProfile = freshProfile || profile;
 
                 // Tạo profile nếu chưa có
                 if (!currentProfile) {
@@ -36,10 +38,8 @@ const AppGate = () => {
                         email: user.email,
                     });
                     
-                    // Small delay to ensure database write completes
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    // Refetch profile after creation
+                    // ROOT FIX 3: Refetch NGAY sau khi create
+                    await new Promise(resolve => setTimeout(resolve, 150));
                     const { data: newProfile } = await refetch();
                     currentProfile = newProfile || null;
                 }
@@ -51,31 +51,38 @@ const AppGate = () => {
                         await updateProfileMutation.mutateAsync({ role: pendingRole });
                         localStorage.removeItem('pendingRole');
                         
-                        // Refetch to get updated profile
+                        // ROOT FIX 3: Refetch NGAY sau khi update role
+                        await new Promise(resolve => setTimeout(resolve, 150));
                         const { data: updatedProfile } = await refetch();
                         currentProfile = updatedProfile || currentProfile;
                     }
                 }
 
+                // ROOT FIX 4: Dùng onboarding_completed từ server (KHÔNG infer)
+                const hasRole = !!currentProfile?.role;
+                const onboardingComplete = currentProfile?.onboarding_completed === true;
+
                 // Chưa có role → chọn role
-                if (!currentProfile?.role) {
+                if (!hasRole) {
                     navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
                     return;
                 }
 
                 // Chưa hoàn tất onboarding
-                if (currentProfile.onboarding_completed !== true) {
+                if (!onboardingComplete) {
                     navigate(ROUTES.ONBOARDING, { replace: true });
                     return;
                 }
 
                 // Đã hoàn tất → redirect to dashboard
-                navigate(
-                    currentProfile.role === 'creator'
-                        ? ROUTES.APP_CREATOR
-                        : ROUTES.APP_BRAND,
-                    { replace: true }
-                );
+                if (currentProfile) {
+                    navigate(
+                        currentProfile.role === 'creator'
+                            ? ROUTES.APP_CREATOR
+                            : ROUTES.APP_BRAND,
+                        { replace: true }
+                    );
+                }
             } catch (err) {
                 const appError = new AppError(
                     'Failed to process app gate',
