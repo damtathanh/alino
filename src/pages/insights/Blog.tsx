@@ -45,7 +45,7 @@ export default function Blog() {
             </Helmet>
 
             <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-5xl px-6 py-14">
+                <div className="mx-auto max-w-5xl px-6 py-16">
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <div className="text-sm text-gray-500">Xu hướng</div>
@@ -66,7 +66,7 @@ export default function Blog() {
                     </div>
 
                     {/* Featured */}
-                    <div className="mt-10 rounded-3xl border border-gray-200 p-8">
+                    <div className="mt-12 rounded-3xl border border-gray-200 p-8">
                         <div className="text-sm text-gray-500">Bài nổi bật</div>
                         <div className="mt-2 text-2xl font-semibold">
                             “Matching đúng tệp” trong creator marketing: bắt đầu từ đâu?

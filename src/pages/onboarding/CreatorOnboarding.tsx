@@ -124,11 +124,11 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
             };
 
             await updateProfile(user!.id, patch);
-            
+
             // ROOT FIX 2 & 3: Invalidate cache + delay để đảm bảo AppGate fetch fresh
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
             await new Promise(resolve => setTimeout(resolve, 200));
-            
+
             // ROOT FIX 2: Navigate /app để AppGate quyết định
             navigate(ROUTES.APP, { replace: true });
         } catch (err) {
@@ -147,54 +147,30 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
 
     return (
         <div className="max-w-3xl mx-auto p-8 bg-white rounded-2xl mt-10 mb-24 space-y-8">
-            <h1 className="text-3xl font-bold">Hoàn thiện hồ sơ Creator</h1>
-
-            <p className="text-gray-500 mt-2">
-                Chỉ mất khoảng 2–3 phút để hoàn tất.
-            </p>
-
-            {/* PROGRESS */}
-            <div className="mt-6 mb-8">
-                <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
-                            1
-                        </div>
-                        Thông tin cơ bản
-                    </div>
-
-                    <div className="h-px flex-1 bg-gray-200" />
-
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center">
-                            2
-                        </div>
-                        Thông tin Creator
-                    </div>
+            {/* Header block with title, subtitle and avatar */}
+            <div className="flex items-center justify-between gap-6 pb-2 border-b border-gray-100">
+                <div>
+                    <h1 className="text-3xl font-bold">Hoàn thiện hồ sơ Creator</h1>
+                    <p className="text-gray-500 mt-1">Chỉ mất khoảng 2–3 phút để hoàn tất</p>
                 </div>
+                <AvatarUploader
+                    userId={user!.id}
+                    onUploaded={setAvatarUrl}
+                >
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer ring-2 ring-gray-200">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" />
+                        ) : (
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-lg font-semibold text-gray-500">
+                                ?
+                            </div>
+                        )}
+                    </div>
+                </AvatarUploader>
             </div>
 
-            <AvatarUploader
-                userId={user!.id}
-                onUploaded={setAvatarUrl}
-            >
-                <div className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer">
-                    {avatarUrl ? (
-                        <img
-                            src={avatarUrl}
-                            className="w-full h-full object-cover"
-                            alt="Avatar"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xl font-semibold text-gray-600">
-                            ?
-                        </div>
-                    )}
-                </div>
-            </AvatarUploader>
-
             {/* BASIC INFO */}
-            <section className="bg-gray-50 p-6 rounded-2xl space-y-4">
+            <section className="bg-gray-50 p-6 rounded-2xl space-y-4 mt-2">
                 <h2 className="font-semibold">Thông tin cơ bản</h2>
 
                 <input

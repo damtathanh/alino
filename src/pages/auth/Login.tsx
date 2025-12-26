@@ -7,9 +7,16 @@ import { ROUTES } from '../../shared/routes';
 import type { Role } from '../../shared/types';
 
 const Login = () => {
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
+
     const navigate = useNavigate();
     const { session } = useAuth();
-    
+
     // User có session thì redirect về /app
     useEffect(() => {
         if (session) {

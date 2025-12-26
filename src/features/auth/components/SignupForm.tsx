@@ -17,42 +17,35 @@ export const SignupForm = () => {
         setLoading(true);
 
         try {
-            const { data, error } = await supabase.auth.signUp({
+            /* STEP 1: CHECK EMAIL BẰNG RPC */
+            const { data, error: rpcError } = await supabase.rpc(
+                'check_email_exists',
+                { p_email: email }
+            );
+
+            if (rpcError) {
+                throw new Error('Không thể kiểm tra email');
+            }
+
+            if (data === true) {
+                throw new Error(
+                    'Email này đã được đăng ký. Vui lòng đăng nhập hoặc xác thực email.'
+                );
+            }
+
+            /* STEP 2: SIGN UP (CHỈ CHẠY KHI EMAIL CHƯA TỒN TẠI) */
+            const { error: signupError } = await supabase.auth.signUp({
                 email,
                 password,
             });
 
-            // ❌ Lỗi thực sự (email đã verify, password yếu, v.v.)
-            if (error) {
-                const msg = error.message.toLowerCase();
-
-                if (msg.includes('already registered')) {
-                    throw new Error(
-                        'Email này đã được đăng ký. Vui lòng đăng nhập.'
-                    );
-                }
-
-                throw error;
+            if (signupError) {
+                throw signupError;
             }
 
-            /**
-             * ❗ CASE ĐẶC BIỆT CỦA SUPABASE: Email đã tồn tại nhưng CHƯA xác thực:
-             */
-            if (data.user && data.user.identities?.length === 0) {
-                throw new Error(
-                    'Email này đã được đăng ký nhưng chưa hoàn tất cập nhật thông tin. Vui lòng đăng nhập và hoàn tất.'
-                );
-            }
-
-            if (data.user) {
-                await supabase
-                    .from('profiles')
-                    .update({ has_password: true })
-                    .eq('id', data.user.id);
-            }
-
-            navigate(ROUTES.VERIFY_EMAIL_PENDING, { state: { email } });
-
+            navigate(ROUTES.VERIFY_EMAIL_PENDING, {
+                state: { email },
+            });
         } catch (err: any) {
             setError(err.message || 'Đăng ký thất bại');
         } finally {

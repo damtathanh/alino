@@ -11,9 +11,9 @@ export default function AboutAlino() {
             </Helmet>
 
             <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-5xl px-6 py-14">
+                <div className="mx-auto max-w-5xl px-6 py-16">
                     <div className="flex items-center justify-between gap-4">
-                        <h1 className="text-3xl font-bold tracking-tight">Về Alino</h1>
+                        <h1 className="text-4xl font-bold tracking-tight">Về Alino</h1>
                         <div className="flex gap-4 text-sm">
                             <Link className="underline" to="/about">← About</Link>
                             <Link className="underline" to="/">Trang chủ</Link>

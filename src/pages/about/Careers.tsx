@@ -11,13 +11,13 @@ export default function Careers() {
             </Helmet>
 
             <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-4xl px-6 py-14">
+                <div className="mx-auto max-w-4xl px-6 py-16">
                     <div className="flex items-center justify-between">
                         <h1 className="text-3xl font-bold tracking-tight">Careers</h1>
                         <Link className="underline text-sm" to="/">Trang chủ</Link>
                     </div>
 
-                    <p className="mt-4 text-gray-600">
+                    <p className="mt-5 text-gray-600 leading-relaxed">
                         Trang Careers (placeholder). Sau khi site chạy ổn, bạn nhét JD thật vào đây.
                     </p>
 

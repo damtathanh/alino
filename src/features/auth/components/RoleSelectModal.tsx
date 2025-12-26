@@ -10,33 +10,23 @@ interface RoleSelectModalProps {
 const RoleSelectModal = ({ isOpen, onClose, onSelect }: RoleSelectModalProps) => {
     const modalRef = useRef<HTMLDivElement>(null);
 
-    // Close on click outside
+    // Remove global outside click; we'll handle overlay clicks with explicit z-ordering
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [isOpen, onClose]);
+        // No-op effect kept to avoid removing hook ordering if future logic is added
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" />
+        <div className="fixed inset-0 z-[110] flex justify-center items-start pt-24 px-4" aria-modal="true" role="dialog">
+            {/* Overlay - sits below the modal and dims the background, but does not block modal */}
+            <div className="fixed inset-0 z-[100] bg-black/40" onClick={onClose} />
 
-            {/* Modal Card */}
+            {/* Modal Card - explicit higher z to ensure it's above overlay */}
             <div
                 ref={modalRef}
-                className="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-auto overflow-hidden animate-fade-in-up"
+                className="relative z-[120] bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-auto overflow-hidden animate-fade-in-up focus:outline-none"
+                onClick={(e) => e.stopPropagation()}
             >
                 {/* Close Button */}
                 <button

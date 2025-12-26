@@ -53,7 +53,7 @@ export default function News() {
             </Helmet>
 
             <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-5xl px-6 py-14">
+                <div className="mx-auto max-w-5xl px-6 py-16">
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <div className="text-sm text-gray-500">Xu hướng</div>

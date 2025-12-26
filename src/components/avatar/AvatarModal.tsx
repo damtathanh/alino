@@ -23,21 +23,28 @@ const AvatarModal = ({
 }: Props) => {
     useEffect(() => {
         if (!open) return;
-        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+        // In crop mode, disable ESC to prevent accidental closes mid-upload/cropping
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && mode !== 'crop') onClose();
+        };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
-    }, [open, onClose]);
+    }, [open, onClose, mode]);
 
     if (!open) return null;
 
     return createPortal(
         <div
             className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center"
-            onClick={onClose}
+            onClick={() => {
+                if (mode !== 'crop') onClose();
+            }}
         >
             <div
                 onClick={(e) => e.stopPropagation()}
                 className="bg-white rounded-2xl p-6 w-full max-w-[600px]"
+                role="dialog"
+                aria-modal="true"
             >
                 {/* VIEW MODE */}
                 {mode === 'view' && avatarUrl && (

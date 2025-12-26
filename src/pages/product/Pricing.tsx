@@ -9,7 +9,7 @@ const TIERS = [
 export default function Pricing() {
     return (
         <div className="min-h-screen bg-white">
-            <div className="mx-auto max-w-6xl px-6 py-14">
+            <div className="mx-auto max-w-6xl px-6 py-16">
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="text-sm text-gray-500">Sản phẩm</div>

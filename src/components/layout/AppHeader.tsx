@@ -6,9 +6,13 @@ import { supabase } from '@/lib/supabase/client';
 import { ROUTES } from '@/shared/routes';
 import AppLogo from '@/shared/components/AppLogo';
 import LandingNav from './LandingNav';
-import RoleSelectModal from '@/features/auth/components/RoleSelectModal';
 
-const AppHeader = () => {
+type AppHeaderProps = {
+    onSignupClick?: () => void;
+    isModalOpen?: boolean;
+};
+
+const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -19,7 +23,6 @@ const AppHeader = () => {
     const [displayName, setDisplayName] = useState('User');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [menuOpen, setMenuOpen] = useState(false);
-    const [roleModalOpen, setRoleModalOpen] = useState(false);
 
     const ref = useRef<HTMLDivElement>(null);
 
@@ -52,7 +55,11 @@ const AppHeader = () => {
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 backdrop-blur border-b border-border">
+        <header
+            className={`fixed top-0 left-0 right-0 z-50 h-16 border-b border-border
+        ${isModalOpen ? 'bg-white' : 'bg-white/95 backdrop-blur'}
+        `}
+        >
             <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
 
                 {/* LEFT */}
@@ -88,9 +95,9 @@ const AppHeader = () => {
                         {/* DROPDOWN */}
                         <div
                             className={`absolute right-0 mt-2 w-52 bg-white border border-border
-                rounded-xl shadow-card overflow-hidden transition
-                ${menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
-              `}
+                        rounded-xl shadow-card overflow-hidden transition
+                        ${menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
+                        `}
                         >
                             <button
                                 disabled={isOnboarding}
@@ -136,7 +143,7 @@ const AppHeader = () => {
                         </button>
 
                         <button
-                            onClick={() => setRoleModalOpen(true)}
+                            onClick={onSignupClick}
                             className="bg-brand hover:bg-brandHover text-white px-4 py-2 rounded-full text-sm font-semibold"
                         >
                             Tạo trang miễn phí
@@ -144,16 +151,6 @@ const AppHeader = () => {
                     </div>
                 )}
             </div>
-
-            {/* ROLE MODAL */}
-            <RoleSelectModal
-                isOpen={roleModalOpen}
-                onClose={() => setRoleModalOpen(false)}
-                onSelect={(role) => {
-                    setRoleModalOpen(false);
-                    navigate(`${ROUTES.SIGNUP}?role=${role}`);
-                }}
-            />
         </header>
     );
 };

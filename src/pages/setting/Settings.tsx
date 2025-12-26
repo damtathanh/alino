@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
+import { useProfile } from '@/lib/queries/useProfile';
 import { supabase } from '@/lib/supabase/client';
 import Toast from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -11,7 +11,6 @@ const SettingsPage = () => {
 
     const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
 
-    /* ================= RENDER ================= */
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 py-10">
@@ -34,7 +33,6 @@ const SettingsPage = () => {
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">Cài đặt</h1>
 
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex">
-                    {/* SIDEBAR */}
                     <aside className="w-56 border-r border-gray-200 p-4">
                         <nav className="space-y-1">
                             <button
@@ -61,14 +59,13 @@ const SettingsPage = () => {
                         </nav>
                     </aside>
 
-                    {/* CONTENT */}
                     <main className="flex-1 p-6">
                         {activeTab === 'account' && profile && (
                             <AccountTab profile={profile} session={session} />
                         )}
 
-                        {activeTab === 'security' && profile && (
-                            <SecurityTab profile={profile} />
+                        {activeTab === 'security' && (
+                            <SecurityTab />
                         )}
                     </main>
                 </div>
@@ -135,9 +132,12 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 /* ================= SECURITY TAB ================= */
 
-const SecurityTab = ({ profile }: { profile: any }) => {
+const SecurityTab = () => {
     const { user, session } = useAuth();
-    const updateProfileMutation = useUpdateProfile(user!.id);
+
+    const providers = session?.user?.app_metadata?.providers as string[] | undefined;
+    const hasPassword = Array.isArray(providers) ? providers.includes('email') : (session?.user?.app_metadata?.provider === 'email');
+    const provider = session?.user?.app_metadata?.provider;
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -145,10 +145,6 @@ const SecurityTab = ({ profile }: { profile: any }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showToast, setShowToast] = useState(false);
-
-    // FIX 3: Email signup = đã có password, Google signup = chưa có
-    const provider = session?.user?.app_metadata?.provider;
-    const hasPassword = provider === 'email' || profile?.has_password === true;
 
     const handleChangePassword = async () => {
         setError('');
@@ -171,20 +167,7 @@ const SecurityTab = ({ profile }: { profile: any }) => {
         setLoading(true);
 
         try {
-            // ✅ RE-AUTH nếu đã có mật khẩu
-            if (hasPassword) {
-                const { error: authError } = await supabase.auth.signInWithPassword({
-                    email: user!.email!,
-                    password: currentPassword,
-                });
-
-                if (authError) {
-                    setError('Mật khẩu hiện tại không đúng');
-                    return;
-                }
-            }
-
-            // ✅ Đổi mật khẩu
+            // Không cần re-auth cho Google; Supabase cho phép đổi/thiết lập mật khẩu khi đã đăng nhập
             const { error } = await supabase.auth.updateUser({
                 password: newPassword,
             });
@@ -198,10 +181,6 @@ const SecurityTab = ({ profile }: { profile: any }) => {
                 return;
             }
 
-            if (!hasPassword) {
-                await updateProfileMutation.mutateAsync({ has_password: true });
-            }
-
             setShowToast(true);
             setCurrentPassword('');
             setNewPassword('');
@@ -211,29 +190,11 @@ const SecurityTab = ({ profile }: { profile: any }) => {
         }
     };
 
-    const handleForgotPassword = async () => {
-        setError('');
-
-        const { error } = await supabase.auth.resetPasswordForEmail(
-            user!.email!,
-            {
-                redirectTo: `${window.location.origin}/update-password`,
-            }
-        );
-
-        if (error) {
-            setError('Không thể gửi email đặt lại mật khẩu');
-        } else {
-            setShowToast(true);
-        }
-    };
-
     return (
         <div className="space-y-6 max-w-xl">
-
             {showToast && (
                 <Toast
-                    message="Thao tác thành công"
+                    message="Cập nhật mật khẩu thành công"
                     onClose={() => setShowToast(false)}
                 />
             )}
@@ -246,11 +207,10 @@ const SecurityTab = ({ profile }: { profile: any }) => {
             </div>
 
             <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
-
                 <p className="text-sm text-gray-500">
                     {hasPassword
-                        ? 'Bạn đã có mật khẩu. Bạn có thể thay đổi mật khẩu tại đây.'
-                        : 'Tài khoản của bạn được tạo bằng Google. Bạn có thể thiết lập mật khẩu để đăng nhập bằng email.'}
+                        ? 'Bạn có thể thay đổi mật khẩu tại đây.'
+                        : 'Tài khoản của bạn được tạo bằng Google. Hãy thiết lập mật khẩu để đăng nhập bằng email.'}
                 </p>
 
                 {hasPassword && (
@@ -286,7 +246,7 @@ const SecurityTab = ({ profile }: { profile: any }) => {
                 <button
                     onClick={handleChangePassword}
                     disabled={loading}
-                    className="w-full py-3 bg-brand text-white rounded-xl font-semibold disabled:opacity-50"
+                    className="w-full py-3 bg-black text-white rounded-xl font-semibold disabled:opacity-50"
                 >
                     {loading
                         ? 'Đang lưu...'
@@ -294,15 +254,6 @@ const SecurityTab = ({ profile }: { profile: any }) => {
                             ? 'Đổi mật khẩu'
                             : 'Thiết lập mật khẩu'}
                 </button>
-
-                {hasPassword && (
-                    <button
-                        onClick={handleForgotPassword}
-                        className="text-sm text-brand hover:underline text-center w-full mt-2"
-                    >
-                        Quên mật khẩu?
-                    </button>
-                )}
             </div>
         </div>
     );

@@ -14,18 +14,18 @@ export default function AboutUs() {
             </Helmet>
 
             <div className="min-h-screen bg-white">
-                <div className="mx-auto max-w-6xl px-6 py-14">
-                    <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-start">
+                <div className="mx-auto max-w-6xl px-6 py-16">
+                    <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start">
                         {/* Left */}
                         <div>
                             <div className="text-sm text-gray-500">About</div>
 
-                            <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight">
+                            <h1 className="mt-3 text-5xl font-extrabold leading-tight tracking-tight">
                                 Kết nối <span className="underline">Creators</span> &{" "}
                                 <span className="underline">Brands</span> để tạo tăng trưởng thật
                             </h1>
 
-                            <p className="mt-4 text-gray-600 leading-relaxed">
+                            <p className="mt-5 text-gray-600 leading-relaxed">
                                 Alino giúp brands tìm đúng creator, quản lý chiến dịch rõ ràng và theo dõi hiệu quả bằng dữ liệu — để
                                 mọi đồng marketing chi đúng chỗ.
                             </p>

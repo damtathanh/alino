@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import AvatarUploader from '@/components/AvatarUploader';
 import ViewAvatarModal from '@/components/avatar/ViewAvatarModal';
+import AvatarModal from '@/components/avatar/AvatarModal';
+import { uploadUserAvatar } from '@/components/avatar/uploadAvatar';
 
 interface Props {
     userId: string;
@@ -19,6 +21,8 @@ const ProfileHeader = ({
 }: Props) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
+    const [cropImage, setCropImage] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Close menu when click outside
@@ -90,8 +94,14 @@ const ProfileHeader = ({
                         <AvatarUploader
                             userId={userId}
                             onUploaded={(url) => {
+                                // onUploaded is still used by other contexts; here we use our own modal
                                 onAvatarChange(url);
                                 setMenuOpen(false);
+                            }}
+                            disableModal
+                            onRawImageSelected={(imageUrl) => {
+                                setMenuOpen(false);
+                                setCropImage(imageUrl);
                             }}
                         >
                             <div className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer">
@@ -121,6 +131,30 @@ const ProfileHeader = ({
                 avatarUrl={avatarUrl}
                 onClose={() => setViewOpen(false)}
             />
+
+            {/* CROP AVATAR MODAL (controlled by ProfileHeader) */}
+            {cropImage && (
+                <AvatarModal
+                    open={true}
+                    mode="crop"
+                    imageToCrop={cropImage}
+                    onClose={() => {
+                        if (!uploading) setCropImage(null);
+                    }}
+                    onCropComplete={async (blob) => {
+                        try {
+                            setUploading(true);
+                            const url = await uploadUserAvatar(userId, blob);
+                            onAvatarChange(url);
+                            setCropImage(null);
+                        } catch (err) {
+                            alert((err as Error).message);
+                        } finally {
+                            setUploading(false);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };

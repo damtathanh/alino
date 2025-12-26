@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 export default function Product() {
     return (
         <div className="min-h-screen bg-white">
-            <div className="mx-auto max-w-6xl px-6 py-14">
+            <div className="mx-auto max-w-6xl px-6 py-16">
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <div className="text-sm text-gray-500">Sản phẩm</div>
-                        <h1 className="mt-2 text-4xl font-bold tracking-tight">
+                        <h1 className="mt-3 text-5xl font-extrabold tracking-tight">
                             Alino giúp chạy creator campaign nhanh, rõ ràng, đo lường được
                         </h1>
                         <p className="mt-4 text-gray-600 leading-relaxed max-w-2xl">
