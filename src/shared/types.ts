@@ -40,6 +40,7 @@ export interface Profile {
     campaigns_per_month?: string | null;
 
     onboarding_completed?: boolean | null;
+    has_password?: boolean | null;
     created_at?: string;
     updated_at?: string;
 }

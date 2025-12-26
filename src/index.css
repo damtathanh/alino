@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.input {
+  @apply w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none;
+}
+
 :root {
   /* Core Neutrals */
   --bg-primary: #FFFFFF;

@@ -12,6 +12,7 @@ export const ROUTES = {
     APP_BRAND: '/app/brand',
 
     PROFILE: '/profile',
+    SETTINGS: '/settings',
 
     ONBOARDING: '/onboarding',
     ONBOARDING_ROLE: '/onboarding/role',

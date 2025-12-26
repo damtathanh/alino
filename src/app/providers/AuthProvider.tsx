@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../../lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 interface AuthContextType {
     session: Session | null;
@@ -28,12 +28,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const init = async () => {
             try {
+                // ✅ BẮT TOKEN KHI CONFIRM EMAIL
                 const { data } = await supabase.auth.getSession();
                 if (!mounted) return;
+
                 setSession(data.session ?? null);
                 setUser(data.session?.user ?? null);
             } catch (e) {
-                console.error('Error fetching session:', e);
+                console.error('Auth init error:', e);
             } finally {
                 if (mounted) setLoading(false);
             }

@@ -10,6 +10,7 @@ const AppHeader = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const isOnboarding = location.pathname.startsWith('/onboarding');
 
     const [displayName, setDisplayName] = useState('User');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -94,17 +95,36 @@ const AppHeader = () => {
                             `}
                         >
                             <button
-                                onClick={() => navigate(ROUTES.APP)}
-                                className="w-full px-4 py-2.5 text-sm text-primary hover:bg-bgAlt text-left"
+                                onClick={() => !isOnboarding && navigate(ROUTES.APP)}
+                                disabled={isOnboarding}
+                                className={`w-full px-4 py-2.5 text-sm text-left
+                                    ${isOnboarding
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-primary hover:bg-bgAlt'}`}
                             >
                                 Quản lý dự án
                             </button>
 
                             <button
-                                onClick={() => navigate(ROUTES.PROFILE)}
-                                className="w-full px-4 py-2.5 text-sm text-primary hover:bg-bgAlt text-left"
+                                onClick={() => !isOnboarding && navigate(ROUTES.PROFILE)}
+                                disabled={isOnboarding}
+                                className={`w-full px-4 py-2.5 text-sm text-left
+                                    ${isOnboarding
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-primary hover:bg-bgAlt'}`}
                             >
-                                Hồ sơ
+                                Trang cá nhân
+                            </button>
+
+                            <button
+                                onClick={() => !isOnboarding && navigate(ROUTES.SETTINGS)}
+                                disabled={isOnboarding}
+                                className={`w-full px-4 py-2.5 text-sm text-left
+                                    ${isOnboarding
+                                        ? 'text-gray-400 cursor-not-allowed'
+                                        : 'text-primary hover:bg-bgAlt'}`}
+                            >
+                                Cài đặt
                             </button>
 
                             <div className="border-t border-border my-1" />

@@ -16,8 +16,8 @@ import VerifyEmailPending from '@/pages/auth/VerifyEmailPending';
 // Onboarding
 import Onboarding from '@/pages/onboarding/Onboarding';
 import RoleSelection from '@/pages/onboarding/RoleSelection';
-
 import ProfilePage from '@/pages/profile/Profile';
+import SettingsPage from '@/pages/setting/Settings';
 
 // App / Dashboard
 import AppGate from '@/pages/dashboard/AppGate';
@@ -45,6 +45,7 @@ function App() {
                         {/* Protected Routes */}
                         <Route path={ROUTES.APP} element={<RequireAuth><AppGate /></RequireAuth>} />
                         <Route path={ROUTES.PROFILE} element={<RequireAuth><ProfilePage /></RequireAuth>} />
+                        <Route path={ROUTES.SETTINGS} element={<RequireAuth><SettingsPage /></RequireAuth>} />
 
                         {/* Onboarding */}
                         <Route path={ROUTES.ONBOARDING} element={<RequireAuth><Onboarding /></RequireAuth>} />

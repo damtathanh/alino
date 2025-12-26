@@ -65,46 +65,49 @@ const AvatarCropper = ({ image, onCancel, onComplete }: Props) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-            <div className="bg-white rounded-2xl p-6 w-[320px]">
-                <div className="relative w-full h-64 bg-black rounded-lg overflow-hidden">
-                    <Cropper
-                        image={image}
-                        crop={crop}
-                        zoom={zoom}
-                        aspect={1}
-                        cropShape="round"
-                        onCropChange={setCrop}
-                        onZoomChange={setZoom}
-                        onCropComplete={onCropComplete}
-                    />
-                </div>
+        <div className="w-full flex flex-col items-center">
 
-                <input
-                    type="range"
-                    min={1}
-                    max={3}
-                    step={0.01}
-                    value={zoom}
-                    onChange={(e) => setZoom(Number(e.target.value))}
-                    className="w-full mt-4"
+            {/* CROPPER AREA */}
+            <div className="relative w-full max-w-[520px] aspect-square bg-black rounded-xl overflow-hidden">
+                <Cropper
+                    image={image}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    cropShape="round"
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={onCropComplete}
                 />
-
-                <div className="flex gap-3 mt-6">
-                    <button
-                        onClick={onCancel}
-                        className="flex-1 py-2 rounded-lg border"
-                    >
-                        Hủy
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="flex-1 py-2 rounded-lg bg-slate-900 text-white font-semibold"
-                    >
-                        Lưu ảnh
-                    </button>
-                </div>
             </div>
+
+            {/* ZOOM */}
+            <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-full max-w-[520px] mt-4"
+            />
+
+            {/* ACTIONS */}
+            <div className="flex gap-3 mt-6 w-full max-w-[520px] justify-end">
+                <button
+                    onClick={onCancel}
+                    className="px-4 py-2.5 rounded-lg border"
+                >
+                    Hủy
+                </button>
+                <button
+                    onClick={handleSave}
+                    className="px-4 py-2.5 rounded-lg bg-slate-900 text-white font-semibold"
+                >
+                    Lưu ảnh
+                </button>
+            </div>
+
         </div>
     );
 };

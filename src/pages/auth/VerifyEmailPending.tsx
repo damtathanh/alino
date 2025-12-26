@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { supabase } from '../../lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { useState } from 'react';
 
 const VerifyEmailPending = () => {
@@ -23,7 +23,11 @@ const VerifyEmailPending = () => {
         });
 
         if (error) {
-            setError(error.message);
+            if (error.message.includes('after')) {
+                setError('Vui lòng đợi 60 giây trước khi gửi lại email xác thực.');
+            } else {
+                setError('Không thể gửi lại email. Vui lòng thử lại.');
+            }
         } else {
             setMessage('Email xác thực đã được gửi lại.');
         }
@@ -34,7 +38,6 @@ const VerifyEmailPending = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-                {/* Icon */}
                 <div className="mx-auto mb-6 w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center">
                     📧
                 </div>

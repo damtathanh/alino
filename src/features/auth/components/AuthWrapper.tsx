@@ -178,12 +178,14 @@ const AuthWrapper = ({
                                     Chưa có tài khoản? Đăng ký
                                 </Link>
                             )}
-                            <Link
-                                to={ROUTES.RESET_PASSWORD}
-                                className="text-secondary hover:text-brand hover:underline"
-                            >
-                                Quên mật khẩu?
-                            </Link>
+                            {session?.user.app_metadata?.provider === 'email' && (
+                                <Link
+                                    to={ROUTES.RESET_PASSWORD}
+                                    className="text-secondary hover:text-brand hover:underline"
+                                >
+                                    Quên mật khẩu?
+                                </Link>
+                            )}
                         </>
                     ) : (
                         <Link

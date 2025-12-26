@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import Header from '../features/landing/components/Header';
 import Hero from '../features/landing/components/Hero';
 import ProblemSolution from '../features/landing/components/ProblemSolution';
@@ -9,6 +10,7 @@ import Audience from '../features/landing/components/Audience';
 import PricingUnlock from '../features/landing/components/PricingUnlock';
 import FAQ from '../features/landing/components/FAQ';
 import Footer from '../features/landing/components/Footer';
+
 import RoleSelectModal from '../features/auth/components/RoleSelectModal';
 import { ROUTES } from '../shared/routes';
 import type { Role } from '../shared/types';
@@ -16,6 +18,8 @@ import type { Role } from '../shared/types';
 const Landing = () => {
     const navigate = useNavigate();
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+    /* ================== SIGNUP HANDLERS ================== */
 
     const openRoleModal = () => setIsRoleModalOpen(true);
 
@@ -32,6 +36,8 @@ const Landing = () => {
         }
     };
 
+    /* ================== RENDER ================== */
+
     return (
         <div className="min-h-screen bg-white text-gray-900 font-sans antialiased selection:bg-brand/20 selection:text-brand">
             <Header onSignupClick={openRoleModal} />
@@ -46,7 +52,6 @@ const Landing = () => {
                 <Audience onSignupClick={handleSignup} />
                 <PricingUnlock onSignupClick={openRoleModal} />
                 <FAQ />
-                {/* CTA cuối */}
             </main>
 
             <Footer />

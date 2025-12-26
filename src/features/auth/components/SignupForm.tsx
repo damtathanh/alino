@@ -17,15 +17,42 @@ export const SignupForm = () => {
         setLoading(true);
 
         try {
-            const { error } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
             });
 
-            if (error) throw error;
+            // ❌ Lỗi thực sự (email đã verify, password yếu, v.v.)
+            if (error) {
+                const msg = error.message.toLowerCase();
 
-            // 👉 Supabase tự gửi email verify
+                if (msg.includes('already registered')) {
+                    throw new Error(
+                        'Email này đã được đăng ký. Vui lòng đăng nhập.'
+                    );
+                }
+
+                throw error;
+            }
+
+            /**
+             * ❗ CASE ĐẶC BIỆT CỦA SUPABASE: Email đã tồn tại nhưng CHƯA xác thực:
+             */
+            if (data.user && data.user.identities?.length === 0) {
+                throw new Error(
+                    'Email này đã được đăng ký nhưng chưa hoàn tất cập nhật thông tin. Vui lòng đăng nhập và hoàn tất.'
+                );
+            }
+
+            if (data.user) {
+                await supabase
+                    .from('profiles')
+                    .update({ has_password: true })
+                    .eq('id', data.user.id);
+            }
+
             navigate(ROUTES.VERIFY_EMAIL_PENDING, { state: { email } });
+
         } catch (err: any) {
             setError(err.message || 'Đăng ký thất bại');
         } finally {
@@ -49,13 +76,17 @@ export const SignupForm = () => {
             <input
                 type="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="Mật khẩu"
                 className="border px-3 py-2 rounded"
             />
 
-            <button disabled={loading} className="bg-black text-white py-2 rounded">
+            <button
+                disabled={loading}
+                className="bg-black text-white py-2 rounded disabled:opacity-50"
+            >
                 {loading ? 'Đang đăng ký...' : 'Đăng ký'}
             </button>
         </form>
