@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { supabase } from '@/lib/supabase/client';
 import { ROUTES } from '@/shared/routes';
@@ -8,18 +8,74 @@ const VerifyEmailPending = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { session } = useAuth();
-    const email = location.state?.email;
 
-    // ROOT FIX 2: Verify xong (có session + email confirmed) → /app
-    useEffect(() => {
-        if (session?.user?.email_confirmed_at) {
-            navigate(ROUTES.APP, { replace: true });
-        }
-    }, [session, navigate]);
+    const email = location.state?.email as string | undefined;
+    const source = (location.state?.source || location.state?.from) as
+        | string
+        | undefined;
+
+    const autoSentRef = useRef(false);
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+
+    // 1. Nếu đã có session → email đã verify → vào AppGate
+    useEffect(() => {
+        if (!session) return;
+
+        navigate(ROUTES.APP, { replace: true });
+    }, [session, navigate]);
+
+    // 2. Handle confirm link lỗi / hết hạn (user quay lại site)
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const errorCode = params.get('error_code');
+
+        if (errorCode === 'otp_expired' || errorCode === 'access_denied') {
+            setError('Link xác thực đã hết hạn. Vui lòng gửi lại email.');
+        }
+    }, [location.search]);
+
+    useEffect(() => {
+        if (!email && !session) {
+            navigate(ROUTES.LOGIN, { replace: true });
+        }
+    }, [email, session, navigate]);
+
+    // 3. Auto resend ONLY khi đến từ login
+    useEffect(() => {
+        if (!location.state) return;
+        if (!email) return;
+        if (source !== 'login') return;
+        if (autoSentRef.current) return;
+
+        autoSentRef.current = true;
+
+        (async () => {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/app`,
+                },
+            });
+
+            console.log('RESEND ERROR:', error);
+
+            if (error) {
+                if (error.message.includes('after')) {
+                    setError(
+                        'Vui lòng đợi 60 giây trước khi gửi lại email xác thực.'
+                    );
+                } else {
+                    setError('Không thể gửi lại email. Vui lòng thử lại.');
+                }
+            } else {
+                setMessage('Email xác thực đã được gửi.');
+            }
+        })();
+    }, [email, source]);
 
     const handleResend = async () => {
         if (!email) return;
@@ -31,11 +87,16 @@ const VerifyEmailPending = () => {
         const { error } = await supabase.auth.resend({
             type: 'signup',
             email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/app`,
+            },
         });
 
         if (error) {
             if (error.message.includes('after')) {
-                setError('Vui lòng đợi 60 giây trước khi gửi lại email xác thực.');
+                setError(
+                    'Vui lòng đợi 60 giây trước khi gửi lại email xác thực.'
+                );
             } else {
                 setError('Không thể gửi lại email. Vui lòng thử lại.');
             }
@@ -97,7 +158,7 @@ const VerifyEmailPending = () => {
                 </div>
 
                 <p className="text-xs text-gray-400 mt-6">
-                    Không thấy email? Hãy kiểm tra thư mục Spam hoặc Promotions.
+                    Sau khi xác thực email, bạn sẽ được tự động chuyển tiếp.
                 </p>
             </div>
         </div>

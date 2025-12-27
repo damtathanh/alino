@@ -5,102 +5,121 @@ import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Role } from '@/shared/types';
 import { ROUTES } from '@/shared/routes';
 import { supabase } from '@/lib/supabase/client';
-import { handleError } from '@/lib/errors/errorHandler';
-import { AppError, ErrorCode } from '@/lib/errors/AppError';
 
 const AppGate = () => {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const [checking, setChecking] = useState(true);
-    
+
     const { data: profile, isLoading, refetch } = useProfile(user?.id);
     const updateProfileMutation = useUpdateProfile(user?.id || '');
 
     useEffect(() => {
+        let cancelled = false;
+
         const run = async () => {
+            if (authLoading) return;
+
             if (!user) {
                 setChecking(false);
                 return;
             }
 
-            // Wait for profile query to complete
             if (isLoading) return;
 
             try {
-                // ROOT FIX 3: LUÔN refetch để đảm bảo data fresh
-                const { data: freshProfile } = await refetch();
-                let currentProfile = freshProfile || profile;
-
-                // Tạo profile nếu chưa có
-                if (!currentProfile) {
-                    await supabase.from('profiles').insert({
-                        id: user.id,
-                        email: user.email,
+                // 1. Email/password chưa verify
+                if (
+                    user.app_metadata?.provider === 'email' &&
+                    !user.email_confirmed_at
+                ) {
+                    navigate(ROUTES.VERIFY_EMAIL_PENDING, {
+                        replace: true,
+                        state: {
+                            email: user.email,
+                            source: 'login',
+                        },
                     });
-                    
-                    // ROOT FIX 3: Refetch NGAY sau khi create
-                    await new Promise(resolve => setTimeout(resolve, 150));
-                    const { data: newProfile } = await refetch();
-                    currentProfile = newProfile || null;
+                    return;
                 }
 
-                // Gán role từ pendingRole
-                if (currentProfile && !currentProfile.role) {
-                    const pendingRole = localStorage.getItem('pendingRole') as Role | null;
+                let currentProfile = profile ?? null;
+
+                // 2. Ensure profile exists
+                if (!currentProfile) {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .upsert(
+                            { id: user.id, email: user.email },
+                            { onConflict: 'id' }
+                        );
+
+                    if (error) throw error;
+
+                    const { data } = await refetch();
+                    currentProfile = data ?? null;
+                }
+
+                if (!currentProfile) {
+                    // defensive guard – tránh TS + logic lỗi
+                    setChecking(false);
+                    return;
+                }
+
+                // 3. Apply pendingRole (Google signup / pre-select)
+                if (!currentProfile.role) {
+                    const pendingRole = localStorage.getItem(
+                        'pendingRole'
+                    ) as Role | null;
+
                     if (pendingRole === 'creator' || pendingRole === 'brand') {
-                        await updateProfileMutation.mutateAsync({ role: pendingRole });
+                        await updateProfileMutation.mutateAsync({
+                            role: pendingRole,
+                        });
+
                         localStorage.removeItem('pendingRole');
-                        
-                        // ROOT FIX 3: Refetch NGAY sau khi update role
-                        await new Promise(resolve => setTimeout(resolve, 150));
-                        const { data: updatedProfile } = await refetch();
-                        currentProfile = updatedProfile || currentProfile;
+
+                        currentProfile = {
+                            ...currentProfile,
+                            role: pendingRole,
+                        };
                     }
                 }
 
-                // ROOT FIX 4: Dùng onboarding_completed từ server (KHÔNG infer)
-                const hasRole = !!currentProfile?.role;
-                const onboardingComplete = currentProfile?.onboarding_completed === true;
-
-                // Chưa có role → chọn role
-                if (!hasRole) {
+                // 4. Routing quyết định
+                if (!currentProfile.role) {
                     navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
                     return;
                 }
 
-                // Chưa hoàn tất onboarding
-                if (!onboardingComplete) {
+                if (currentProfile.onboarding_completed !== true) {
                     navigate(ROUTES.ONBOARDING, { replace: true });
                     return;
                 }
 
-                // Đã hoàn tất → redirect to dashboard
-                if (currentProfile) {
-                    navigate(
-                        currentProfile.role === 'creator'
-                            ? ROUTES.APP_CREATOR
-                            : ROUTES.APP_BRAND,
-                        { replace: true }
-                    );
-                }
-            } catch (err) {
-                const appError = new AppError(
-                    'Failed to process app gate',
-                    ErrorCode.DATA_FETCH_FAILED,
-                    undefined,
-                    err instanceof Error ? err : undefined
+                // 5. Done → dashboard
+                navigate(
+                    currentProfile.role === 'creator'
+                        ? ROUTES.APP_CREATOR
+                        : ROUTES.APP_BRAND,
+                    { replace: true }
                 );
-                console.error('[AppGate Error]', handleError(appError));
+            } catch (err) {
+                console.error('[AppGate Error]', err);
                 navigate(ROUTES.ONBOARDING, { replace: true });
             } finally {
-                setChecking(false);
+                if (!cancelled) setChecking(false);
             }
         };
 
         run();
-    }, [user, profile, isLoading, navigate, refetch, updateProfileMutation]);
 
-    if (checking || isLoading) {
+        return () => {
+            cancelled = true;
+        };
+    }, [user, authLoading, isLoading, profile, refetch, updateProfileMutation, navigate]);
+
+    if (authLoading || checking || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />

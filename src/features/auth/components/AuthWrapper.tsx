@@ -71,9 +71,17 @@ const AuthWrapper = ({
                 <button
                     onClick={handleGoogle}
                     disabled={loadingGoogle}
-                    className="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg flex items-center justify-center gap-3 disabled:opacity-60"
-                >
-                    {loadingGoogle ? 'Đang mở Google...' : 'Tiếp tục với Google'}
+                    className="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg flex items-center justify-center gap-3 disabled:opacity-60">
+                    {!loadingGoogle && (
+                        <img
+                            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                            alt="Google"
+                            className="w-5 h-5"
+                        />
+                    )}
+                    <span>
+                        {loadingGoogle ? 'Đang mở Google...' : 'Tiếp tục với Google'}
+                    </span>
                 </button>
 
                 <div className="my-6 flex items-center gap-3">
@@ -102,6 +110,12 @@ const AuthWrapper = ({
                             });
 
                             if (error) {
+                                const msg = String(error.message || '').toLowerCase();
+                                const isUnconfirmed = msg.includes('confirm') || msg.includes('not confirmed');
+                                if (isUnconfirmed) {
+                                    navigate(ROUTES.VERIFY_EMAIL_PENDING, { state: { email }, replace: true });
+                                    return;
+                                }
                                 setErrorMsg('Email hoặc mật khẩu không đúng');
                             }
                         }}

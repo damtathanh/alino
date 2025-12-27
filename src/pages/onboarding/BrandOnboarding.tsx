@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { updateProfile } from '@/lib/supabase/profile';
@@ -48,7 +47,6 @@ interface BrandOnboardingProps {
 
 const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     const [saving, setSaving] = useState(false);
@@ -111,12 +109,10 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
 
             await updateProfile(user!.id, patch);
 
-            // ROOT FIX 2 & 3: Invalidate cache + delay để đảm bảo AppGate fetch fresh
+            // Invalidate cache để AppGate đọc dữ liệu mới
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
-            await new Promise(resolve => setTimeout(resolve, 200));
-
-            // ROOT FIX 2: Navigate /app để AppGate quyết định
-            navigate(ROUTES.APP, { replace: true });
+            // Điều hướng theo flow hiện tại: /app để AppGate quyết định
+            window.location.href = ROUTES.APP;
         } catch (err) {
             const appError = new AppError(
                 'Failed to save onboarding data',
@@ -339,7 +335,7 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
                 disabled={saving}
                 className="w-full bg-black text-white py-4 rounded-2xl font-semibold text-lg"
             >
-                {saving ? 'Đang lưu...' : 'Hoàn tất & vào Dashboard'}
+                {saving ? 'Đang lưu...' : 'Hoàn tất và vào Dashboard'}
             </button>
         </div>
     );

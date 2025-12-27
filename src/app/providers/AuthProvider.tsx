@@ -44,12 +44,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         init();
 
         const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-            // Fix race condition: check mounted before setting state
             if (!mounted) return;
-            
+
             setSession(nextSession ?? null);
             setUser(nextSession?.user ?? null);
             setLoading(false);
+
+            if (window.location.hash.includes('access_token')) {
+                window.location.replace('/app');
+            }
         });
 
         return () => {

@@ -156,10 +156,10 @@ const CreatorProfile = ({ profile }: { profile: Profile }) => {
                 <SectionCard title="Thông tin Creator">
                     <Field id="creatorType" label="Loại Creator" error={fieldError === 'creatorType'}>
                         <select className="input bg-white" value={creatorType} onChange={e => setCreatorType(e.target.value)}>
-                            <option value="">Chọn loại Creator</option>
+                            <option value="">Chọn nhóm Creator</option>
                             {CREATOR_TYPES.map(t => <option key={t}>{t}</option>)}
                         </select>
-                        <ErrorText show={fieldError === 'creatorType'} text="Vui lòng chọn Loại Creator" />
+                        <ErrorText show={fieldError === 'creatorType'} text="Vui lòng chọn nhóm Creator" />
                     </Field>
 
                     <div id="experience">

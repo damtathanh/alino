@@ -17,9 +17,13 @@ const Login = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
 
-    // User có session thì redirect về /app
+    // Nếu có session nhưng email chưa xác nhận → chuyển sang VerifyEmailPending
     useEffect(() => {
         if (session) {
+            if (session.user.app_metadata?.provider === 'email' && !session.user.email_confirmed_at) {
+                navigate(ROUTES.VERIFY_EMAIL_PENDING, { replace: true, state: { email: session.user.email } });
+                return;
+            }
             navigate(ROUTES.APP, { replace: true });
         }
     }, [session, navigate]);

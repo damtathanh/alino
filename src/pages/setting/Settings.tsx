@@ -4,11 +4,11 @@ import { useProfile } from '@/lib/queries/useProfile';
 import { supabase } from '@/lib/supabase/client';
 import Toast from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { useQueryClient } from '@tanstack/react-query';
 
 const SettingsPage = () => {
     const { user, session } = useAuth();
     const { data: profile, isLoading } = useProfile(user?.id);
-
     const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
 
     if (isLoading) {
@@ -134,9 +134,9 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 const SecurityTab = () => {
     const { session } = useAuth();
-
-    const providers = session?.user?.app_metadata?.providers as string[] | undefined;
-    const hasPassword = Array.isArray(providers) ? providers.includes('email') : (session?.user?.app_metadata?.provider === 'email');
+    const queryClient = useQueryClient();
+    const identities = session?.user?.identities ?? [];
+    const hasPassword = identities.some(identity => identity.provider === 'email');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -146,11 +146,6 @@ const SecurityTab = () => {
 
     const handleChangePassword = async () => {
         setError('');
-
-        if (hasPassword && !currentPassword) {
-            setError('Vui lòng nhập mật khẩu hiện tại');
-            return;
-        }
 
         if (newPassword.length < 6) {
             setError('Mật khẩu mới phải có ít nhất 6 ký tự');
@@ -165,10 +160,57 @@ const SecurityTab = () => {
         setLoading(true);
 
         try {
-            // Không cần re-auth cho Google; Supabase cho phép đổi/thiết lập mật khẩu khi đã đăng nhập
+            // CASE 1: Google-only account → set password lần đầu (KHÔNG cần mật khẩu cũ)
+            if (!hasPassword) {
+                const { error } = await supabase.auth.updateUser({
+                    password: newPassword,
+                });
+
+                if (error) {
+                    setError('Không thể thiết lập mật khẩu. Vui lòng thử lại.');
+                    return;
+                }
+
+                await supabase
+                    .from('profiles')
+                    .update({ has_password: true })
+                    .eq('id', session!.user.id);
+
+                queryClient.invalidateQueries({
+                    queryKey: ['profile', session!.user.id],
+                });
+
+                setShowToast(true);
+                setNewPassword('');
+                setConfirmPassword('');
+                return;
+            }
+
+            // CASE 2: Account đã có password → bắt buộc verify mật khẩu cũ
+            if (!currentPassword) {
+                setError('Vui lòng nhập mật khẩu hiện tại');
+                return;
+            }
+
+            const email = session!.user.email!;
+            const { error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password: currentPassword,
+            });
+
+            if (authError) {
+                setError('Mật khẩu hiện tại không đúng');
+                return;
+            }
+
             const { error } = await supabase.auth.updateUser({
                 password: newPassword,
             });
+
+            await supabase
+                .from('profiles')
+                .update({ has_password: true })
+                .eq('id', session!.user.id);
 
             if (error) {
                 if (error.message.includes('different from the old password')) {

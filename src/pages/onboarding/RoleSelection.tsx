@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { ROUTES } from '../../shared/routes';
 import RoleSelectModal from '../../features/auth/components/RoleSelectModal';
@@ -8,8 +7,8 @@ import { updateProfile } from '../../lib/supabase/profile';
 
 const RoleSelection = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [open] = useState(true);
 
     const handleSelect = async (role: Role) => {
         if (!user) return;
@@ -17,9 +16,8 @@ const RoleSelection = () => {
 
         try {
             await updateProfile(user.id, { role });
-            
-            // ROOT FIX 2: Navigate /app để AppGate quyết định
-            navigate(ROUTES.APP, { replace: true });
+            window.location.href = ROUTES.APP;
+
         } catch (err) {
             console.error(err);
             setLoading(false);
@@ -36,8 +34,8 @@ const RoleSelection = () => {
 
     return (
         <RoleSelectModal
-            isOpen={true}
-            onClose={() => { }} // Block closing
+            isOpen={open}
+            onClose={() => { }}
             onSelect={handleSelect}
         />
     );

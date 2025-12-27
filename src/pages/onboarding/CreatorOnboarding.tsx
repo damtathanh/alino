@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { updateProfile } from '@/lib/supabase/profile';
@@ -64,7 +63,6 @@ interface CreatorOnboardingProps {
 
 const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     const [saving, setSaving] = useState(false);
@@ -96,7 +94,7 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
         if (!fullName.trim()) return setError('Vui lòng nhập Họ tên');
         if (!city.trim()) return setError('Vui lòng nhập Thành phố');
         if (goals.length === 0) return setError('Vui lòng chọn ít nhất một Mục tiêu');
-        if (!creatorType) return setError('Vui lòng chọn loại Creator');
+        if (!creatorType) return setError('Vui lòng chọn nhóm Creator');
         if (!birthYear) return setError('Vui lòng nhập Năm sinh');
         if (platforms.length === 0) return setError('Vui lòng chọn ít nhất một Nền tảng');
         if (categories.length === 0) return setError('Vui lòng chọn ít nhất một Lĩnh vực');
@@ -125,12 +123,10 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
 
             await updateProfile(user!.id, patch);
 
-            // ROOT FIX 2 & 3: Invalidate cache + delay để đảm bảo AppGate fetch fresh
+            // Invalidate cache để AppGate đọc dữ liệu mới
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
-            await new Promise(resolve => setTimeout(resolve, 200));
-
-            // ROOT FIX 2: Navigate /app để AppGate quyết định
-            navigate(ROUTES.APP, { replace: true });
+            // Điều hướng theo flow hiện tại: /app để AppGate quyết định
+            window.location.href = ROUTES.APP;
         } catch (err) {
             const appError = new AppError(
                 'Failed to save onboarding data',
@@ -397,7 +393,7 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
                 disabled={saving}
                 className="w-full bg-black text-white py-4 rounded-2xl font-semibold text-lg"
             >
-                {saving ? 'Đang lưu...' : 'Hoàn tất & vào Dashboard'}
+                {saving ? 'Đang lưu...' : 'Hoàn tất và vào Dashboard'}
             </button>
         </div>
     );

@@ -30,6 +30,13 @@ const AuthCallback = () => {
                 return;
             }
 
+            // FIX: Email/password provider but email chưa xác nhận → chuyển VerifyEmailPending
+            const provider = user.app_metadata?.provider;
+            if (provider === 'email' && !user.email_confirmed_at) {
+                navigate(ROUTES.VERIFY_EMAIL_PENDING, { replace: true, state: { email: user.email } });
+                return; // STOP further execution
+            }
+
             /* Helper: find profile by email */
             const getProfileByEmail = async (email: string) => {
                 const { data } = await supabase
