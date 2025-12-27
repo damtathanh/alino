@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/lib/queries/useProfile';
 import { supabase } from '@/lib/supabase/client';
@@ -8,8 +8,15 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const SettingsPage = () => {
     const { user, session } = useAuth();
-    const { data: profile, isLoading } = useProfile(user?.id);
+    const { data: profile, isLoading, refetch } = useProfile(user?.id);
     const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
+
+    useEffect(() => {
+        if (user?.id) {
+            refetch();
+        }
+    }, [user?.id, refetch]);
+
 
     if (isLoading) {
         return (
@@ -65,7 +72,7 @@ const SettingsPage = () => {
                         )}
 
                         {activeTab === 'security' && (
-                            <SecurityTab />
+                            <SecurityTab profile={profile} />
                         )}
                     </main>
                 </div>
@@ -132,11 +139,10 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 /* ================= SECURITY TAB ================= */
 
-const SecurityTab = () => {
+const SecurityTab = ({ profile }: { profile: any }) => {
     const { session } = useAuth();
     const queryClient = useQueryClient();
-    const identities = session?.user?.identities ?? [];
-    const hasPassword = identities.some(identity => identity.provider === 'email');
+    const hasPassword = profile?.has_password === true;
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');

@@ -4,6 +4,7 @@ import { ROUTES } from '../../shared/routes';
 import RoleSelectModal from '../../features/auth/components/RoleSelectModal';
 import type { Role } from '../../shared/types';
 import { updateProfile } from '../../lib/supabase/profile';
+import { hardRedirect } from '@/shared/navigation/hardRedirect';
 
 const RoleSelection = () => {
     const { user } = useAuth();
@@ -16,7 +17,7 @@ const RoleSelection = () => {
 
         try {
             await updateProfile(user.id, { role });
-            window.location.href = ROUTES.APP;
+            hardRedirect(ROUTES.APP);
 
         } catch (err) {
             console.error(err);

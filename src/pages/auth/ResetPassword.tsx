@@ -9,61 +9,24 @@ const ResetPassword = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    /**
-     * Helper: lấy profile theo email
-     */
-    const getProfileByEmail = async (email: string) => {
-        const { data } = await supabase
-            .from('profiles')
-            .select('id, has_password')
-            .eq('email', email)
-            .maybeSingle();
-
-        return data;
-    };
-
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
         setError('');
 
-        /**
-         * 🔒 GUARD 1:
-         * Kiểm tra email có tồn tại trong profiles không
-         */
-        const profile = await getProfileByEmail(email);
-
-        if (!profile) {
-            setError('Email này chưa được đăng ký.');
-            setLoading(false);
-            return;
-        }
-
-        /**
-         * 🔒 GUARD 2:
-         * Google user chưa set password → KHÔNG cho reset
-         */
-        if (profile.has_password === false) {
-            setError(
-                'Tài khoản này được tạo bằng Google. ' +
-                'Vui lòng đăng nhập bằng Google và thiết lập mật khẩu trong Cài đặt.'
-            );
-            setLoading(false);
-            return;
-        }
-
-        /**
-         * ✅ OK → cho reset password
-         */
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${getSiteUrl()}${ROUTES.UPDATE_PASSWORD}`,
         });
 
         if (error) {
-            setError(error.message);
+            // Không leak thông tin email có tồn tại hay không
+            setError('Không thể gửi email reset. Vui lòng thử lại.');
         } else {
-            setMessage('Vui lòng kiểm tra email để đặt lại mật khẩu.');
+            // Luôn báo thành công (best practice)
+            setMessage(
+                'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu.'
+            );
         }
 
         setLoading(false);

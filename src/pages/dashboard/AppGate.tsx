@@ -5,11 +5,12 @@ import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Role } from '@/shared/types';
 import { ROUTES } from '@/shared/routes';
 import { supabase } from '@/lib/supabase/client';
+import { isEmailNotVerified } from '@/shared/auth/email';
 
 const AppGate = () => {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
-    const [checking, setChecking] = useState(true);
+    const [isCheckingGate, setIsCheckingGate] = useState(true);
 
     const { data: profile, isLoading, refetch } = useProfile(user?.id);
     const updateProfileMutation = useUpdateProfile(user?.id || '');
@@ -21,7 +22,7 @@ const AppGate = () => {
             if (authLoading) return;
 
             if (!user) {
-                setChecking(false);
+                setIsCheckingGate(false);
                 return;
             }
 
@@ -29,10 +30,7 @@ const AppGate = () => {
 
             try {
                 // 1. Email/password chưa verify
-                if (
-                    user.app_metadata?.provider === 'email' &&
-                    !user.email_confirmed_at
-                ) {
+                if (isEmailNotVerified(user)) {
                     navigate(ROUTES.VERIFY_EMAIL_PENDING, {
                         replace: true,
                         state: {
@@ -62,8 +60,23 @@ const AppGate = () => {
 
                 if (!currentProfile) {
                     // defensive guard – tránh TS + logic lỗi
-                    setChecking(false);
+                    setIsCheckingGate(false);
                     return;
+                }
+
+                // 🔒 Ensure has_password for email users (one-time fix)
+                if (
+                    user.app_metadata?.provider === 'email' &&
+                    currentProfile.has_password !== true
+                ) {
+                    await updateProfileMutation.mutateAsync({
+                        has_password: true,
+                    });
+
+                    currentProfile = {
+                        ...currentProfile,
+                        has_password: true,
+                    };
                 }
 
                 // 3. Apply pendingRole (Google signup / pre-select)
@@ -108,7 +121,7 @@ const AppGate = () => {
                 console.error('[AppGate Error]', err);
                 navigate(ROUTES.ONBOARDING, { replace: true });
             } finally {
-                if (!cancelled) setChecking(false);
+                if (!cancelled) setIsCheckingGate(false);
             }
         };
 
@@ -119,7 +132,7 @@ const AppGate = () => {
         };
     }, [user, authLoading, isLoading, profile, refetch, updateProfileMutation, navigate]);
 
-    if (authLoading || checking || isLoading) {
+    if (authLoading || isCheckingGate || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />

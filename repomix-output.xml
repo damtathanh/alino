@@ -154,11 +154,15 @@ src/
       Settings.tsx
     Landing.tsx
   shared/
+    auth/
+      email.ts
     components/
       AppLogo.tsx
     constants/
       enums.ts
       profileOptions.ts
+    navigation/
+      hardRedirect.ts
     routes.ts
     types.ts
   App.tsx
@@ -182,6 +186,24 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/shared/auth/email.ts">
+import type { User } from '@supabase/supabase-js';
+
+export const isEmailNotVerified = (user: User | null) => {
+    return !!(
+        user &&
+        user.app_metadata?.provider === 'email' &&
+        !user.email_confirmed_at
+    );
+};
+</file>
+
+<file path="src/shared/navigation/hardRedirect.ts">
+export const hardRedirect = (to: string) => {
+    window.location.href = to;
+};
+</file>
 
 <file path="src/auth/.gitkeep">
 # This folder is reserved for future auth-related modules
@@ -3516,83 +3538,6 @@ function backup() {
 backup();
 </file>
 
-<file path="src/app/providers/AuthProvider.tsx">
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
-
-interface AuthContextType {
-    session: Session | null;
-    user: User | null;
-    loading: boolean;
-    signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType>({
-    session: null,
-    user: null,
-    loading: true,
-    signOut: async () => { },
-});
-
-export const useAuth = () => useContext(AuthContext);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [session, setSession] = useState<Session | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        let mounted = true;
-
-        const init = async () => {
-            try {
-                // ✅ BẮT TOKEN KHI CONFIRM EMAIL
-                const { data } = await supabase.auth.getSession();
-                if (!mounted) return;
-
-                setSession(data.session ?? null);
-                setUser(data.session?.user ?? null);
-            } catch (e) {
-                console.error('Auth init error:', e);
-            } finally {
-                if (mounted) setLoading(false);
-            }
-        };
-
-        init();
-
-        const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-            if (!mounted) return;
-
-            setSession(nextSession ?? null);
-            setUser(nextSession?.user ?? null);
-            setLoading(false);
-
-            if (window.location.hash.includes('access_token')) {
-                window.location.replace('/app');
-            }
-        });
-
-        return () => {
-            mounted = false;
-            sub.subscription.unsubscribe();
-        };
-    }, []);
-
-    const signOut = async () => {
-        await supabase.auth.signOut();
-    };
-
-    const value = useMemo(
-        () => ({ session, user, loading, signOut }),
-        [session, user, loading]
-    );
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-</file>
-
 <file path="src/components/layout/AppLayout.tsx">
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -4124,61 +4069,24 @@ const ResetPassword = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    /**
-     * Helper: lấy profile theo email
-     */
-    const getProfileByEmail = async (email: string) => {
-        const { data } = await supabase
-            .from('profiles')
-            .select('id, has_password')
-            .eq('email', email)
-            .maybeSingle();
-
-        return data;
-    };
-
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
         setError('');
 
-        /**
-         * 🔒 GUARD 1:
-         * Kiểm tra email có tồn tại trong profiles không
-         */
-        const profile = await getProfileByEmail(email);
-
-        if (!profile) {
-            setError('Email này chưa được đăng ký.');
-            setLoading(false);
-            return;
-        }
-
-        /**
-         * 🔒 GUARD 2:
-         * Google user chưa set password → KHÔNG cho reset
-         */
-        if (profile.has_password === false) {
-            setError(
-                'Tài khoản này được tạo bằng Google. ' +
-                'Vui lòng đăng nhập bằng Google và thiết lập mật khẩu trong Cài đặt.'
-            );
-            setLoading(false);
-            return;
-        }
-
-        /**
-         * ✅ OK → cho reset password
-         */
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${getSiteUrl()}${ROUTES.UPDATE_PASSWORD}`,
         });
 
         if (error) {
-            setError(error.message);
+            // Không leak thông tin email có tồn tại hay không
+            setError('Không thể gửi email reset. Vui lòng thử lại.');
         } else {
-            setMessage('Vui lòng kiểm tra email để đặt lại mật khẩu.');
+            // Luôn báo thành công (best practice)
+            setMessage(
+                'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu.'
+            );
         }
 
         setLoading(false);
@@ -4242,177 +4150,6 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-</file>
-
-<file path="src/pages/auth/VerifyEmailPending.tsx">
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
-import { useAuth } from '@/app/providers/AuthProvider';
-import { supabase } from '@/lib/supabase/client';
-import { ROUTES } from '@/shared/routes';
-
-const VerifyEmailPending = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { session } = useAuth();
-
-    const email = location.state?.email as string | undefined;
-    const source = (location.state?.source || location.state?.from) as
-        | string
-        | undefined;
-
-    const autoSentRef = useRef(false);
-
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-
-    // 1. Nếu đã có session → email đã verify → vào AppGate
-    useEffect(() => {
-        if (!session) return;
-
-        navigate(ROUTES.APP, { replace: true });
-    }, [session, navigate]);
-
-    // 2. Handle confirm link lỗi / hết hạn (user quay lại site)
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const errorCode = params.get('error_code');
-
-        if (errorCode === 'otp_expired' || errorCode === 'access_denied') {
-            setError('Link xác thực đã hết hạn. Vui lòng gửi lại email.');
-        }
-    }, [location.search]);
-
-    useEffect(() => {
-        if (!email && !session) {
-            navigate(ROUTES.LOGIN, { replace: true });
-        }
-    }, [email, session, navigate]);
-
-    // 3. Auto resend ONLY khi đến từ login
-    useEffect(() => {
-        if (!location.state) return;
-        if (!email) return;
-        if (source !== 'login') return;
-        if (autoSentRef.current) return;
-
-        autoSentRef.current = true;
-
-        (async () => {
-            const { error } = await supabase.auth.resend({
-                type: 'signup',
-                email,
-                options: {
-                    emailRedirectTo: `${window.location.origin}/app`,
-                },
-            });
-
-            console.log('RESEND ERROR:', error);
-
-            if (error) {
-                if (error.message.includes('after')) {
-                    setError(
-                        'Vui lòng đợi 60 giây trước khi gửi lại email xác thực.'
-                    );
-                } else {
-                    setError('Không thể gửi lại email. Vui lòng thử lại.');
-                }
-            } else {
-                setMessage('Email xác thực đã được gửi.');
-            }
-        })();
-    }, [email, source]);
-
-    const handleResend = async () => {
-        if (!email) return;
-
-        setLoading(true);
-        setError('');
-        setMessage('');
-
-        const { error } = await supabase.auth.resend({
-            type: 'signup',
-            email,
-            options: {
-                emailRedirectTo: `${window.location.origin}/app`,
-            },
-        });
-
-        if (error) {
-            if (error.message.includes('after')) {
-                setError(
-                    'Vui lòng đợi 60 giây trước khi gửi lại email xác thực.'
-                );
-            } else {
-                setError('Không thể gửi lại email. Vui lòng thử lại.');
-            }
-        } else {
-            setMessage('Email xác thực đã được gửi lại.');
-        }
-
-        setLoading(false);
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-                <div className="mx-auto mb-6 w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center">
-                    📧
-                </div>
-
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                    Kiểm tra email của bạn
-                </h1>
-
-                <p className="text-gray-600 text-sm mb-6">
-                    Chúng tôi đã gửi email xác thực đến:
-                </p>
-
-                <div className="font-semibold text-indigo-600 mb-6 break-all">
-                    {email}
-                </div>
-
-                {message && (
-                    <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
-                        {message}
-                    </div>
-                )}
-
-                {error && (
-                    <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
-                        {error}
-                    </div>
-                )}
-
-                <div className="flex flex-col gap-3">
-                    <a
-                        href="https://mail.google.com"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition"
-                    >
-                        Mở Gmail
-                    </a>
-
-                    <button
-                        onClick={handleResend}
-                        disabled={loading}
-                        className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-lg transition disabled:opacity-50"
-                    >
-                        {loading ? 'Đang gửi lại...' : 'Gửi lại email'}
-                    </button>
-                </div>
-
-                <p className="text-xs text-gray-400 mt-6">
-                    Sau khi xác thực email, bạn sẽ được tự động chuyển tiếp.
-                </p>
-            </div>
-        </div>
-    );
-};
-
-export default VerifyEmailPending;
 </file>
 
 <file path="src/pages/dashboard/BrandDashboard.tsx">
@@ -5437,6 +5174,540 @@ const RadioGroup = ({
 );
 </file>
 
+<file path="src/shared/components/AppLogo.tsx">
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/shared/routes';
+
+type AppLogoProps = {
+    subtitle?: string;
+};
+
+const AppLogo = ({ subtitle }: AppLogoProps) => {
+    const navigate = useNavigate();
+
+    const goHome = () => {
+        navigate(ROUTES.HOME, { state: { allowLanding: true } });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    return (
+        <button
+            onClick={goHome}
+            className="flex items-center gap-3 hover:opacity-80 transition"
+        >
+            {/* LOGO */}
+            <img
+                src="/logo/logo.png"
+                alt="Alino Logo"
+                className="w-10 h-10 object-contain"
+            />
+
+            {/* TEXT */}
+            <div className="flex flex-col leading-tight text-left">
+                <span
+                    className="
+            text-[20px] font-extrabold
+            bg-gradient-to-r from-brand to-indigo-600
+            bg-clip-text text-transparent
+          "
+                >
+                    ALINO
+                </span>
+
+                {subtitle && (
+                    <span className="text-[12px] font-semibold text-muted uppercase tracking-wide">
+                        {subtitle}
+                    </span>
+                )}
+            </div>
+        </button>
+    );
+};
+
+export default AppLogo;
+</file>
+
+<file path="src/shared/routes.ts">
+export const ROUTES = {
+    HOME: '/',
+    LOGIN: '/login',
+    SIGNUP: '/signup',
+    RESET_PASSWORD: '/reset-password',
+    UPDATE_PASSWORD: '/update-password',
+    AUTH_CALLBACK: '/auth/callback',
+    VERIFY_EMAIL_PENDING: '/verify-email-pending',
+
+    APP: '/app',
+    APP_CREATOR: '/app/creator',
+    APP_BRAND: '/app/brand',
+
+    PROFILE: '/profile',
+    SETTINGS: '/settings',
+
+    ONBOARDING: '/onboarding',
+    ONBOARDING_ROLE: '/onboarding/role',
+} as const;
+</file>
+
+<file path="README.md">
+# Alino App
+
+Single-root React + Vite + Supabase application.
+
+## 📂 Structure
+- `src/`: Source code
+- `scripts/`: Automation scripts
+- `public/`: Static assets
+
+## 🚀 Getting Started
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Environment**
+   Copy `.env.example` to `.env` and fill in Supabase keys.
+
+3. **Development**
+   ```bash
+   npm run dev
+   ```
+
+## 🛠 Automation
+- **Backup**: `npm run backup` (Commits & pushes to origin)
+- **Context**: `npm run repomox` (Generates `repomix.md`)
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+    plugins: [react()],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'src'),
+        },
+    },
+    server: {
+        host: true,
+        port: 5173,
+        strictPort: true,
+    },
+})
+</file>
+
+<file path="src/app/providers/AuthProvider.tsx">
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
+
+interface AuthContextType {
+    session: Session | null;
+    user: User | null;
+    loading: boolean;
+    signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+    session: null,
+    user: null,
+    loading: true,
+    signOut: async () => { },
+});
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [session, setSession] = useState<Session | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const init = async () => {
+            try {
+                // ✅ BẮT TOKEN KHI CONFIRM EMAIL
+                const { data } = await supabase.auth.getSession();
+                if (!mounted) return;
+
+                setSession(data.session ?? null);
+                setUser(data.session?.user ?? null);
+            } catch (e) {
+                console.error('Auth init error:', e);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        init();
+
+        const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+            if (!mounted) return;
+
+            setSession(nextSession ?? null);
+            setUser(nextSession?.user ?? null);
+            setLoading(false);
+
+            if (window.location.hash.includes('access_token')) {
+                window.location.replace('/app');
+            }
+        });
+
+        return () => {
+            mounted = false;
+            sub.subscription.unsubscribe();
+        };
+    }, []);
+
+    const signOut = async () => {
+        await supabase.auth.signOut();
+    };
+
+    const value = useMemo(
+        () => ({ session, user, loading, signOut }),
+        [session, user, loading]
+    );
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+</file>
+
+<file path="src/components/layout/AppHeader.tsx">
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { getProfile } from '@/lib/supabase/profile';
+import { supabase } from '@/lib/supabase/client';
+import { ROUTES } from '@/shared/routes';
+import AppLogo from '@/shared/components/AppLogo';
+import LandingNav from './LandingNav';
+
+type AppHeaderProps = {
+    onSignupClick?: () => void;
+    isModalOpen?: boolean;
+};
+
+const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const isLanding = location.pathname === ROUTES.HOME;
+    const isOnboarding = location.pathname.startsWith('/onboarding');
+
+    const [displayName, setDisplayName] = useState('User');
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!user) return;
+
+        getProfile(user.id).then((profile) => {
+            setDisplayName(
+                profile?.full_name ||
+                profile?.company_name ||
+                'User'
+            );
+            setAvatarUrl(profile?.avatar_url ?? null);
+        });
+    }, [user]);
+
+    useEffect(() => {
+        const close = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    const logout = async () => {
+        await supabase.auth.signOut();
+        navigate(ROUTES.HOME, { replace: true });
+    };
+
+    return (
+        <header
+            className={`fixed top-0 left-0 right-0 z-50 h-16 border-b border-border
+        ${isModalOpen ? 'bg-white' : 'bg-white/95 backdrop-blur'}
+        `}
+        >
+            <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+
+                {/* LEFT */}
+                <div className="flex items-center gap-10">
+                    <AppLogo />
+
+                    {/* 👉 Navigation chỉ hiện ở Landing & chưa login */}
+                    {isLanding && <LandingNav />}
+                </div>
+
+                {/* RIGHT */}
+                {user ? (
+                    <div ref={ref} className="relative">
+                        <button
+                            onClick={() => setMenuOpen(v => !v)}
+                            className="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-bgAlt transition"
+                        >
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-semibold">
+                                    {displayName.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <span className="hidden sm:block text-sm font-medium text-primary max-w-[140px] truncate">
+                                {displayName}
+                            </span>
+                        </button>
+
+                        {/* DROPDOWN */}
+                        <div
+                            className={`absolute right-0 mt-2 w-52 bg-white border border-border
+                        rounded-xl shadow-card overflow-hidden transition
+                        ${menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
+                        `}
+                        >
+                            <button
+                                disabled={isOnboarding}
+                                onClick={() => navigate(ROUTES.APP)}
+                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
+                            >
+                                Quản lý dự án
+                            </button>
+
+                            <button
+                                disabled={isOnboarding}
+                                onClick={() => navigate(ROUTES.PROFILE)}
+                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
+                            >
+                                Trang cá nhân
+                            </button>
+
+                            <button
+                                disabled={isOnboarding}
+                                onClick={() => navigate(ROUTES.SETTINGS)}
+                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
+                            >
+                                Cài đặt
+                            </button>
+
+                            <div className="border-t border-border my-1" />
+
+                            <button
+                                onClick={logout}
+                                className="w-full px-4 py-2.5 text-sm text-error hover:bg-red-50 text-left"
+                            >
+                                Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate(ROUTES.LOGIN)}
+                            className="text-sm font-medium text-secondary hover:text-primary"
+                        >
+                            Đăng nhập
+                        </button>
+
+                        <button
+                            onClick={onSignupClick}
+                            className="bg-brand hover:bg-brandHover text-white px-4 py-2 rounded-full text-sm font-semibold"
+                        >
+                            Tạo trang miễn phí
+                        </button>
+                    </div>
+                )}
+            </div>
+        </header>
+    );
+};
+
+export default AppHeader;
+</file>
+
+<file path="src/pages/auth/VerifyEmailPending.tsx">
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { supabase } from '@/lib/supabase/client';
+import { ROUTES } from '@/shared/routes';
+
+const VerifyEmailPending = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { session } = useAuth();
+
+    const email = location.state?.email as string | undefined;
+    const source = (location.state?.source || location.state?.from) as
+        | string
+        | undefined;
+
+    const autoSentRef = useRef(false);
+
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+
+    // 1. Nếu đã có session → email đã verify → vào AppGate
+    useEffect(() => {
+        if (!session) return;
+
+        navigate(ROUTES.APP, { replace: true });
+    }, [session, navigate]);
+
+    // 2. Handle confirm link lỗi / hết hạn (user quay lại site)
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const errorCode = params.get('error_code');
+
+        if (errorCode === 'otp_expired' || errorCode === 'access_denied') {
+            setError('Link xác thực đã hết hạn. Vui lòng gửi lại email.');
+        }
+    }, [location.search]);
+
+    useEffect(() => {
+        if (!email && !session) {
+            navigate(ROUTES.LOGIN, { replace: true });
+        }
+    }, [email, session, navigate]);
+
+    // 3. Auto resend ONLY khi đến từ login
+    useEffect(() => {
+        if (!location.state) return;
+        if (!email) return;
+        if (source !== 'login') return;
+        if (autoSentRef.current) return;
+
+        autoSentRef.current = true;
+
+        (async () => {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/app`,
+                },
+            });
+
+            console.log('RESEND ERROR:', error);
+
+            if (error) {
+                if (error.message.includes('after')) {
+                    setError(
+                        'Vui lòng đợi 60 giây trước khi gửi lại email xác thực.'
+                    );
+                } else {
+                    setError('Không thể gửi lại email. Vui lòng thử lại.');
+                }
+            } else {
+                setMessage('Email xác thực đã được gửi.');
+            }
+        })();
+    }, [email, source]);
+
+    const handleResend = async () => {
+        if (!email) return;
+
+        setLoading(true);
+        setError('');
+        setMessage('');
+
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/app`,
+            },
+        });
+
+        if (error) {
+            if (error.message.includes('after')) {
+                setError(
+                    'Vui lòng đợi 60 giây trước khi gửi lại email xác thực.'
+                );
+            } else {
+                setError('Không thể gửi lại email. Vui lòng thử lại.');
+            }
+        } else {
+            setMessage('Email xác thực đã được gửi lại.');
+        }
+
+        setLoading(false);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+                <div className="mx-auto mb-6 w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center">
+                    📧
+                </div>
+
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    Kiểm tra email của bạn
+                </h1>
+
+                <p className="text-gray-600 text-sm mb-6">
+                    Chúng tôi đã gửi email xác thực đến:
+                </p>
+
+                <div className="font-semibold text-indigo-600 mb-6 break-all">
+                    {email}
+                </div>
+
+                {message && (
+                    <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+                        {message}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                        {error}
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-3">
+                    <a
+                        href="https://mail.google.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition"
+                    >
+                        Mở Gmail
+                    </a>
+
+                    <button
+                        onClick={handleResend}
+                        disabled={loading}
+                        className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-lg transition disabled:opacity-50"
+                    >
+                        {loading ? 'Đang gửi lại...' : 'Gửi lại email'}
+                    </button>
+                </div>
+
+                <p className="text-xs text-gray-400 mt-6">
+                    Sau khi xác thực email, bạn sẽ được tự động chuyển tiếp.
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default VerifyEmailPending;
+</file>
+
 <file path="src/pages/profile/CreatorProfile.tsx">
 import { useState } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -5682,290 +5953,237 @@ const RadioGroup = ({
 );
 </file>
 
-<file path="src/shared/components/AppLogo.tsx">
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/shared/routes';
-
-type AppLogoProps = {
-    subtitle?: string;
-};
-
-const AppLogo = ({ subtitle }: AppLogoProps) => {
-    const navigate = useNavigate();
-
-    const goHome = () => {
-        navigate(ROUTES.HOME, { state: { allowLanding: true } });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    return (
-        <button
-            onClick={goHome}
-            className="flex items-center gap-3 hover:opacity-80 transition"
-        >
-            {/* LOGO */}
-            <img
-                src="/logo/logo.png"
-                alt="Alino Logo"
-                className="w-10 h-10 object-contain"
-            />
-
-            {/* TEXT */}
-            <div className="flex flex-col leading-tight text-left">
-                <span
-                    className="
-            text-[20px] font-extrabold
-            bg-gradient-to-r from-brand to-indigo-600
-            bg-clip-text text-transparent
-          "
-                >
-                    ALINO
-                </span>
-
-                {subtitle && (
-                    <span className="text-[12px] font-semibold text-muted uppercase tracking-wide">
-                        {subtitle}
-                    </span>
-                )}
-            </div>
-        </button>
-    );
-};
-
-export default AppLogo;
-</file>
-
-<file path="src/shared/routes.ts">
-export const ROUTES = {
-    HOME: '/',
-    LOGIN: '/login',
-    SIGNUP: '/signup',
-    RESET_PASSWORD: '/reset-password',
-    UPDATE_PASSWORD: '/update-password',
-    AUTH_CALLBACK: '/auth/callback',
-    VERIFY_EMAIL_PENDING: '/verify-email-pending',
-
-    APP: '/app',
-    APP_CREATOR: '/app/creator',
-    APP_BRAND: '/app/brand',
-
-    PROFILE: '/profile',
-    SETTINGS: '/settings',
-
-    ONBOARDING: '/onboarding',
-    ONBOARDING_ROLE: '/onboarding/role',
-} as const;
-</file>
-
-<file path="README.md">
-# Alino App
-
-Single-root React + Vite + Supabase application.
-
-## 📂 Structure
-- `src/`: Source code
-- `scripts/`: Automation scripts
-- `public/`: Static assets
-
-## 🚀 Getting Started
-
-1. **Install Dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Environment**
-   Copy `.env.example` to `.env` and fill in Supabase keys.
-
-3. **Development**
-   ```bash
-   npm run dev
-   ```
-
-## 🛠 Automation
-- **Backup**: `npm run backup` (Commits & pushes to origin)
-- **Context**: `npm run repomox` (Generates `repomix.md`)
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-
-export default defineConfig({
-    plugins: [react()],
-    resolve: {
-        alias: {
-            '@': path.resolve(__dirname, 'src'),
-        },
-    },
-    server: {
-        host: true,
-        port: 5173,
-        strictPort: true,
-    },
-})
-</file>
-
-<file path="src/components/layout/AppHeader.tsx">
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+<file path="src/pages/profile/Profile.tsx">
 import { useAuth } from '@/app/providers/AuthProvider';
-import { getProfile } from '@/lib/supabase/profile';
-import { supabase } from '@/lib/supabase/client';
-import { ROUTES } from '@/shared/routes';
-import AppLogo from '@/shared/components/AppLogo';
-import LandingNav from './LandingNav';
+import { useProfile } from '@/lib/queries/useProfile';
+import { SkeletonProfile } from '@/components/ui/Skeleton';
+import { handleError } from '@/lib/errors/errorHandler';
 
-type AppHeaderProps = {
-    onSignupClick?: () => void;
-    isModalOpen?: boolean;
-};
+import CreatorProfile from './CreatorProfile';
+import BrandProfile from './BrandProfile';
 
-const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
+const ProfilePage = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
+    const { data: profile, isLoading, error } = useProfile(user?.id);
 
-    const isLanding = location.pathname === ROUTES.HOME;
-    const isOnboarding = location.pathname.startsWith('/onboarding');
+    if (!user || isLoading) {
+        return <SkeletonProfile />;
+    }
 
-    const [displayName, setDisplayName] = useState('User');
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!user) return;
-
-        getProfile(user.id).then((profile) => {
-            setDisplayName(
-                profile?.full_name ||
-                profile?.company_name ||
-                'User'
-            );
-            setAvatarUrl(profile?.avatar_url ?? null);
-        });
-    }, [user]);
-
-    useEffect(() => {
-        const close = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
-                setMenuOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', close);
-        return () => document.removeEventListener('mousedown', close);
-    }, []);
-
-    const logout = async () => {
-        await supabase.auth.signOut();
-        navigate(ROUTES.HOME, { replace: true });
-    };
-
-    return (
-        <header
-            className={`fixed top-0 left-0 right-0 z-50 h-16 border-b border-border
-        ${isModalOpen ? 'bg-white' : 'bg-white/95 backdrop-blur'}
-        `}
-        >
-            <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-
-                {/* LEFT */}
-                <div className="flex items-center gap-10">
-                    <AppLogo />
-
-                    {/* 👉 Navigation chỉ hiện ở Landing & chưa login */}
-                    {isLanding && <LandingNav />}
+    if (error) {
+        const errorMessage = handleError(error);
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-600 mb-4">{errorMessage}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-black text-white rounded-lg"
+                    >
+                        Tải lại
+                    </button>
                 </div>
-
-                {/* RIGHT */}
-                {user ? (
-                    <div ref={ref} className="relative">
-                        <button
-                            onClick={() => setMenuOpen(v => !v)}
-                            className="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-bgAlt transition"
-                        >
-                            {avatarUrl ? (
-                                <img
-                                    src={avatarUrl}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-semibold">
-                                    {displayName.charAt(0).toUpperCase()}
-                                </div>
-                            )}
-                            <span className="hidden sm:block text-sm font-medium text-primary max-w-[140px] truncate">
-                                {displayName}
-                            </span>
-                        </button>
-
-                        {/* DROPDOWN */}
-                        <div
-                            className={`absolute right-0 mt-2 w-52 bg-white border border-border
-                        rounded-xl shadow-card overflow-hidden transition
-                        ${menuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
-                        `}
-                        >
-                            <button
-                                disabled={isOnboarding}
-                                onClick={() => navigate(ROUTES.APP)}
-                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
-                            >
-                                Quản lý dự án
-                            </button>
-
-                            <button
-                                disabled={isOnboarding}
-                                onClick={() => navigate(ROUTES.PROFILE)}
-                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
-                            >
-                                Trang cá nhân
-                            </button>
-
-                            <button
-                                disabled={isOnboarding}
-                                onClick={() => navigate(ROUTES.SETTINGS)}
-                                className="w-full px-4 py-2.5 text-sm text-left hover:bg-bgAlt disabled:text-gray-400"
-                            >
-                                Cài đặt
-                            </button>
-
-                            <div className="border-t border-border my-1" />
-
-                            <button
-                                onClick={logout}
-                                className="w-full px-4 py-2.5 text-sm text-error hover:bg-red-50 text-left"
-                            >
-                                Đăng xuất
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate(ROUTES.LOGIN)}
-                            className="text-sm font-medium text-secondary hover:text-primary"
-                        >
-                            Đăng nhập
-                        </button>
-
-                        <button
-                            onClick={onSignupClick}
-                            className="bg-brand hover:bg-brandHover text-white px-4 py-2 rounded-full text-sm font-semibold"
-                        >
-                            Tạo trang miễn phí
-                        </button>
-                    </div>
-                )}
             </div>
-        </header>
-    );
+        );
+    }
+
+    if (!profile) {
+        return <SkeletonProfile />;
+    }
+
+    if (profile.role === 'creator') {
+        return <CreatorProfile profile={profile} />;
+    }
+
+    if (profile.role === 'brand') {
+        return <BrandProfile profile={profile} />;
+    }
+
+    return null;
 };
 
-export default AppHeader;
+export default ProfilePage;
+</file>
+
+<file path="src/shared/types.ts">
+import { Role as RoleEnum } from './constants/enums';
+
+export type Role = 'creator' | 'brand';
+export { RoleEnum };
+
+export type SocialLinks = Partial<{
+    tiktok: string;
+    instagram: string;
+    youtube: string;
+    facebook: string;
+    website: string;
+}>;
+
+export interface Profile {
+    id: string;
+    email?: string | null;
+    email_verified?: boolean | null;
+    role?: Role | null;
+    full_name?: string | null;
+    birth_year?: number | null;
+    city?: string | null;
+
+    avatar_url?: string | null;
+    phone?: string | null;
+    gender?: string | null;
+    marketing_opt_in?: boolean | null;
+
+    creator_type?: string | null;
+    platforms?: string[] | null;
+    goals?: string[] | null;
+    content_categories?: string[] | null;
+    experience_level?: string | null;
+    income_range?: string | null;
+    social_links?: SocialLinks | null;
+
+    company_name?: string | null;
+    company_domain?: string | null;
+    company_type?: string | null;
+    job_title?: string | null;
+    industry?: string | null;
+    team_size_range?: string | null;
+    budget_range?: string | null;
+    campaigns_per_month?: string | null;
+
+    onboarding_completed?: boolean | null;
+    has_password?: boolean | null;
+    created_at?: string;
+    updated_at?: string;
+}
+</file>
+
+<file path="src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.input {
+  @apply w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none;
+}
+
+:root {
+  /* Core Neutrals */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+
+  /* Text */
+  --text-primary: #101828;
+  --text-secondary: #667085;
+
+  /* Brand */
+  --brand-primary: #4F46E5;
+  --brand-soft-bg: #EEF2FF;
+
+  /* Semantic */
+  --success: #16A34A;
+  --error: #DC2626;
+
+  /* Borders */
+  --border-divider: #E4E7EC;
+
+  /* Deal Statuses */
+  --status-new: #EEF2FF;
+  --status-progress: #DBEAFE;
+  --status-awaiting: #FEF3C7;
+  --status-completed: #DCFCE7;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .rotate-y-n5 {
+    transform: rotateY(-5deg);
+  }
+
+  .rotate-x-5 {
+    transform: rotateX(5deg);
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 3s infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+</file>
+
+<file path="tsconfig.json">
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "useDefineForClassFields": true,
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "skipLibCheck": true,
+        /* Bundler mode */
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        /* Linting */
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        /* Alias for shared */
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ]
+        }
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "supabase"
+    ],
+    "references": [
+        {
+            "path": "./tsconfig.node.json"
+        }
+    ]
+}
 </file>
 
 <file path="src/features/auth/components/AuthWrapper.tsx">
@@ -6280,6 +6498,78 @@ const Signup = () => {
 export default Signup;
 </file>
 
+<file path="src/pages/onboarding/Onboarding.tsx">
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { useProfile } from '@/lib/queries/useProfile';
+import { ROUTES } from '@/shared/routes';
+import CreatorOnboarding from './CreatorOnboarding';
+import BrandOnboarding from './BrandOnboarding';
+
+/**
+ * Onboarding Router Component
+ * 
+ * Responsibilities:
+ * - Fetch user profile using React Query
+ * - Check if user has role
+ * - Route to appropriate onboarding form based on role
+ * - Show loading/error states
+ */
+const Onboarding = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    
+    const { data: profile, isLoading, error } = useProfile(user?.id);
+
+    // Redirect to role selection if no role
+    useEffect(() => {
+        if (!isLoading && profile && !profile.role) {
+            navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
+        }
+    }, [profile, isLoading, navigate]);
+
+    // Loading state
+    if (!user || isLoading) {
+        return (
+            <div className="flex justify-center py-20">
+                <div className="animate-spin h-8 w-8 border-b-2 border-black" />
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        console.error('Error loading profile:', error);
+        navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
+        return null;
+    }
+
+    // No profile or no role
+    if (!profile || !profile.role) {
+        return (
+            <div className="flex justify-center py-20">
+                <div className="animate-spin h-8 w-8 border-b-2 border-black" />
+            </div>
+        );
+    }
+
+    // Route to appropriate onboarding form
+    if (profile.role === 'creator') {
+        return <CreatorOnboarding profile={profile} />;
+    }
+
+    if (profile.role === 'brand') {
+        return <BrandOnboarding profile={profile} />;
+    }
+
+    // Fallback
+    return null;
+};
+
+export default Onboarding;
+</file>
+
 <file path="src/pages/onboarding/RoleSelection.tsx">
 import { useState } from 'react';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -6287,6 +6577,7 @@ import { ROUTES } from '../../shared/routes';
 import RoleSelectModal from '../../features/auth/components/RoleSelectModal';
 import type { Role } from '../../shared/types';
 import { updateProfile } from '../../lib/supabase/profile';
+import { hardRedirect } from '@/shared/navigation/hardRedirect';
 
 const RoleSelection = () => {
     const { user } = useAuth();
@@ -6299,7 +6590,7 @@ const RoleSelection = () => {
 
         try {
             await updateProfile(user.id, { role });
-            window.location.href = ROUTES.APP;
+            hardRedirect(ROUTES.APP);
 
         } catch (err) {
             console.error(err);
@@ -6327,237 +6618,10 @@ const RoleSelection = () => {
 export default RoleSelection;
 </file>
 
-<file path="src/pages/profile/Profile.tsx">
-import { useAuth } from '@/app/providers/AuthProvider';
-import { useProfile } from '@/lib/queries/useProfile';
-import { SkeletonProfile } from '@/components/ui/Skeleton';
-import { handleError } from '@/lib/errors/errorHandler';
-
-import CreatorProfile from './CreatorProfile';
-import BrandProfile from './BrandProfile';
-
-const ProfilePage = () => {
-    const { user } = useAuth();
-    const { data: profile, isLoading, error } = useProfile(user?.id);
-
-    if (!user || isLoading) {
-        return <SkeletonProfile />;
-    }
-
-    if (error) {
-        const errorMessage = handleError(error);
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-600 mb-4">{errorMessage}</p>
-                    <button 
-                        onClick={() => window.location.reload()}
-                        className="px-4 py-2 bg-black text-white rounded-lg"
-                    >
-                        Tải lại
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    if (!profile) {
-        return <SkeletonProfile />;
-    }
-
-    if (profile.role === 'creator') {
-        return <CreatorProfile profile={profile} />;
-    }
-
-    if (profile.role === 'brand') {
-        return <BrandProfile profile={profile} />;
-    }
-
-    return null;
-};
-
-export default ProfilePage;
-</file>
-
-<file path="src/shared/types.ts">
-import { Role as RoleEnum } from './constants/enums';
-
-export type Role = 'creator' | 'brand';
-export { RoleEnum };
-
-export type SocialLinks = Partial<{
-    tiktok: string;
-    instagram: string;
-    youtube: string;
-    facebook: string;
-    website: string;
-}>;
-
-export interface Profile {
-    id: string;
-    email?: string | null;
-    email_verified?: boolean | null;
-    role?: Role | null;
-    full_name?: string | null;
-    birth_year?: number | null;
-    city?: string | null;
-
-    avatar_url?: string | null;
-    phone?: string | null;
-    gender?: string | null;
-    marketing_opt_in?: boolean | null;
-
-    creator_type?: string | null;
-    platforms?: string[] | null;
-    goals?: string[] | null;
-    content_categories?: string[] | null;
-    experience_level?: string | null;
-    income_range?: string | null;
-    social_links?: SocialLinks | null;
-
-    company_name?: string | null;
-    company_domain?: string | null;
-    company_type?: string | null;
-    job_title?: string | null;
-    industry?: string | null;
-    team_size_range?: string | null;
-    budget_range?: string | null;
-    campaigns_per_month?: string | null;
-
-    onboarding_completed?: boolean | null;
-    has_password?: boolean | null;
-    created_at?: string;
-    updated_at?: string;
-}
-</file>
-
-<file path="src/index.css">
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.input {
-  @apply w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none;
-}
-
-:root {
-  /* Core Neutrals */
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #FAFAFA;
-
-  /* Text */
-  --text-primary: #101828;
-  --text-secondary: #667085;
-
-  /* Brand */
-  --brand-primary: #4F46E5;
-  --brand-soft-bg: #EEF2FF;
-
-  /* Semantic */
-  --success: #16A34A;
-  --error: #DC2626;
-
-  /* Borders */
-  --border-divider: #E4E7EC;
-
-  /* Deal Statuses */
-  --status-new: #EEF2FF;
-  --status-progress: #DBEAFE;
-  --status-awaiting: #FEF3C7;
-  --status-completed: #DCFCE7;
-}
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-@layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-
-  .rotate-y-n5 {
-    transform: rotateY(-5deg);
-  }
-
-  .rotate-x-5 {
-    transform: rotateX(5deg);
-  }
-
-  .animate-bounce-slow {
-    animation: bounce 3s infinite;
-  }
-
-  .animate-fade-in-up {
-    animation: fadeInUp 0.3s ease-out forwards;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
-</file>
-
-<file path="tsconfig.json">
-{
-    "compilerOptions": {
-        "target": "ES2020",
-        "useDefineForClassFields": true,
-        "lib": [
-            "ES2020",
-            "DOM",
-            "DOM.Iterable"
-        ],
-        "module": "ESNext",
-        "skipLibCheck": true,
-        /* Bundler mode */
-        "moduleResolution": "bundler",
-        "allowImportingTsExtensions": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "jsx": "react-jsx",
-        /* Linting */
-        "strict": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
-        /* Alias for shared */
-        "baseUrl": ".",
-        "paths": {
-            "@/*": [
-                "./src/*"
-            ]
-        }
-    },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "node_modules",
-        "supabase"
-    ],
-    "references": [
-        {
-            "path": "./tsconfig.node.json"
-        }
-    ]
-}
+<file path=".env.example">
+VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
+VITE_SITE_URL=http://localhost:5173
 </file>
 
 <file path="src/pages/auth/AuthCallback.tsx">
@@ -6565,6 +6629,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase/client';
 import { ROUTES } from '../../shared/routes';
+import type { Profile } from '@/shared/types';
 import {
     getProfile,
     upsertProfile,
@@ -6654,6 +6719,7 @@ const AuthCallback = () => {
                     email: user.email,
                     full_name: googleName,
                     avatar_url: googleAvatar,
+                    has_password: user.app_metadata?.provider === 'email',
                 });
             }
 
@@ -6661,7 +6727,14 @@ const AuthCallback = () => {
              * CASE 3: Có profile → update field còn thiếu
              */
             if (profile) {
-                const patch: Record<string, any> = {};
+                const patch: Partial<Profile> = {};
+
+                if (
+                    user.app_metadata?.provider === 'email' &&
+                    profile.has_password !== true
+                ) {
+                    patch.has_password = true;
+                }
 
                 if (!profile.full_name && googleName) {
                     patch.full_name = googleName;
@@ -6693,82 +6766,49 @@ const AuthCallback = () => {
 export default AuthCallback;
 </file>
 
-<file path="src/pages/onboarding/Onboarding.tsx">
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/providers/AuthProvider';
-import { useProfile } from '@/lib/queries/useProfile';
-import { ROUTES } from '@/shared/routes';
-import CreatorOnboarding from './CreatorOnboarding';
-import BrandOnboarding from './BrandOnboarding';
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-/**
- * Onboarding Router Component
- * 
- * Responsibilities:
- * - Fetch user profile using React Query
- * - Check if user has role
- * - Route to appropriate onboarding form based on role
- * - Show loading/error states
- */
-const Onboarding = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    
-    const { data: profile, isLoading, error } = useProfile(user?.id);
+# Node modules
+node_modules
+**/node_modules
 
-    // Redirect to role selection if no role
-    useEffect(() => {
-        if (!isLoading && profile && !profile.role) {
-            navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
-        }
-    }, [profile, isLoading, navigate]);
+# Build artifacts
+dist
+dist-ssr
+*.local
+out
+build
+coverage
 
-    // Loading state
-    if (!user || isLoading) {
-        return (
-            <div className="flex justify-center py-20">
-                <div className="animate-spin h-8 w-8 border-b-2 border-black" />
-            </div>
-        );
-    }
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*.njsproj
+*.sln
+*.sw?
 
-    // Error state
-    if (error) {
-        console.error('Error loading profile:', error);
-        navigate(ROUTES.ONBOARDING_ROLE, { replace: true });
-        return null;
-    }
+# Typescript
+*.tsbuildinfo
 
-    // No profile or no role
-    if (!profile || !profile.role) {
-        return (
-            <div className="flex justify-center py-20">
-                <div className="animate-spin h-8 w-8 border-b-2 border-black" />
-            </div>
-        );
-    }
+# Env
+.env
+.env.*
+!.env.example
 
-    // Route to appropriate onboarding form
-    if (profile.role === 'creator') {
-        return <CreatorOnboarding profile={profile} />;
-    }
-
-    if (profile.role === 'brand') {
-        return <BrandOnboarding profile={profile} />;
-    }
-
-    // Fallback
-    return null;
-};
-
-export default Onboarding;
-</file>
-
-<file path=".env.example">
-VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
-VITE_SITE_URL=http://localhost:5173
+# Generator
+repomix.md
 </file>
 
 <file path="src/pages/onboarding/BrandOnboarding.tsx">
@@ -6783,6 +6823,7 @@ import AvatarUploader from '@/components/AvatarUploader';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { handleError } from '@/lib/errors/errorHandler';
 import { AppError, ErrorCode } from '@/lib/errors/AppError';
+import { hardRedirect } from '@/shared/navigation/hardRedirect';
 
 /* ================== OPTIONS ================== */
 
@@ -6886,7 +6927,7 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
             // Invalidate cache để AppGate đọc dữ liệu mới
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
             // Điều hướng theo flow hiện tại: /app để AppGate quyết định
-            window.location.href = ROUTES.APP;
+            hardRedirect(ROUTES.APP);
         } catch (err) {
             const appError = new AppError(
                 'Failed to save onboarding data',
@@ -7130,6 +7171,7 @@ import AvatarUploader from '@/components/AvatarUploader';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { handleError } from '@/lib/errors/errorHandler';
 import { AppError, ErrorCode } from '@/lib/errors/AppError';
+import { hardRedirect } from '@/shared/navigation/hardRedirect';
 
 /* ================== OPTIONS ================== */
 
@@ -7247,7 +7289,7 @@ const CreatorOnboarding = ({ profile }: CreatorOnboardingProps) => {
             // Invalidate cache để AppGate đọc dữ liệu mới
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
             // Điều hướng theo flow hiện tại: /app để AppGate quyết định
-            window.location.href = ROUTES.APP;
+            hardRedirect(ROUTES.APP);
         } catch (err) {
             const appError = new AppError(
                 'Failed to save onboarding data',
@@ -7524,7 +7566,7 @@ export default CreatorOnboarding;
 </file>
 
 <file path="src/pages/setting/Settings.tsx">
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/lib/queries/useProfile';
 import { supabase } from '@/lib/supabase/client';
@@ -7534,8 +7576,15 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const SettingsPage = () => {
     const { user, session } = useAuth();
-    const { data: profile, isLoading } = useProfile(user?.id);
+    const { data: profile, isLoading, refetch } = useProfile(user?.id);
     const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
+
+    useEffect(() => {
+        if (user?.id) {
+            refetch();
+        }
+    }, [user?.id, refetch]);
+
 
     if (isLoading) {
         return (
@@ -7591,7 +7640,7 @@ const SettingsPage = () => {
                         )}
 
                         {activeTab === 'security' && (
-                            <SecurityTab />
+                            <SecurityTab profile={profile} />
                         )}
                     </main>
                 </div>
@@ -7658,11 +7707,10 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 /* ================= SECURITY TAB ================= */
 
-const SecurityTab = () => {
+const SecurityTab = ({ profile }: { profile: any }) => {
     const { session } = useAuth();
     const queryClient = useQueryClient();
-    const identities = session?.user?.identities ?? [];
-    const hasPassword = identities.some(identity => identity.provider === 'email');
+    const hasPassword = profile?.has_password === true;
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -7828,51 +7876,6 @@ const SecurityTab = () => {
 export default SettingsPage;
 </file>
 
-<file path=".gitignore">
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Node modules
-node_modules
-**/node_modules
-
-# Build artifacts
-dist
-dist-ssr
-*.local
-out
-build
-coverage
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*.njsproj
-*.sln
-*.sw?
-
-# Typescript
-*.tsbuildinfo
-
-# Env
-.env
-.env.*
-!.env.example
-
-# Generator
-repomix.md
-</file>
-
 <file path="src/pages/dashboard/AppGate.tsx">
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7881,11 +7884,12 @@ import { useProfile, useUpdateProfile } from '@/lib/queries/useProfile';
 import type { Role } from '@/shared/types';
 import { ROUTES } from '@/shared/routes';
 import { supabase } from '@/lib/supabase/client';
+import { isEmailNotVerified } from '@/shared/auth/email';
 
 const AppGate = () => {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
-    const [checking, setChecking] = useState(true);
+    const [isCheckingGate, setIsCheckingGate] = useState(true);
 
     const { data: profile, isLoading, refetch } = useProfile(user?.id);
     const updateProfileMutation = useUpdateProfile(user?.id || '');
@@ -7897,7 +7901,7 @@ const AppGate = () => {
             if (authLoading) return;
 
             if (!user) {
-                setChecking(false);
+                setIsCheckingGate(false);
                 return;
             }
 
@@ -7905,10 +7909,7 @@ const AppGate = () => {
 
             try {
                 // 1. Email/password chưa verify
-                if (
-                    user.app_metadata?.provider === 'email' &&
-                    !user.email_confirmed_at
-                ) {
+                if (isEmailNotVerified(user)) {
                     navigate(ROUTES.VERIFY_EMAIL_PENDING, {
                         replace: true,
                         state: {
@@ -7938,8 +7939,23 @@ const AppGate = () => {
 
                 if (!currentProfile) {
                     // defensive guard – tránh TS + logic lỗi
-                    setChecking(false);
+                    setIsCheckingGate(false);
                     return;
+                }
+
+                // 🔒 Ensure has_password for email users (one-time fix)
+                if (
+                    user.app_metadata?.provider === 'email' &&
+                    currentProfile.has_password !== true
+                ) {
+                    await updateProfileMutation.mutateAsync({
+                        has_password: true,
+                    });
+
+                    currentProfile = {
+                        ...currentProfile,
+                        has_password: true,
+                    };
                 }
 
                 // 3. Apply pendingRole (Google signup / pre-select)
@@ -7984,7 +8000,7 @@ const AppGate = () => {
                 console.error('[AppGate Error]', err);
                 navigate(ROUTES.ONBOARDING, { replace: true });
             } finally {
-                if (!cancelled) setChecking(false);
+                if (!cancelled) setIsCheckingGate(false);
             }
         };
 
@@ -7995,7 +8011,7 @@ const AppGate = () => {
         };
     }, [user, authLoading, isLoading, profile, refetch, updateProfileMutation, navigate]);
 
-    if (authLoading || checking || isLoading) {
+    if (authLoading || isCheckingGate || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />

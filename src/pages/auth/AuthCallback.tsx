@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase/client';
 import { ROUTES } from '../../shared/routes';
+import type { Profile } from '@/shared/types';
 import {
     getProfile,
     upsertProfile,
@@ -91,6 +92,7 @@ const AuthCallback = () => {
                     email: user.email,
                     full_name: googleName,
                     avatar_url: googleAvatar,
+                    has_password: user.app_metadata?.provider === 'email',
                 });
             }
 
@@ -98,7 +100,14 @@ const AuthCallback = () => {
              * CASE 3: Có profile → update field còn thiếu
              */
             if (profile) {
-                const patch: Record<string, any> = {};
+                const patch: Partial<Profile> = {};
+
+                if (
+                    user.app_metadata?.provider === 'email' &&
+                    profile.has_password !== true
+                ) {
+                    patch.has_password = true;
+                }
 
                 if (!profile.full_name && googleName) {
                     patch.full_name = googleName;

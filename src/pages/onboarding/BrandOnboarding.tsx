@@ -9,6 +9,7 @@ import AvatarUploader from '@/components/AvatarUploader';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { handleError } from '@/lib/errors/errorHandler';
 import { AppError, ErrorCode } from '@/lib/errors/AppError';
+import { hardRedirect } from '@/shared/navigation/hardRedirect';
 
 /* ================== OPTIONS ================== */
 
@@ -112,7 +113,7 @@ const BrandOnboarding = ({ profile }: BrandOnboardingProps) => {
             // Invalidate cache để AppGate đọc dữ liệu mới
             queryClient.invalidateQueries({ queryKey: profileKeys.detail(user!.id) });
             // Điều hướng theo flow hiện tại: /app để AppGate quyết định
-            window.location.href = ROUTES.APP;
+            hardRedirect(ROUTES.APP);
         } catch (err) {
             const appError = new AppError(
                 'Failed to save onboarding data',
