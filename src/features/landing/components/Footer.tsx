@@ -62,7 +62,6 @@ const Footer = () => {
                     <div className="col-span-1">
                         <h4 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">Công ty</h4>
                         <ul className="space-y-3 text-sm text-gray-500">
-                            <li><a href="#" className="hover:text-brand transition-colors">Về Alino</a></li>
                             <li><a href="#" className="hover:text-brand transition-colors">Tuyển dụng</a></li>
                             <li><a href="#" className="hover:text-brand transition-colors">Blog</a></li>
                             <li><a href="#" className="hover:text-brand transition-colors">Đối tác</a></li>

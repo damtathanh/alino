@@ -14,161 +14,283 @@ type EventItem = {
 const EVENTS: EventItem[] = [
   {
     title: "Webinar: Tối ưu workflow creator campaign (brief → deliver)",
-    date: "2026-01-10",
+    date: "10 Jan 2026",
     type: "Webinar",
     location: "Online",
-    desc: "Chia sẻ template brief + checklist nghiệm thu để giảm sai sót vận hành.",
+    desc: "Chia sẻ template brief và checklist nghiệm thu giúp giảm sai sót vận hành.",
     status: "upcoming",
   },
   {
     title: "Workshop: Đo lường campaign creator cho team marketing",
-    date: "2026-01-20",
+    date: "20 Jan 2026",
     type: "Workshop",
     location: "HCM (TBA)",
-    desc: "Cách set KPI, tracking và báo cáo kết quả dễ hiểu cho stakeholder.",
+    desc: "Thực hành set KPI, tracking và báo cáo cho stakeholder.",
     status: "upcoming",
   },
   {
     title: "Community meetup: Creator & Brand matching night",
-    date: "2025-12-05",
+    date: "05 Dec 2025",
     type: "Community",
     location: "Hà Nội",
-    desc: "Kết nối nhanh, chia sẻ case study và networking.",
+    desc: "Kết nối, chia sẻ case study và networking.",
     status: "past",
   },
 ];
 
-function Badge({ children }: { children: string }) {
+function EventBadge({ children }: { children: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-700">
+    <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-600 px-3 py-1 text-xs font-semibold">
       {children}
     </span>
   );
 }
 
 export default function Events() {
-  const upcoming = EVENTS.filter((e) => e.status === "upcoming");
-  const past = EVENTS.filter((e) => e.status === "past");
+  const upcoming = EVENTS.filter(e => e.status === "upcoming");
+  const past = EVENTS.filter(e => e.status === "past");
 
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Sự kiện")}</title>
+        <title>{buildTitle("Sự kiện & học hỏi")}</title>
         <meta
           name="description"
-          content="Cơ hội học hỏi cho Brand và Creator: webinar, workshop, cộng đồng."
+          content="Webinar, workshop và community event giúp Brand & Creator nâng chuẩn vận hành Influencer Marketing."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8 flex items-start justify-between gap-6">
-            <div>
-              <span className="inline-block text-sm font-semibold text-indigo-600">Insights</span>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">Sự kiện & học hỏi</h1>
-              <p className="mt-3 text-gray-600">
-                Sự kiện giúp đội ngũ cập nhật tư duy và quy trình. Chọn đúng nội dung, giá trị lớn hơn thời gian bỏ ra.
+      <div className="bg-white overflow-hidden">
+
+        {/* ================= HERO ================= */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+          <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            <div className="animate-fade-in-up">
+              <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+                Insights & Community
+              </span>
+
+              <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+                Học hỏi từ <br />
+                thực tiễn <br />
+                triển khai
+              </h1>
+
+              <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+                Webinar, workshop và community event
+                giúp Brand & Creator cập nhật tư duy,
+                chuẩn hoá quy trình và kết nối đúng người.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
-              <Link className="underline" to="/trends">
-                ← Xu hướng
-              </Link>
-              <Link className="underline" to="/">
-                Trang chủ
-              </Link>
+            {/* Hero Visual – Event Format */}
+            <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
+
+                <div className="text-sm font-semibold text-indigo-600">
+                  CẤU TRÚC SỰ KIỆN
+                </div>
+
+                <div className="space-y-4">
+
+                  {/* Session 1 */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                      01
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Chia sẻ case thực tế
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Workflow • KPI • Deliverables
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Session 2 */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                      02
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Thực hành & phân tích
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Brief • Checklist • Báo cáo
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Session 3 */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                      03
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Kết nối & thảo luận
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Brand • Creator • Agency
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className="pt-3 text-xs text-gray-500">
+                  Nội dung tập trung vào vận hành & triển khai thực tế
+                </div>
+
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Why events matter */}
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Vì sao sự kiện quan trọng</h2>
-            <ul className="mt-3 space-y-2 text-sm text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Cập nhật xu hướng, cách làm mới và case thực tế.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tối ưu quy trình hiện tại thay vì “đập đi xây lại”.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Kết nối đồng nghiệp, hợp tác để nâng chuẩn vận hành.</li>
-            </ul>
-          </section>
+        {/* ================= WHY EVENTS ================= */}
+        <section className="py-28 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900 animate-fade-in-up">
+              Vì sao chúng tôi tổ chức sự kiện
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 max-w-3xl mx-auto animate-fade-in-up">
+              Influencer Marketing thay đổi nhanh,
+              nhưng quy trình và chuẩn mực không thể học qua lý thuyết.
+            </p>
 
-          {/* How to choose */}
-          <section className="mt-8 rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Cách chọn sự kiện phù hợp</h2>
-            <ul className="mt-3 space-y-2 text-sm text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Rõ mục tiêu học (ví dụ: chuẩn hoá brief, đo lường chiến dịch).</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Diễn giả có kinh nghiệm thực thi, không chỉ lý thuyết.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tài liệu kèm theo (template, checklist, guideline).</li>
-            </ul>
-          </section>
-
-          {/* Categories */}
-          <section className="mt-8 rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Nhóm sự kiện điển hình</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Webinar</div>
-                <div className="mt-1 text-sm text-gray-700">Tập trung vào một chủ đề hẹp, thời lượng ngắn, cập nhật nhanh.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Workshop</div>
-                <div className="mt-1 text-sm text-gray-700">Thực hành theo template, có bài tập/feedback.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Community</div>
-                <div className="mt-1 text-sm text-gray-700">Kết nối, chia sẻ case study, khai thác cơ hội hợp tác.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Roundtable</div>
-                <div className="mt-1 text-sm text-gray-700">Thảo luận mở cho nhóm nhỏ về quy trình và tiêu chuẩn.</div>
-              </div>
+            <div className="mt-14 grid md:grid-cols-3 gap-10">
+              {[
+                {
+                  title: "Chia sẻ case thực tế",
+                  desc: "Không nói lý thuyết suông, tập trung vào bài học triển khai."
+                },
+                {
+                  title: "Tối ưu quy trình",
+                  desc: "Giữ những gì đang tốt và cải thiện điểm nghẽn."
+                },
+                {
+                  title: "Kết nối cộng đồng",
+                  desc: "Tạo cơ hội hợp tác giữa Brand, Creator và Agency."
+                }
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="bg-white border border-gray-200 rounded-3xl p-8 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <h3 className="text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-4 text-gray-600">{item.desc}</p>
+                </div>
+              ))}
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* Listings */}
-          <div className="mt-10">
-            <div className="text-sm text-gray-500">Sắp diễn ra</div>
-            <div className="mt-3 space-y-4">
-              {upcoming.map((e) => (
-                <div key={e.title} className="rounded-2xl border border-gray-200 p-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="font-semibold">{e.title}</div>
-                    <Badge>{e.type}</Badge>
+        {/* ================= UPCOMING ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900 animate-fade-in-up">
+              Sắp diễn ra
+            </h2>
+
+            <div className="mt-12 grid md:grid-cols-2 gap-10">
+              {upcoming.map(e => (
+                <div
+                  key={e.title}
+                  className="group rounded-3xl border border-gray-200 p-8 hover:shadow-xl transition animate-fade-in-up"
+                >
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <EventBadge>{e.type}</EventBadge>
                     <span className="text-sm text-gray-500">{e.date}</span>
                     <span className="text-sm text-gray-500">• {e.location}</span>
                   </div>
-                  <p className="mt-3 text-sm text-gray-600 leading-relaxed">{e.desc}</p>
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <button className="px-5 py-3 rounded-full bg-black text-white">Đăng ký tham gia</button>
-                    <button className="px-5 py-3 rounded-full border border-gray-200">Nhắc tôi</button>
+
+                  <h3 className="mt-4 text-2xl font-semibold group-hover:text-indigo-600 transition">
+                    {e.title}
+                  </h3>
+
+                  <p className="mt-4 text-gray-600 leading-relaxed">
+                    {e.desc}
+                  </p>
+
+                  <div className="mt-8 flex gap-4">
+                    <button className="px-6 py-3 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-500 transition">
+                      Đăng ký tham gia
+                    </button>
+                    <button className="px-6 py-3 rounded-full border border-gray-300 hover:bg-gray-50 transition">
+                      Nhắc tôi
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="mt-12">
-            <div className="text-sm text-gray-500">Đã diễn ra</div>
-            <div className="mt-3 space-y-4">
-              {past.map((e) => (
-                <div key={e.title} className="rounded-2xl border border-gray-200 p-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="font-semibold">{e.title}</div>
-                    <Badge>{e.type}</Badge>
-                    <span className="text-sm text-gray-500">{e.date}</span>
-                    <span className="text-sm text-gray-500">• {e.location}</span>
+        {/* ================= PAST EVENTS ================= */}
+        <section className="py-32 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900 animate-fade-in-up">
+              Sự kiện đã diễn ra
+            </h2>
+
+            <div className="mt-12 grid md:grid-cols-3 gap-10">
+              {past.map(e => (
+                <div
+                  key={e.title}
+                  className="rounded-3xl border border-gray-200 p-6 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <div className="text-sm text-gray-500">
+                    {e.date} • {e.location}
                   </div>
-                  <p className="mt-3 text-sm text-gray-600 leading-relaxed">{e.desc}</p>
-                  <div className="mt-4 text-sm underline">Xem recap →</div>
+
+                  <h3 className="mt-3 font-semibold text-gray-900">
+                    {e.title}
+                  </h3>
+
+                  <p className="mt-3 text-gray-600">
+                    {e.desc}
+                  </p>
+
+                  <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline">
+                    Xem recap →
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="mt-10 flex gap-3">
-            <Link to="/news" className="px-5 py-3 rounded-full border border-gray-200">Xem Tin tức</Link>
-            <Link to="/blog" className="px-5 py-3 rounded-full border border-gray-200">Đọc Blog</Link>
+        {/* ================= CTA ================= */}
+        <section className="py-36 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+            Tham gia cộng đồng <br />
+            xây chuẩn Influencer Marketing
+          </h2>
+
+          <p className="mt-6 text-xl text-white/80">
+            Theo dõi Alino để không bỏ lỡ webinar,
+            workshop và community event tiếp theo.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4">
+            <Link
+              to="/blog"
+              className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+            >
+              Đọc Blog
+            </Link>
+            <Link
+              to="/features"
+              className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+            >
+              Xem sản phẩm
+            </Link>
           </div>
-        </div>
+        </section>
+
       </div>
     </>
   );

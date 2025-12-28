@@ -112,7 +112,6 @@ src/
     siteUrl.ts
   pages/
     about/
-      AboutAlino.tsx
       AboutUs.tsx
       Careers.tsx
       Partners.tsx
@@ -138,7 +137,6 @@ src/
       Onboarding.tsx
       RoleSelection.tsx
     product/
-      Features.tsx
       ForBrands.tsx
       ForCreators.tsx
       Pricing.tsx
@@ -186,24 +184,6 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
-
-<file path="src/shared/auth/email.ts">
-import type { User } from '@supabase/supabase-js';
-
-export const isEmailNotVerified = (user: User | null) => {
-    return !!(
-        user &&
-        user.app_metadata?.provider === 'email' &&
-        !user.email_confirmed_at
-    );
-};
-</file>
-
-<file path="src/shared/navigation/hardRedirect.ts">
-export const hardRedirect = (to: string) => {
-    window.location.href = to;
-};
-</file>
 
 <file path="src/auth/.gitkeep">
 # This folder is reserved for future auth-related modules
@@ -1775,6 +1755,18 @@ const SectionCard = ({ title, description, children }: Props) => {
 export default SectionCard;
 </file>
 
+<file path="src/shared/auth/email.ts">
+import type { User } from '@supabase/supabase-js';
+
+export const isEmailNotVerified = (user: User | null) => {
+    return !!(
+        user &&
+        user.app_metadata?.provider === 'email' &&
+        !user.email_confirmed_at
+    );
+};
+</file>
+
 <file path="src/shared/constants/enums.ts">
 /**
  * Enums and Constants
@@ -1868,6 +1860,12 @@ export const TEAM_SIZES = [
     '51–100',
     '100+',
 ];
+</file>
+
+<file path="src/shared/navigation/hardRedirect.ts">
+export const hardRedirect = (to: string) => {
+    window.location.href = to;
+};
 </file>
 
 <file path="src/seo.ts">
@@ -2401,7 +2399,6 @@ const NAV_ITEMS: NavGroup[] = [
     {
         label: "Về chúng tôi", to: "/about",
         items: [
-            { label: "Về Alino", to: "/about-alino" },
             { label: "Đối tác", to: "/partners" },
             { label: "Tuyển dụng", to: "/careers" },
         ],
@@ -2409,7 +2406,6 @@ const NAV_ITEMS: NavGroup[] = [
     {
         label: "Sản phẩm", to: "/product",
         items: [
-            { label: "Tính năng", to: "/features" },
             { label: "Bảng giá", to: "/pricing" },
             { label: "Cho Creators", to: "/creators" },
             { label: "Cho Brands", to: "/brands" },
@@ -2849,7 +2845,6 @@ const Footer = () => {
                     <div className="col-span-1">
                         <h4 className="font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">Công ty</h4>
                         <ul className="space-y-3 text-sm text-gray-500">
-                            <li><a href="#" className="hover:text-brand transition-colors">Về Alino</a></li>
                             <li><a href="#" className="hover:text-brand transition-colors">Tuyển dụng</a></li>
                             <li><a href="#" className="hover:text-brand transition-colors">Blog</a></li>
                             <li><a href="#" className="hover:text-brand transition-colors">Đối tác</a></li>
@@ -3769,77 +3764,6 @@ export const SignupForm = () => {
 };
 </file>
 
-<file path="src/pages/about/AboutAlino.tsx">
-import { Helmet } from "react-helmet-async";
-import { buildTitle } from "../../seo";
-
-export default function AboutAlino() {
-  return (
-    <>
-      <Helmet>
-        <title>{buildTitle("Về Alino")}</title>
-        <meta name="description" content="Cách Alino chuẩn hoá quy trình Brand–Creator để làm việc rõ ràng, minh bạch và hiệu quả." />
-      </Helmet>
-
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-10">
-            <span className="inline-block text-sm font-semibold text-indigo-600">Sản phẩm</span>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight">Về Alino</h1>
-            <p className="mt-4 text-gray-600 leading-relaxed">
-              Alino giúp chuẩn hoá quy trình làm việc giữa Brand và Creator: từ hồ sơ, brief, trao đổi đến nghiệm thu.
-              Mục tiêu là giảm ma sát giao tiếp, thống nhất kỳ vọng và đo lường được tác động thực tế.
-            </p>
-          </div>
-
-          {/* Problem / Approach */}
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Vấn đề thường gặp</h2>
-              <ul className="mt-4 space-y-3 text-gray-600">
-                <li className="flex gap-2"><span className="mt-2 h-2 w-2 rounded-full bg-indigo-600"/>Brief thiếu hoặc thay đổi nhiều, khó thống nhất kỳ vọng.</li>
-                <li className="flex gap-2"><span className="mt-2 h-2 w-2 rounded-full bg-indigo-600"/>Tiến độ và phạm vi không tập trung, dễ lệch chất lượng.</li>
-                <li className="flex gap-2"><span className="mt-2 h-2 w-2 rounded-full bg-indigo-600"/>Nghiệm thu mơ hồ, khó đo lường tác động.</li>
-              </ul>
-            </section>
-
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Cách tiếp cận của Alino</h2>
-              <ul className="mt-4 space-y-3 text-gray-600">
-                <li className="flex gap-2"><span className="mt-2 h-2 w-2 rounded-full bg-indigo-600"/>Chuẩn hoá thông tin ngay từ đầu: hồ sơ rõ ràng, brief có cấu trúc.</li>
-                <li className="flex gap-2"><span className="mt-2 h-2 w-2 rounded-full bg-indigo-600"/>Một nơi để làm việc: theo dõi tiến độ, trao đổi, nghiệm thu.</li>
-                <li className="flex gap-2"><span className="mt-2 h-2 w-2 rounded-full bg-indigo-600"/>Tập trung chất lượng nội dung và mục tiêu truyền thông cụ thể.</li>
-              </ul>
-            </section>
-          </div>
-
-          {/* Commitment */}
-          <div className="mt-12 border-t border-indigo-50 pt-10">
-            <h2 className="text-lg font-semibold text-gray-900">Cam kết trải nghiệm</h2>
-            <p className="mt-3 text-gray-600">Ưu tiên sự rõ ràng và tính chuyên nghiệp. Tối giản luồng làm việc để đội ngũ thực thi nhanh và đúng.</p>
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Đơn giản</div>
-                <div className="mt-1 text-sm text-gray-700">Ít thao tác, rõ bước, giảm sai lệch kỳ vọng.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Tin cậy</div>
-                <div className="mt-1 text-sm text-gray-700">Hồ sơ, trao đổi, nghiệm thu tập trung và minh bạch.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Hiệu quả</div>
-                <div className="mt-1 text-sm text-gray-700">Tối ưu cho kết quả thay vì chỉ số hư danh.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-</file>
-
 <file path="src/pages/about/AboutUs.tsx">
 import { Helmet } from "react-helmet-async";
 import { buildTitle } from "../../seo";
@@ -3848,74 +3772,120 @@ export default function AboutUs() {
   return (
     <>
       <Helmet>
-        <title>{buildTitle("About")}</title>
+        <title>{buildTitle("Về chúng tôi")}</title>
         <meta
           name="description"
-          content="Alino giúp brands và creators làm việc rõ ràng, chuyên nghiệp và đo lường được kết quả."
+          content="Alino – nền tảng hợp tác chuẩn hoá quy trình cho Brand & Creator, minh bạch, rõ ràng và đo lường được."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-10">
-            <span className="inline-block text-sm font-semibold text-indigo-600">Về chúng tôi</span>
-            <h1 className="mt-2 text-5xl font-extrabold tracking-tight">Alino – Nền tảng kết nối Brand và Creator</h1>
-            <p className="mt-4 text-gray-600 leading-relaxed">
-              Alino được xây dựng cho thị trường Việt Nam, giúp đội ngũ marketing và các nhà sáng tạo
-              hợp tác hiệu quả hơn: rõ ràng về mục tiêu, minh bạch về phạm vi công việc, đo lường được
-              tác động. Chúng tôi tập trung vào thực thi, thay vì ồn ào về kênh và định dạng.
+      <div className="bg-white text-gray-900 overflow-hidden">
+
+        {/* ===== HERO ===== */}
+        <section className="pt-36 pb-24">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h1 className="text-6xl lg:text-7xl font-extrabold tracking-tight leading-tight">
+              Nền tảng vận hành <br />
+              Influencer Marketing <br />
+              dành cho Brand & Creator
+            </h1>
+            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
+              Alino giúp hai bên làm việc cùng nhau một cách rõ ràng, minh bạch
+              và đo lường được ROI của mỗi chiến dịch.
             </p>
           </div>
+        </section>
 
-          {/* Two-column: For Brands / For Creators */}
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start">
-            <section>
-              <h2 className="text-xl font-semibold text-gray-900">Dành cho Brand</h2>
-              <p className="mt-3 text-gray-600">
-                Alino giúp đội marketing xác định nhu cầu, tìm kiếm Creator phù hợp, quản lý chiến dịch và theo dõi kết quả.
-                Mục tiêu là rút ngắn thời gian chuẩn bị, giảm sai lệch kỳ vọng, và tăng tỷ lệ hoàn thành đúng chất lượng.
+        {/* ===== MISSION & VISION ===== */}
+        <section className="py-24 bg-indigo-50/30">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20">
+            <div className="space-y-6">
+              <h2 className="text-4xl font-bold tracking-tight">
+                Sứ mệnh của chúng tôi
+              </h2>
+              <p className="text-lg text-gray-700">
+                Trong một thị trường Influencer Marketing đang bùng nổ, nhưng thiếu
+                chuẩn hoá trong cách làm việc, chúng tôi xây dựng Alino để giải quyết
+                những rào cản lớn nhất giữa Brand và Creator.
               </p>
-              <ul className="mt-4 space-y-2 text-gray-600">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Quy trình rõ ràng từ brief đến nghiệm thu.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Theo dõi tiến độ, kiểm soát phạm vi công việc.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tập trung vào kết quả thay vì chỉ số hư danh.</li>
-              </ul>
-            </section>
+            </div>
 
-            <section>
-              <h2 className="text-xl font-semibold text-gray-900">Dành cho Creator</h2>
-              <p className="mt-3 text-gray-600">
-                Alino hỗ trợ Creator quản lý hồ sơ, làm việc có cấu trúc với Brand, và thể hiện giá trị lao động sáng tạo một cách
-                chuyên nghiệp. Công việc rõ ràng hơn, giao tiếp ít ma sát, và tập trung vào chất lượng nội dung.
+            <div className="space-y-6">
+              <h2 className="text-4xl font-bold tracking-tight">
+                Tầm nhìn dài hạn
+              </h2>
+              <p className="text-lg text-gray-700">
+                Trở thành nền tảng vận hành tiêu chuẩn cho Influencer Marketing,
+                nơi các thương hiệu và người sáng tạo có thể cộng tác hiệu quả,
+                minh bạch và bền vững.
               </p>
-              <ul className="mt-4 space-y-2 text-gray-600">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Hồ sơ nhất quán, dễ hiểu, tập trung vào năng lực.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Quy trình làm việc minh bạch; ít đổi brief phút cuối.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tích lũy uy tín qua hợp tác chất lượng.</li>
-              </ul>
-            </section>
-          </div>
-
-          {/* Principles */}
-          <div className="mt-12 border-t border-indigo-50 pt-10">
-            <h2 className="text-xl font-semibold text-gray-900">Nguyên tắc sản phẩm</h2>
-            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="rounded-2xl border border-gray-200 p-6">
-                <h3 className="text-base font-semibold text-indigo-600">Rõ ràng</h3>
-                <p className="mt-2 text-sm text-gray-600">Mỗi bước đều có mục đích và đầu ra cụ thể. Ít lựa chọn hơn, chất lượng cao hơn.</p>
-              </div>
-              <div className="rounded-2xl border border-gray-200 p-6">
-                <h3 className="text-base font-semibold text-indigo-600">Minh bạch</h3>
-                <p className="mt-2 text-sm text-gray-600">Kỳ vọng, phạm vi, tiến độ và nghiệm thu được ghi nhận rõ ràng để tránh sai lệch.</p>
-              </div>
-              <div className="rounded-2xl border border-gray-200 p-6">
-                <h3 className="text-base font-semibold text-indigo-600">Tập trung kết quả</h3>
-                <p className="mt-2 text-sm text-gray-600">Ưu tiên tác động thực tế lên mục tiêu truyền thông, thay vì chỉ số bề nổi.</p>
-              </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* ===== CORE TEAM ===== */}
+        <section className="py-24">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold text-center tracking-tight">
+              Đội ngũ dẫn dắt
+            </h2>
+            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
+              {[
+                {
+                  name: "Nguyen Van A",
+                  role: "Founder & CEO",
+                  bio: "Hơn 10 năm kinh nghiệm trong marketing và xây dựng hệ thống hợp tác giữa Brand & Creator."
+                },
+                {
+                  name: "Tran Thi B",
+                  role: "Head of Product",
+                  bio: "Định hình trải nghiệm người dùng và logic vận hành sản phẩm."
+                },
+                {
+                  name: "Le Van C",
+                  role: "Head of Engineering",
+                  bio: "Chịu trách nhiệm xây dựng nền tảng kỹ thuật vững chắc và mở rộng."
+                }
+              ].map((p, i) => (
+                <div key={i} className="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition">
+                  <div className="h-32 w-32 bg-indigo-100 rounded-full mx-auto" />
+                  <div className="mt-4 text-center">
+                    <h3 className="text-xl font-semibold">{p.name}</h3>
+                    <p className="mt-1 text-sm text-indigo-600">{p.role}</p>
+                    <p className="mt-3 text-gray-700">{p.bio}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== WHY ALINO ===== */}
+        <section className="py-24 bg-indigo-50/40">
+          <div className="max-w-5xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight">
+              Tại sao Alino?
+            </h2>
+            <p className="mt-6 text-lg text-gray-600 max-w-3xl mx-auto">
+              Thay vì làm việc rời rạc qua nhiều kênh, Alino cung cấp một luồng
+              vận hành tập trung cho tất cả các bước của chiến dịch Influencer
+              Marketing — từ brief tới nghiệm thu và đánh giá kết quả.
+            </p>
+          </div>
+        </section>
+
+        {/* ===== CTA ===== */}
+        <section className="py-24 text-center">
+          <h2 className="text-5xl font-extrabold tracking-tight">
+            Cùng thúc đẩy chuẩn mực Influencer Marketing
+          </h2>
+          <p className="mt-6 text-xl text-gray-600">
+            Dành cho Brand, Creator và các đối tác đồng hành dài hạn.
+          </p>
+          <div className="mt-10 inline-flex px-10 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:scale-105 transition">
+            Bắt đầu với Alino
+          </div>
+        </section>
       </div>
     </>
   );
@@ -3931,64 +3901,204 @@ export default function Careers() {
     <>
       <Helmet>
         <title>{buildTitle("Careers")}</title>
-        <meta name="description" content="Tuyển dụng tại Alino." />
+        <meta
+          name="description"
+          content="Gia nhập Alino — chúng tôi xây dựng nền tảng vận hành Influencer Marketing với tư duy sản phẩm và chất lượng cao."
+        />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8">
-            <span className="inline-block text-sm font-semibold text-indigo-600">Tuyển dụng</span>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight">Cùng xây dựng trải nghiệm hợp tác chuyên nghiệp</h1>
-            <p className="mt-5 text-gray-600 leading-relaxed">
-              Chúng tôi tìm kiếm những người nghiêm túc với sản phẩm, giao tiếp rõ ràng và có trách nhiệm với chất lượng công việc.
-              Nhịp làm việc gọn, ưu tiên kết quả và tính kỷ luật.
+      <div className="bg-white text-gray-900 overflow-hidden">
+
+        {/* HERO */}
+        <section className="pt-36 pb-24 text-center">
+          <div className="max-w-4xl mx-auto px-6 animate-fade-in-up">
+            <h1 className="text-6xl lg:text-7xl font-extrabold tracking-tight">
+              Gia nhập Alino <br /> để xây dựng niềm tin <br /> trong Influencer Marketing
+            </h1>
+            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Chúng tôi tìm kiếm những người nghiêm túc, có tư duy hệ thống,
+              cam kết với chất lượng và muốn xây dựng sản phẩm có giá trị thật.
             </p>
           </div>
+        </section>
 
-          {/* What we value */}
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Điều chúng tôi đánh giá cao</h2>
-            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div>
-                <div className="text-sm font-semibold text-indigo-600">Tư duy sản phẩm</div>
-                <div className="mt-1 text-sm text-gray-700">Biết nói không, giữ luồng đơn giản, tối ưu cho người dùng thực tế.</div>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-indigo-600">Trách nhiệm</div>
-                <div className="mt-1 text-sm text-gray-700">Chủ động, đáng tin cậy, cam kết với chất lượng và thời hạn.</div>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-indigo-600">Giao tiếp gọn</div>
-                <div className="mt-1 text-sm text-gray-700">Rõ ràng, thẳng thắn, tôn trọng và tập trung vào giải pháp.</div>
+        {/* WHY WORK HERE */}
+        <section className="py-24 bg-indigo-50/30">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            <div className="animate-fade-in-up">
+              <h2 className="text-4xl font-bold tracking-tight">
+                Vì sao bạn nên cân nhắc
+              </h2>
+              <p className="mt-6 text-lg text-gray-700 leading-relaxed">
+                Influencer Marketing đang trở thành một phần cốt lõi của nhiều chiến lược truyền thông,
+                nhưng thiếu một nền tảng vận hành chuẩn mực, rõ rệt. Tại Alino, bạn sẽ làm việc với
+                những bài toán có chiều sâu, mang tính hệ thống.
+              </p>
+              <p className="mt-4 text-lg text-gray-700 leading-relaxed">
+                Đây là nơi dành cho người không ngại trách nhiệm, hiểu trade-off và cam kết với chất lượng
+                đến cùng.
+              </p>
+            </div>
+            {/* Visual / Work Principles */}
+            <div className="relative rounded-3xl bg-indigo-50 p-8 animate-slow-zoom">
+              <div className="space-y-6">
+
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                  <div className="text-sm font-semibold text-indigo-600 mb-2">
+                    CÂN NHẮC KỸ LƯỠNG
+                  </div>
+                  <p className="text-gray-700 leading-relaxed">
+                    Chúng tôi ưu tiên hiểu đúng vấn đề trước khi tìm lời giải.
+                    Mọi quyết định đều dựa trên dữ liệu và tác động đến doanh nghiệp.
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                  <div className="text-sm font-semibold text-indigo-600 mb-2">
+                    TRÁCH NHIỆM VÀ TIÊN PHONG
+                  </div>
+                  <p className="text-gray-700 leading-relaxed">
+                    Mỗi cá nhân chịu trách nhiệm đến cùng cho quyết định và sản phẩm
+                    mình tạo ra. ALINO khuyến khích tinh thần chủ động, minh bạch
+                    và dám sai để phát triển.
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                  <div className="text-sm font-semibold text-indigo-600 mb-2">
+                    CHẤT LƯỢNG LÀ TRÊN HẾT
+                  </div>
+                  <p className="text-gray-700 leading-relaxed">
+                    Chúng tôi cam kết sản phẩm cuối cùng đạt tiêu chuẩn cao nhất và tạo ra giá trị thật cho người dùng.
+                  </p>
+                </div>
+
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Roles */}
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 p-6">
-              <h3 className="text-base font-semibold text-gray-900">Sản phẩm & Kỹ thuật</h3>
-              <p className="mt-2 text-sm text-gray-600">Ưu tiên những người hiểu trade-off và thiết kế hệ thống gọn, dễ bảo trì. Làm đúng việc quan trọng trước, đo lường tác động sau.</p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 p-6">
-              <h3 className="text-base font-semibold text-gray-900">Vận hành & Hỗ trợ</h3>
-              <p className="mt-2 text-sm text-gray-600">Đảm bảo quy trình rõ ràng, chăm sóc người dùng nhanh, tử tế và hiệu quả.</p>
+        {/* CULTURE */}
+        <section className="py-24">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold tracking-tight text-center">
+              Văn hoá & cách làm việc
+            </h2>
+            <div className="mt-12 grid md:grid-cols-3 gap-10">
+              {[
+                {
+                  title: "Tư duy sản phẩm",
+                  desc: "Chúng tôi ưu tiên giải quyết vấn đề thật hơn là câu chữ đẹp."
+                },
+                {
+                  title: "Minh bạch",
+                  desc: "Giao tiếp rõ ràng, trách nhiệm minh bạch và feedback thẳng thắn."
+                },
+                {
+                  title: "Hiệu quả",
+                  desc: "Ưu tiên tác động thật đối với user và hệ thống."
+                }
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-3xl border border-gray-200 p-8 hover:-translate-y-1 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <h3 className="text-xl font-semibold text-gray-900">{item.title}</h3>
+                  <p className="mt-4 text-gray-700">{item.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
+        </section>
 
-          {/* Process */}
-          <div className="mt-12 border-t border-indigo-50 pt-10">
-            <h2 className="text-lg font-semibold text-gray-900">Quy trình tuyển chọn</h2>
-            <ol className="mt-4 space-y-3 text-gray-700">
-              <li className="flex gap-3"><span className="mt-1 h-5 w-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">1</span>Sàng lọc hồ sơ ngắn gọn (kinh nghiệm, sản phẩm, cách làm việc).</li>
-              <li className="flex gap-3"><span className="mt-1 h-5 w-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">2</span>Trao đổi chuyên môn và tư duy sản phẩm.</li>
-              <li className="flex gap-3"><span className="mt-1 h-5 w-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">3</span>Bài tập nhỏ (nếu cần) tập trung vào tính thực tế.</li>
-              <li className="flex gap-3"><span className="mt-1 h-5 w-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">4</span>Thảo luận offer và cách phối hợp công việc.</li>
-            </ol>
-            <p className="mt-4 text-sm text-gray-600">Nếu quan tâm, vui lòng gửi hồ sơ và giới thiệu ngắn gọn về kinh nghiệm của bạn.</p>
+        {/* BENEFITS */}
+        <section className="py-24 bg-indigo-50/30">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight">
+              Những benefit bạn nhận được
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed">
+              Chúng tôi tin rằng môi trường tốt dẫn đến sản phẩm tốt. Vì vậy, đội ngũ sẽ nhận được:
+            </p>
+            <div className="mt-12 grid md:grid-cols-3 gap-10">
+              {[
+                "Lương cạnh tranh và thưởng theo hiệu quả",
+                "Chế độ nghỉ phép & chăm sóc sức khoẻ",
+                "Môi trường làm việc linh hoạt & remote nếu phù hợp"
+              ].map((b, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl bg-white border border-gray-200 p-6 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <p className="text-lg text-gray-700">{b}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* OPEN ROLES */}
+        <section className="py-24">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold tracking-tight text-center">
+              Vị trí đang tuyển
+            </h2>
+            <p className="mt-4 text-lg text-gray-700 text-center">
+              Nếu không có vị trí phù hợp ngay, bạn vẫn có thể gửi hồ sơ chung!
+            </p>
+
+            <div className="mt-12 space-y-6">
+              {[
+                {
+                  title: "Senior Product Manager",
+                  team: "Product",
+                  desc: "Lãnh đạo roadmap sản phẩm, định nghĩa KPI & success metric."
+                },
+                {
+                  title: "Fullstack Engineer",
+                  team: "Engineering",
+                  desc: "Xây dựng & mở rộng nền tảng với hiệu năng cao."
+                },
+                {
+                  title: "Brand Marketing Specialist",
+                  team: "Marketing",
+                  desc: "Phối hợp với Brand để triển khai chiến dịch mẫu hóa."
+                }
+              ].map((role, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-gray-200 p-6 hover:-translate-y-1 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-2xl font-semibold">{role.title}</h3>
+                    <span className="text-indigo-600 font-semibold text-sm uppercase">
+                      {role.team}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-gray-700">{role.desc}</p>
+                  <button className="mt-4 inline-flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-500 transition">
+                    Ứng tuyển vị trí này
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-28 text-center bg-indigo-600 text-white">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight">
+            Không có vị trí phù hợp?
+          </h2>
+          <p className="mt-6 text-xl leading-relaxed">
+            Gửi cho chúng tôi hồ sơ & LinkedIn của bạn —
+            chúng tôi sẽ liên hệ khi có cơ hội phù hợp.
+          </p>
+          <div className="mt-10 inline-flex px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition">
+            Gửi hồ sơ chung
+          </div>
+        </section>
+
       </div>
     </>
   );
@@ -3998,158 +4108,204 @@ export default function Careers() {
 <file path="src/pages/about/Partners.tsx">
 import { Helmet } from "react-helmet-async";
 import { buildTitle } from "../../seo";
+import {
+  FaYoutube,
+  FaInstagram,
+  FaTiktok,
+  FaFacebook,
+  FaLinkedin
+} from "react-icons/fa";
+
 
 export default function Partners() {
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Partners")}</title>
-        <meta name="description" content="Thông tin hợp tác cùng Alino." />
+        <title>{buildTitle("Đối tác")}</title>
+        <meta
+          name="description"
+          content="Hợp tác cùng Alino — xây dựng hệ sinh thái Influencer Marketing minh bạch và bền vững."
+        />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8">
-            <span className="inline-block text-sm font-semibold text-indigo-600">Đối tác</span>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight">Hợp tác để nâng chuẩn trải nghiệm Brand × Creator</h1>
-            <p className="mt-5 text-gray-600 leading-relaxed">
-              Chúng tôi tìm kiếm đối tác cùng tầm nhìn: ưu tiên chất lượng và trải nghiệm làm việc chuyên nghiệp. Mục tiêu là tạo ra
-              quy trình rõ ràng, hiệu quả cho cả Brand và Creator.
+      <div className="bg-white text-gray-900 overflow-hidden">
+
+        {/* ===== HERO ===== */}
+        <section className="pt-36 pb-20 bg-indigo-50/40">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            {/* Text block */}
+            <div className="animate-fade-in-up">
+              <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-gray-900">
+                Hợp tác cùng Alino <br />
+                để mở rộng hệ sinh thái
+              </h1>
+              <p className="mt-6 text-xl text-gray-700 leading-relaxed">
+                Alino hợp tác với Agency, Tech Platform và Đơn vị đào tạo
+                để cùng tạo ra chuẩn mực vận hành Influencer Marketing
+                rõ ràng, minh bạch và có thể đo lường.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <button className="bg-indigo-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-500 transition">
+                  Bắt đầu hợp tác
+                </button>
+                <button className="border border-indigo-600 text-indigo-600 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition">
+                  Tìm hiểu thêm
+                </button>
+              </div>
+            </div>
+
+            {/* Visual / Partner Logos */}
+            <div className="relative h-[380px] rounded-3xl bg-indigo-50 flex items-center justify-center animate-slow-zoom">
+
+              {/* cluster */}
+              <div className="grid grid-cols-3 grid-rows-2 gap-x-16 gap-y-12 place-items-center">
+                <FaYoutube className="text-red-600 text-7xl" />
+                <FaInstagram className="text-pink-500 text-7xl" />
+                <FaTiktok className="text-black text-7xl" />
+
+                <FaFacebook className="text-blue-600 text-7xl" />
+                <FaLinkedin className="text-blue-700 text-7xl" />
+                <div />
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ===== WHY PARTNER ===== */}
+        <section className="py-28">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Vì sao nên hợp tác với Alino?
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed">
+              Alino đem đến mô hình hợp tác có cấu trúc, giúp đối tác
+              tối ưu quy trình, mở rộng năng lực & ghi nhận giá trị thực.
             </p>
-          </div>
 
-          {/* Partnership models */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="rounded-2xl border border-gray-200 p-6">
-              <div className="text-sm font-semibold text-indigo-600">Đồng xây dựng</div>
-              <p className="mt-2 text-sm text-gray-700">Cùng phát triển tính năng hoặc quy trình nhằm gia tăng trải nghiệm sử dụng.</p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 p-6">
-              <div className="text-sm font-semibold text-indigo-600">Tích hợp</div>
-              <p className="mt-2 text-sm text-gray-700">Kết nối hệ thống/luồng dữ liệu theo nhu cầu thực tế và chuẩn bảo mật hiện hành.</p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 p-6">
-              <div className="text-sm font-semibold text-indigo-600">Dịch vụ</div>
-              <p className="mt-2 text-sm text-gray-700">Hợp tác cung cấp dịch vụ bổ trợ (đào tạo, vận hành) theo tiêu chuẩn của Alino.</p>
-            </div>
-          </div>
-
-          {/* Fit & Getting started */}
-          <div className="mt-12 border-t border-indigo-50 pt-10">
-            <h2 className="text-lg font-semibold text-gray-900">Tiêu chí phù hợp</h2>
-            <ul className="mt-4 space-y-2 text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tôn trọng người dùng; ưu tiên chất lượng và tính bền vững.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Giao tiếp rõ ràng; cam kết với thời hạn và kết quả.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Bảo mật và tuân thủ là mặc định.</li>
-            </ul>
-
-            <div className="mt-8 rounded-2xl bg-indigo-50 p-6">
-              <h3 className="text-base font-semibold text-gray-900">Bắt đầu trao đổi</h3>
-              <p className="mt-2 text-sm text-gray-700">Vui lòng giới thiệu ngắn về năng lực, lý do hợp tác, và phạm vi quan tâm.</p>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Liên hệ đội ngũ Alino</div>
+            <div className="mt-12 grid md:grid-cols-3 gap-10">
+              {[
+                {
+                  title: "Quy trình rõ ràng",
+                  desc: "Từ brief đến nghiệm thu — mọi bước đều minh bạch và có tiêu chuẩn."
+                },
+                {
+                  title: "Mở rộng tầm ảnh hưởng",
+                  desc: "Hợp tác giúp gia tăng khả năng kết nối với Brand & Creator."
+                },
+                {
+                  title: "Giá trị thật",
+                  desc: "Đánh giá hiệu quả dựa trên kết quả thực tế chứ không chỉ số bề nổi."
+                }
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl bg-white border border-gray-200 p-8 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {item.title}
+                  </h3>
+                  <p className="mt-4 text-gray-700">{item.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* ===== HOW IT WORKS ===== */}
+        <section className="py-28 bg-indigo-50/40">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Cách thức hợp tác đơn giản
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
+              Chúng tôi thiết kế quy trình hợp tác rõ ràng theo 3 bước dễ hiểu.
+            </p>
+
+            <div className="mt-12 grid md:grid-cols-3 gap-10">
+              {[
+                {
+                  step: "01",
+                  title: "Liên hệ & trao đổi",
+                  desc: "Giới thiệu năng lực và mục tiêu hợp tác."
+                },
+                {
+                  step: "02",
+                  title: "Thảo luận chi tiết",
+                  desc: "Xác định phạm vi, tiêu chuẩn & kế hoạch chung."
+                },
+                {
+                  step: "03",
+                  title: "Triển khai & đánh giá",
+                  desc: "Làm việc cùng nhau và đo lường kết quả."
+                }
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="p-6 bg-white border border-gray-200 rounded-2xl text-left animate-fade-in-up"
+                >
+                  <div className="text-indigo-600 font-bold text-3xl">
+                    {item.step}
+                  </div>
+                  <h3 className="mt-2 text-2xl font-semibold text-gray-900">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-gray-700">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== SUCCESS STORIES ===== */}
+        <section className="py-28">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Câu chuyện đối tác tiêu biểu
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
+              Những đối tác cùng tầm nhìn đã đồng hành với Alino để tạo nên
+              giá trị lâu dài cho cộng đồng Brand & Creator.
+            </p>
+
+            <div className="mt-12 space-y-8">
+              {[1, 2, 3].map((_, i) => (
+                <div
+                  key={i}
+                  className="border border-gray-200 rounded-2xl p-10 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <h3 className="text-2xl font-semibold text-gray-900">
+                    Đối tác #{i + 1}
+                  </h3>
+                  <p className="mt-4 text-gray-700">
+                    Mô tả ngắn về việc hợp tác thành công, kết quả đạt được
+                    và lợi ích đôi bên.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== CTA ===== */}
+        <section className="py-36 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight">
+            Sẵn sàng hợp tác cùng Alino?
+          </h2>
+          <p className="mt-6 text-xl leading-relaxed">
+            Chia sẻ ngắn về năng lực và mong muốn hợp tác — chúng tôi sẽ
+            phản hồi trong thời gian sớm nhất.
+          </p>
+          <div className="mt-10 inline-flex px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition">
+            Bắt đầu trao đổi
+          </div>
+        </section>
+
       </div>
     </>
   );
 }
-</file>
-
-<file path="src/pages/auth/ResetPassword.tsx">
-import { useState } from 'react';
-import { supabase } from '../../lib/supabase/client';
-import { ROUTES } from '../../shared/routes';
-import { getSiteUrl } from '../../lib/siteUrl';
-
-const ResetPassword = () => {
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const handleReset = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage('');
-        setError('');
-
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${getSiteUrl()}${ROUTES.UPDATE_PASSWORD}`,
-        });
-
-        if (error) {
-            // Không leak thông tin email có tồn tại hay không
-            setError('Không thể gửi email reset. Vui lòng thử lại.');
-        } else {
-            // Luôn báo thành công (best practice)
-            setMessage(
-                'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu.'
-            );
-        }
-
-        setLoading(false);
-    };
-
-    return (
-        <div className="min-h-screen bg-bg flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-border p-8">
-                <h1 className="text-2xl font-bold text-primary mb-2 text-center">
-                    Quên mật khẩu
-                </h1>
-
-                <p className="text-secondary text-sm text-center mb-6">
-                    Nhập email để nhận link đặt lại mật khẩu
-                </p>
-
-                {message && (
-                    <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
-                        {message}
-                    </div>
-                )}
-
-                {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleReset} className="flex flex-col gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-primary mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-brand hover:bg-brandHover text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                        {loading ? 'Đang gửi...' : 'Gửi link reset'}
-                    </button>
-
-                    <a
-                        href={ROUTES.LOGIN}
-                        className="text-center text-sm text-brand hover:underline mt-2"
-                    >
-                        Quay lại Đăng nhập
-                    </a>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-export default ResetPassword;
 </file>
 
 <file path="src/pages/dashboard/BrandDashboard.tsx">
@@ -4180,8 +4336,8 @@ import { buildTitle } from "../../seo";
 type Post = {
   title: string;
   readingTime: string;
-  reason: string;
   summary: string;
+  reason: string;
 };
 
 const POSTS: Post[] = [
@@ -4190,21 +4346,24 @@ const POSTS: Post[] = [
     readingTime: "5 phút đọc",
     summary:
       "Một brief tốt xác định rõ mục tiêu, audience, yêu cầu nội dung và tiêu chí nghiệm thu. Khi đầu vào đủ, cả Brand và Creator giảm đáng kể vòng lặp không cần thiết.",
-    reason: "Giúp đội ngũ rút ngắn thời gian chuẩn bị và nâng tỷ lệ nghiệm thu ngay lần đầu.",
+    reason:
+      "Giúp đội ngũ rút ngắn thời gian chuẩn bị và nâng tỷ lệ nghiệm thu ngay lần đầu.",
   },
   {
     title: "Checklist nghiệm thu theo nền tảng",
     readingTime: "4 phút đọc",
     summary:
       "Checklist giúp đảm bảo mọi deliver đều được soát theo đúng định dạng và guideline từng nền tảng trước khi xuất bản hoặc bàn giao.",
-    reason: "Tăng độ nhất quán và hạn chế sai sót khi chạy nhiều campaign song song.",
+    reason:
+      "Tăng độ nhất quán và hạn chế sai sót khi chạy nhiều campaign song song.",
   },
   {
     title: "Đo lường để tối ưu, không chỉ để báo cáo",
     readingTime: "6 phút đọc",
     summary:
       "Thay vì tổng hợp số liệu sau cùng, hãy theo dõi các chỉ số có thể hành động để điều chỉnh sớm và phân bổ nguồn lực hợp lý.",
-    reason: "Giúp ra quyết định thực tế hơn về ngân sách và nội dung trong các vòng tiếp theo.",
+    reason:
+      "Giúp ra quyết định thực tế hơn về ngân sách và nội dung trong các vòng tiếp theo.",
   },
 ];
 
@@ -4212,61 +4371,196 @@ export default function Blog() {
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Blog")}</title>
+        <title>{buildTitle("Blog & Insights")}</title>
         <meta
           name="description"
-          content="Thought leadership của Alino: quy trình, vận hành, và tiêu chuẩn làm việc Brand–Creator."
+          content="Thought leadership của Alino về Influencer Marketing, vận hành Brand–Creator và chuẩn hoá quy trình làm việc."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8 flex items-start justify-between gap-6">
-            <div>
-              <span className="inline-block text-sm font-semibold text-indigo-600">Insights</span>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">Blog / Góc nhìn sản phẩm</h1>
-              <p className="mt-3 text-gray-600 leading-relaxed">
-                Những bài viết ngắn, thực tế về cách chuẩn hoá quy trình Brand–Creator và nâng chuẩn vận hành.
+      <div className="bg-white overflow-hidden">
+
+        {/* ================= HERO ================= */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+          <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            {/* Text */}
+            <div className="animate-fade-in-up">
+              <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+                Insights
+              </span>
+
+              <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+                Góc nhìn <br />
+                từ người <br />
+                xây hệ thống
+              </h1>
+
+              <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+                Những bài viết ngắn, thực tế về cách
+                <strong> chuẩn hoá Influencer Marketing</strong>,
+                cải thiện vận hành và làm việc hiệu quả
+                giữa Brand và Creator.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
-              <Link className="underline" to="/trends">← Xu hướng</Link>
-              <Link className="underline" to="/">Trang chủ</Link>
+
+            {/* Hero Visual – Knowledge Framework */}
+            <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-4">
+                <div className="font-semibold text-gray-900">
+                  Khung tư duy bài viết
+                </div>
+                {["Vấn đề vận hành", "Cấu trúc giải quyết", "Tác động thực tế"].map(
+                  (i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 text-sm text-gray-600"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                      {i}
+                    </div>
+                  )
+                )}
+                <div className="pt-2 text-xs text-gray-500">
+                  Không chạy theo trend, tập trung vào cách làm
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Featured */}
-          <div className="rounded-3xl border border-gray-200 p-8">
-            <div className="text-sm font-semibold text-indigo-600">Bài nổi bật</div>
-            <div className="mt-2 text-2xl font-semibold">“Matching đúng tệp” bắt đầu từ tiêu chí hợp tác</div>
-            <p className="mt-3 text-gray-600 leading-relaxed">
-              Thay vì chọn theo lượng view, hãy bắt đầu từ mục tiêu truyền thông, audience và tiêu chí nội dung. Khi tiêu chuẩn
-              rõ ràng, shortlist creator sẽ tự gọn lại.
-            </p>
-          </div>
+        {/* ================= FEATURED ================= */}
+        <section className="py-24 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              {/* Text */}
+              <div className="animate-fade-in-up">
+                <span className="text-sm font-semibold text-indigo-600">
+                  Bài viết nổi bật
+                </span>
 
-          {/* Posts */}
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {POSTS.map((p) => (
-              <div key={p.title} className="rounded-2xl border border-gray-200 p-6">
-                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                  <span>~ {p.readingTime}</span>
+                <h2 className="mt-4 text-4xl font-bold tracking-tight text-gray-900">
+                  “Matching đúng tệp” <br />
+                  bắt đầu từ tiêu chí hợp tác
+                </h2>
+
+                <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                  Thay vì chọn Creator theo lượng view,
+                  hãy bắt đầu từ mục tiêu truyền thông,
+                  audience và tiêu chí nội dung.
+                </p>
+
+                <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+                  Khi tiêu chuẩn rõ ràng, shortlist Creator
+                  sẽ tự gọn lại — và chất lượng hợp tác tăng lên.
+                </p>
+
+                <div className="mt-8 inline-flex items-center gap-3 text-indigo-600 font-semibold hover:underline">
+                  Đọc bài viết →
                 </div>
-                <div className="mt-2 font-semibold">{p.title}</div>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{p.summary}</p>
-                <div className="mt-3 text-xs font-medium text-indigo-600">Vì sao đáng đọc</div>
-                <p className="mt-1 text-sm text-gray-700">{p.reason}</p>
-                <div className="mt-4 text-sm underline text-gray-800">Đọc tiếp →</div>
               </div>
-            ))}
-          </div>
 
-          <div className="mt-10 flex gap-3">
-            <Link to="/news" className="px-5 py-3 rounded-full border border-gray-200">Xem Tin tức</Link>
-            <Link to="/events" className="px-5 py-3 rounded-full border border-gray-200">Xem Sự kiện</Link>
+              {/* Featured Visual – Article Structure */}
+              <div className="rounded-3xl bg-white border border-gray-200 p-6 animate-slow-zoom">
+                <div className="space-y-4">
+                  <div className="font-semibold text-gray-900">
+                    Cấu trúc bài viết
+                  </div>
+                  {[
+                    "Bối cảnh & vấn đề",
+                    "Tiêu chí hợp tác",
+                    "Ví dụ thực tế",
+                    "Kết luận & áp dụng",
+                  ].map((s, i) => (
+                    <div key={s} className="flex items-center gap-3 text-sm">
+                      <span className="text-indigo-600 font-semibold">
+                        {i + 1}
+                      </span>
+                      <span className="text-gray-600">{s}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* ================= POSTS ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="mb-16 max-w-3xl animate-fade-in-up">
+              <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+                Bài viết mới nhất
+              </h2>
+              <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+                Tập trung vào quy trình, vận hành và
+                cách làm việc bền vững — không chạy theo trend ngắn hạn.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-10">
+              {POSTS.map((p) => (
+                <div
+                  key={p.title}
+                  className="group rounded-3xl border border-gray-200 p-8 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <div className="text-sm text-gray-500">
+                    ~ {p.readingTime}
+                  </div>
+
+                  <h3 className="mt-3 text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition">
+                    {p.title}
+                  </h3>
+
+                  <p className="mt-4 text-gray-600 leading-relaxed">
+                    {p.summary}
+                  </p>
+
+                  <div className="mt-6 text-sm font-semibold text-indigo-600">
+                    Vì sao đáng đọc
+                  </div>
+                  <p className="mt-2 text-gray-700">
+                    {p.reason}
+                  </p>
+
+                  <div className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-800 group-hover:underline">
+                    Đọc tiếp →
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ================= CTA ================= */}
+        <section className="py-32 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+            Muốn làm Influencer Marketing <br />
+            bài bản hơn?
+          </h2>
+
+          <p className="mt-6 text-xl text-white/80 leading-relaxed">
+            Theo dõi Alino để cập nhật góc nhìn thực tế
+            từ đội ngũ xây dựng sản phẩm.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4">
+            <Link
+              to="/features"
+              className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+            >
+              Xem sản phẩm
+            </Link>
+            <Link
+              to="/"
+              className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+            >
+              Trang chủ
+            </Link>
+          </div>
+        </section>
+
       </div>
     </>
   );
@@ -4290,161 +4584,283 @@ type EventItem = {
 const EVENTS: EventItem[] = [
   {
     title: "Webinar: Tối ưu workflow creator campaign (brief → deliver)",
-    date: "2026-01-10",
+    date: "10 Jan 2026",
     type: "Webinar",
     location: "Online",
-    desc: "Chia sẻ template brief + checklist nghiệm thu để giảm sai sót vận hành.",
+    desc: "Chia sẻ template brief và checklist nghiệm thu giúp giảm sai sót vận hành.",
     status: "upcoming",
   },
   {
     title: "Workshop: Đo lường campaign creator cho team marketing",
-    date: "2026-01-20",
+    date: "20 Jan 2026",
     type: "Workshop",
     location: "HCM (TBA)",
-    desc: "Cách set KPI, tracking và báo cáo kết quả dễ hiểu cho stakeholder.",
+    desc: "Thực hành set KPI, tracking và báo cáo cho stakeholder.",
     status: "upcoming",
   },
   {
     title: "Community meetup: Creator & Brand matching night",
-    date: "2025-12-05",
+    date: "05 Dec 2025",
     type: "Community",
     location: "Hà Nội",
-    desc: "Kết nối nhanh, chia sẻ case study và networking.",
+    desc: "Kết nối, chia sẻ case study và networking.",
     status: "past",
   },
 ];
 
-function Badge({ children }: { children: string }) {
+function EventBadge({ children }: { children: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-700">
+    <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-600 px-3 py-1 text-xs font-semibold">
       {children}
     </span>
   );
 }
 
 export default function Events() {
-  const upcoming = EVENTS.filter((e) => e.status === "upcoming");
-  const past = EVENTS.filter((e) => e.status === "past");
+  const upcoming = EVENTS.filter(e => e.status === "upcoming");
+  const past = EVENTS.filter(e => e.status === "past");
 
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Sự kiện")}</title>
+        <title>{buildTitle("Sự kiện & học hỏi")}</title>
         <meta
           name="description"
-          content="Cơ hội học hỏi cho Brand và Creator: webinar, workshop, cộng đồng."
+          content="Webinar, workshop và community event giúp Brand & Creator nâng chuẩn vận hành Influencer Marketing."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8 flex items-start justify-between gap-6">
-            <div>
-              <span className="inline-block text-sm font-semibold text-indigo-600">Insights</span>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">Sự kiện & học hỏi</h1>
-              <p className="mt-3 text-gray-600">
-                Sự kiện giúp đội ngũ cập nhật tư duy và quy trình. Chọn đúng nội dung, giá trị lớn hơn thời gian bỏ ra.
+      <div className="bg-white overflow-hidden">
+
+        {/* ================= HERO ================= */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+          <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            <div className="animate-fade-in-up">
+              <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+                Insights & Community
+              </span>
+
+              <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+                Học hỏi từ <br />
+                thực tiễn <br />
+                triển khai
+              </h1>
+
+              <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+                Webinar, workshop và community event
+                giúp Brand & Creator cập nhật tư duy,
+                chuẩn hoá quy trình và kết nối đúng người.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
-              <Link className="underline" to="/trends">
-                ← Xu hướng
-              </Link>
-              <Link className="underline" to="/">
-                Trang chủ
-              </Link>
+            {/* Hero Visual – Event Format */}
+            <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
+
+                <div className="text-sm font-semibold text-indigo-600">
+                  CẤU TRÚC SỰ KIỆN
+                </div>
+
+                <div className="space-y-4">
+
+                  {/* Session 1 */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                      01
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Chia sẻ case thực tế
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Workflow • KPI • Deliverables
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Session 2 */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                      02
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Thực hành & phân tích
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Brief • Checklist • Báo cáo
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Session 3 */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                      03
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Kết nối & thảo luận
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Brand • Creator • Agency
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className="pt-3 text-xs text-gray-500">
+                  Nội dung tập trung vào vận hành & triển khai thực tế
+                </div>
+
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Why events matter */}
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Vì sao sự kiện quan trọng</h2>
-            <ul className="mt-3 space-y-2 text-sm text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Cập nhật xu hướng, cách làm mới và case thực tế.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tối ưu quy trình hiện tại thay vì “đập đi xây lại”.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Kết nối đồng nghiệp, hợp tác để nâng chuẩn vận hành.</li>
-            </ul>
-          </section>
+        {/* ================= WHY EVENTS ================= */}
+        <section className="py-28 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900 animate-fade-in-up">
+              Vì sao chúng tôi tổ chức sự kiện
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 max-w-3xl mx-auto animate-fade-in-up">
+              Influencer Marketing thay đổi nhanh,
+              nhưng quy trình và chuẩn mực không thể học qua lý thuyết.
+            </p>
 
-          {/* How to choose */}
-          <section className="mt-8 rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Cách chọn sự kiện phù hợp</h2>
-            <ul className="mt-3 space-y-2 text-sm text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Rõ mục tiêu học (ví dụ: chuẩn hoá brief, đo lường chiến dịch).</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Diễn giả có kinh nghiệm thực thi, không chỉ lý thuyết.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tài liệu kèm theo (template, checklist, guideline).</li>
-            </ul>
-          </section>
-
-          {/* Categories */}
-          <section className="mt-8 rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Nhóm sự kiện điển hình</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Webinar</div>
-                <div className="mt-1 text-sm text-gray-700">Tập trung vào một chủ đề hẹp, thời lượng ngắn, cập nhật nhanh.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Workshop</div>
-                <div className="mt-1 text-sm text-gray-700">Thực hành theo template, có bài tập/feedback.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Community</div>
-                <div className="mt-1 text-sm text-gray-700">Kết nối, chia sẻ case study, khai thác cơ hội hợp tác.</div>
-              </div>
-              <div className="rounded-xl bg-indigo-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Roundtable</div>
-                <div className="mt-1 text-sm text-gray-700">Thảo luận mở cho nhóm nhỏ về quy trình và tiêu chuẩn.</div>
-              </div>
+            <div className="mt-14 grid md:grid-cols-3 gap-10">
+              {[
+                {
+                  title: "Chia sẻ case thực tế",
+                  desc: "Không nói lý thuyết suông, tập trung vào bài học triển khai."
+                },
+                {
+                  title: "Tối ưu quy trình",
+                  desc: "Giữ những gì đang tốt và cải thiện điểm nghẽn."
+                },
+                {
+                  title: "Kết nối cộng đồng",
+                  desc: "Tạo cơ hội hợp tác giữa Brand, Creator và Agency."
+                }
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="bg-white border border-gray-200 rounded-3xl p-8 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <h3 className="text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-4 text-gray-600">{item.desc}</p>
+                </div>
+              ))}
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* Listings */}
-          <div className="mt-10">
-            <div className="text-sm text-gray-500">Sắp diễn ra</div>
-            <div className="mt-3 space-y-4">
-              {upcoming.map((e) => (
-                <div key={e.title} className="rounded-2xl border border-gray-200 p-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="font-semibold">{e.title}</div>
-                    <Badge>{e.type}</Badge>
+        {/* ================= UPCOMING ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900 animate-fade-in-up">
+              Sắp diễn ra
+            </h2>
+
+            <div className="mt-12 grid md:grid-cols-2 gap-10">
+              {upcoming.map(e => (
+                <div
+                  key={e.title}
+                  className="group rounded-3xl border border-gray-200 p-8 hover:shadow-xl transition animate-fade-in-up"
+                >
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <EventBadge>{e.type}</EventBadge>
                     <span className="text-sm text-gray-500">{e.date}</span>
                     <span className="text-sm text-gray-500">• {e.location}</span>
                   </div>
-                  <p className="mt-3 text-sm text-gray-600 leading-relaxed">{e.desc}</p>
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <button className="px-5 py-3 rounded-full bg-black text-white">Đăng ký tham gia</button>
-                    <button className="px-5 py-3 rounded-full border border-gray-200">Nhắc tôi</button>
+
+                  <h3 className="mt-4 text-2xl font-semibold group-hover:text-indigo-600 transition">
+                    {e.title}
+                  </h3>
+
+                  <p className="mt-4 text-gray-600 leading-relaxed">
+                    {e.desc}
+                  </p>
+
+                  <div className="mt-8 flex gap-4">
+                    <button className="px-6 py-3 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-500 transition">
+                      Đăng ký tham gia
+                    </button>
+                    <button className="px-6 py-3 rounded-full border border-gray-300 hover:bg-gray-50 transition">
+                      Nhắc tôi
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="mt-12">
-            <div className="text-sm text-gray-500">Đã diễn ra</div>
-            <div className="mt-3 space-y-4">
-              {past.map((e) => (
-                <div key={e.title} className="rounded-2xl border border-gray-200 p-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="font-semibold">{e.title}</div>
-                    <Badge>{e.type}</Badge>
-                    <span className="text-sm text-gray-500">{e.date}</span>
-                    <span className="text-sm text-gray-500">• {e.location}</span>
+        {/* ================= PAST EVENTS ================= */}
+        <section className="py-32 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900 animate-fade-in-up">
+              Sự kiện đã diễn ra
+            </h2>
+
+            <div className="mt-12 grid md:grid-cols-3 gap-10">
+              {past.map(e => (
+                <div
+                  key={e.title}
+                  className="rounded-3xl border border-gray-200 p-6 hover:shadow-lg transition animate-fade-in-up"
+                >
+                  <div className="text-sm text-gray-500">
+                    {e.date} • {e.location}
                   </div>
-                  <p className="mt-3 text-sm text-gray-600 leading-relaxed">{e.desc}</p>
-                  <div className="mt-4 text-sm underline">Xem recap →</div>
+
+                  <h3 className="mt-3 font-semibold text-gray-900">
+                    {e.title}
+                  </h3>
+
+                  <p className="mt-3 text-gray-600">
+                    {e.desc}
+                  </p>
+
+                  <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline">
+                    Xem recap →
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="mt-10 flex gap-3">
-            <Link to="/news" className="px-5 py-3 rounded-full border border-gray-200">Xem Tin tức</Link>
-            <Link to="/blog" className="px-5 py-3 rounded-full border border-gray-200">Đọc Blog</Link>
+        {/* ================= CTA ================= */}
+        <section className="py-36 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+            Tham gia cộng đồng <br />
+            xây chuẩn Influencer Marketing
+          </h2>
+
+          <p className="mt-6 text-xl text-white/80">
+            Theo dõi Alino để không bỏ lỡ webinar,
+            workshop và community event tiếp theo.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4">
+            <Link
+              to="/blog"
+              className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+            >
+              Đọc Blog
+            </Link>
+            <Link
+              to="/features"
+              className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+            >
+              Xem sản phẩm
+            </Link>
           </div>
-        </div>
+        </section>
+
       </div>
     </>
   );
@@ -4460,87 +4876,197 @@ export default function News() {
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Tin tức")}</title>
+        <title>{buildTitle("Tin tức & cập nhật ngành")}</title>
         <meta
           name="description"
-          content="Chủ đề tin tức quan trọng cho hợp tác Brand–Creator: thuật toán, monetization, chính sách nền tảng."
+          content="Những cập nhật quan trọng ảnh hưởng đến cách Brand và Creator làm việc: thuật toán, monetization và chính sách nền tảng."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8 flex items-start justify-between gap-6">
-            <div>
-              <span className="inline-block text-sm font-semibold text-indigo-600">Insights</span>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">Tin tức theo chủ đề</h1>
-              <p className="mt-3 text-gray-600">
-                Tổng hợp những chủ đề ảnh hưởng tới cách làm việc của Brand và Creator. Mang tính định hướng, không
-                phải đưa tin thời sự.
+      <div className="bg-white overflow-hidden">
+
+        {/* ================= HERO ================= */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+          <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            {/* TEXT */}
+            <div className="animate-fade-in-up">
+              <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+                Insights
+              </span>
+
+              <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+                Những thay đổi <br />
+                bạn không thể <br />
+                bỏ qua
+              </h1>
+
+              <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+                Không chạy theo tin thời sự.
+                Chúng tôi chọn lọc những cập nhật
+                <strong> thực sự ảnh hưởng</strong> đến cách
+                Brand và Creator hợp tác & vận hành.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
-              <Link className="underline" to="/trends">
-                ← Xu hướng
-              </Link>
-              <Link className="underline" to="/">
-                Trang chủ
-              </Link>
+
+            {/* Hero Visual – Industry Signals */}
+            <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-4">
+                <div className="font-semibold text-gray-900">
+                  Tín hiệu ngành
+                </div>
+                <div className="text-sm text-gray-600">
+                  Thuật toán • Monetization • Chính sách
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-4/5 bg-indigo-600 rounded-full" />
+                </div>
+                <div className="text-xs text-gray-500">
+                  Tác động trực tiếp đến vận hành
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Themed sections */}
-          <div className="space-y-8">
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Thuật toán & phân phối nội dung</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Thay đổi thuật toán có thể làm lệch reach đột ngột. Điều quan trọng là duy trì chất lượng nội dung và
-                lịch đăng nhất quán.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tối ưu theo mục tiêu thay vì chạy theo trend ngắn hạn.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Chuẩn bị phương án A/B khi reach dao động.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Giữ tiêu chuẩn nghiệm thu ổn định giữa các đợt thay đổi.</li>
-              </ul>
-            </section>
-
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Monetization & mô hình hợp tác</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Khi nền tảng thay đổi chính sách monetization, cách định giá và phạm vi công việc cần được cập nhật
-                tương ứng.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Gắn fee với kết quả/đầu ra cụ thể (khi hợp lý).</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Làm rõ phạm vi deliverables theo từng nền tảng.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Dự phòng phương án nếu chính sách đổi giữa campaign.</li>
-              </ul>
-            </section>
-
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Chính sách nền tảng & tuân thủ</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Tuân thủ guideline (quảng cáo, disclosure, nhạc/bản quyền) là bắt buộc. Vi phạm dẫn đến hạ phân phối hoặc
-                gỡ nội dung.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Checklist tuân thủ theo kênh và loại nội dung.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Phê duyệt nội dung nhạy cảm trước khi đăng.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Lưu trữ bằng chứng nghiệm thu để đối soát.</li>
-              </ul>
-            </section>
+        {/* ================= INTRO ================= */}
+        <section className="py-24 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-6 text-center animate-fade-in-up">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Tin tức theo góc nhìn vận hành
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed">
+              Mỗi thay đổi về thuật toán, monetization hay chính sách
+              đều kéo theo tác động trực tiếp tới
+              brief, deliverables và cách nghiệm thu.
+            </p>
           </div>
+        </section>
 
-          {/* Footer links */}
-          <div className="mt-10 flex gap-3">
-            <Link to="/blog" className="px-5 py-3 rounded-full border border-gray-200">
+        {/* ================= SECTIONS ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6 space-y-24">
+
+            {/* ALGORITHM */}
+            <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+              <div>
+                <span className="text-sm font-semibold text-indigo-600">
+                  Thuật toán & phân phối
+                </span>
+
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                  Khi reach thay đổi, <br />
+                  quy trình phải vững
+                </h3>
+              </div>
+
+              {/* Algorithm Visual */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="font-semibold text-gray-900">
+                    Phân phối nội dung
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full">
+                    <div className="h-full w-2/5 bg-indigo-400 rounded-full" />
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full">
+                    <div className="h-full w-3/5 bg-indigo-500 rounded-full" />
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Reach dao động theo update
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* MONETIZATION */}
+            <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+              {/* Monetization Visual */}
+              <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="font-semibold text-gray-900">
+                    Cấu trúc chi phí
+                  </div>
+                  {["Deliverables", "Phạm vi", "Kết quả"].map((i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-indigo-600">✓</span> {i}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="order-1 lg:order-2">
+                <span className="text-sm font-semibold text-indigo-600">
+                  Monetization
+                </span>
+
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                  Định giá không còn <br />
+                  là chuyện cảm tính
+                </h3>
+              </div>
+            </div>
+
+            {/* POLICY */}
+            <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+              <div>
+                <span className="text-sm font-semibold text-indigo-600">
+                  Chính sách & tuân thủ
+                </span>
+
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                  Tuân thủ không phải <br />
+                  lựa chọn
+                </h3>
+              </div>
+
+              {/* Policy Visual */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="font-semibold text-gray-900">
+                    Checklist tuân thủ
+                  </div>
+                  {["Gắn disclosure", "Đúng guideline", "Lưu bằng chứng"].map((i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-green-600">✓</span> {i}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ================= CTA ================= */}
+        <section className="py-36 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+            Muốn theo kịp ngành <br />
+            mà không bị quá tải?
+          </h2>
+
+          <p className="mt-6 text-xl text-white/80">
+            Đọc blog và tham gia sự kiện của Alino
+            để cập nhật đúng thứ quan trọng.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4">
+            <Link
+              to="/blog"
+              className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+            >
               Đọc Blog
             </Link>
-            <Link to="/events" className="px-5 py-3 rounded-full border border-gray-200">
+            <Link
+              to="/events"
+              className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+            >
               Xem Sự kiện
             </Link>
           </div>
-        </div>
+        </section>
+
       </div>
     </>
   );
@@ -4552,193 +5078,205 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { buildTitle } from "../../seo";
 
-const QUICK_LINKS = [
-  { title: "Tin tức", desc: "Chủ đề cập nhật có tác động tới hợp tác Brand–Creator.", to: "/news" },
-  { title: "Blog", desc: "Góc nhìn quy trình, tiêu chuẩn và cách làm thực tế.", to: "/blog" },
-  { title: "Sự kiện", desc: "Webinar, workshop, cộng đồng để học và kết nối.", to: "/events" },
-];
-
 export default function Trends() {
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Xu hướng")}</title>
+        <title>{buildTitle("Xu hướng Creator Economy")}</title>
         <meta
           name="description"
-          content="Phân tích xu hướng Creator Economy và tác động tới quy trình Brand–Creator."
+          content="Phân tích những chuyển dịch quan trọng của Creator Economy và tác động đến cách Brand–Creator hợp tác."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-10 flex items-start justify-between gap-6">
+      <div className="bg-white overflow-hidden">
+
+        {/* ================= HERO ================= */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+          <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            <div className="animate-fade-in-up">
+              <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+                Insights
+              </span>
+
+              <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+                Xu hướng <br />
+                đang định hình <br />
+                Creator Economy
+              </h1>
+
+              <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+                Không phải dự đoán mơ hồ.
+                Đây là những chuyển dịch <strong>đã và đang xảy ra</strong>
+                – ảnh hưởng trực tiếp đến cách
+                Brand và Creator làm việc cùng nhau.
+              </p>
+            </div>
+
+            {/* Hero Visual – Market Shift */}
+            <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-4">
+                <div className="font-semibold text-gray-900">
+                  Creator Economy
+                </div>
+                <div className="text-sm text-gray-600">
+                  Cảm tính → Có cấu trúc
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-3/4 bg-indigo-600 rounded-full" />
+                </div>
+                <div className="text-xs text-gray-500">
+                  Áp lực hiệu quả & minh bạch tăng
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= INTRO ================= */}
+        <section className="py-24 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-6 text-center animate-fade-in-up">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Creator Economy đang trưởng thành
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed">
+              Khi ngân sách bị soi kỹ hơn và áp lực hiệu quả tăng cao,
+              thị trường đang rời xa cách làm cảm tính
+              để tiến tới những mô hình hợp tác có cấu trúc.
+            </p>
+          </div>
+        </section>
+
+        {/* ================= TREND 1 ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
             <div>
-              <span className="inline-block text-sm font-semibold text-indigo-600">Insights</span>
-              <h1 className="mt-2 text-4xl font-bold tracking-tight">Xu hướng Creator Economy</h1>
-              <p className="mt-4 max-w-2xl text-gray-600 leading-relaxed">
-                Tổng hợp các chuyển dịch có ảnh hưởng trực tiếp tới cách Brand và Creator hợp tác. Tập trung vào điều
-                có thể hành động: chuẩn hoá quy trình, rõ đầu ra, và đo lường được kết quả.
+              <span className="text-sm font-semibold text-indigo-600">
+                Xu hướng #1
+              </span>
+
+              <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                Từ reach sang <br />
+                thực thi có thể kiểm soát
+              </h3>
+
+              <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                Reach không biến mất,
+                nhưng không còn là trung tâm của mọi quyết định.
               </p>
             </div>
-            <div className="hidden lg:block w-[360px] rounded-3xl border border-gray-200 p-6">
-              <div className="text-sm font-semibold text-indigo-600">Gợi ý đọc</div>
-              <div className="mt-2 font-semibold">Chuẩn hoá workflow để scale</div>
-              <p className="mt-2 text-sm text-gray-600">
-                Vì sao chuẩn hoá giúp giảm vòng lặp feedback và tăng tỷ lệ nghiệm thu.
-              </p>
-              <Link to="/blog" className="mt-4 inline-block text-sm underline">
-                Đọc Blog →
-              </Link>
+
+            {/* Trend 1 Visual – Workflow */}
+            <div className="rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Workflow chiến dịch
+                </div>
+                {["Brief rõ", "Deliver đúng", "Nghiệm thu"].map((s) => (
+                  <div key={s} className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="text-indigo-600">✓</span> {s}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Trends */}
-          <div className="space-y-8">
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">1) Từ reach sang thực thi có thể kiểm soát</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Thay vì chạy theo chỉ số bề nổi, đội marketing chuyển sang theo dõi tiến độ, phạm vi, và nghiệm thu rõ
-                ràng. Điều này yêu cầu brief có cấu trúc và checklist deliver cụ thể.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Brief chuẩn ngay từ đầu.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Trạng thái deliver minh bạch, dễ nghiệm thu.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Báo cáo để tối ưu, không chỉ để tổng kết.</li>
-              </ul>
-            </section>
+        {/* ================= TREND 2 ================= */}
+        <section className="py-32 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
 
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">2) Hợp tác dài hạn thay cho one-off</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Creator nghiêm túc ưu tiên quan hệ dài hạn với Brand phù hợp. Điều này đòi hỏi hồ sơ nhất quán và tiêu
-                chuẩn làm việc chuyên nghiệp từ cả hai phía.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Hồ sơ rõ ràng, tập trung vào năng lực.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tiêu chí nghiệm thu nhất quán giữa các campaign.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Lịch và kỳ vọng được ghi nhận từ đầu.</li>
-              </ul>
-            </section>
+            {/* Trend 2 Visual – Long-term */}
+            <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Quan hệ hợp tác
+                </div>
+                <div className="text-sm text-gray-600">
+                  Campaign 1 → Campaign 2 → Dài hạn
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-full bg-indigo-600 rounded-full" />
+                </div>
+              </div>
+            </div>
 
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">3) Tối giản công cụ, thống nhất luồng</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Thay vì dùng nhiều công cụ rời rạc, các đội chọn một luồng thống nhất để giảm trễ thông tin và thất lạc
-                deliver. Kết quả: bớt vòng lặp, tăng rõ ràng trách nhiệm.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Một nơi cho brief, deal, deliver, report.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Quy trình có thể nhân rộng khi scale.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Ít nhầm lẫn, ít sai lệch kỳ vọng.</li>
-              </ul>
-            </section>
+            <div className="order-1 lg:order-2">
+              <span className="text-sm font-semibold text-indigo-600">
+                Xu hướng #2
+              </span>
+
+              <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                Quan hệ dài hạn <br />
+                thay cho hợp tác one-off
+              </h3>
+            </div>
           </div>
+        </section>
 
-          {/* Links */}
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {QUICK_LINKS.map((x) => (
-              <Link key={x.title} to={x.to} className="rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 transition">
-                <div className="text-sm font-semibold text-indigo-600">{x.title}</div>
-                <div className="mt-2 text-sm text-gray-600">{x.desc}</div>
-                <div className="mt-4 text-sm underline">Mở trang →</div>
-              </Link>
-            ))}
+        {/* ================= TREND 3 ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div>
+              <span className="text-sm font-semibold text-indigo-600">
+                Xu hướng #3
+              </span>
+
+              <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                Tối giản công cụ, <br />
+                thống nhất luồng làm việc
+              </h3>
+            </div>
+
+            {/* Trend 3 Visual – Unified Flow */}
+            <div className="rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Luồng thống nhất
+                </div>
+                <div className="text-sm text-gray-600">
+                  Brief → Trao đổi → Deliver → Báo cáo
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-4/5 bg-indigo-600 rounded-full" />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* ================= CTA ================= */}
+        <section className="py-36 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+            Xu hướng chỉ có giá trị <br />
+            khi bạn hành động
+          </h2>
+
+          <p className="mt-6 text-xl text-white/80">
+            Đọc blog, tham gia sự kiện và khám phá
+            cách Alino giúp đội ngũ vận hành tốt hơn.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4">
+            <Link
+              to="/blog"
+              className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+            >
+              Đọc Blog
+            </Link>
+            <Link
+              to="/events"
+              className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+            >
+              Xem Sự kiện
+            </Link>
+          </div>
+        </section>
+
       </div>
     </>
-  );
-}
-</file>
-
-<file path="src/pages/product/Features.tsx">
-import { Link } from "react-router-dom";
-
-
-export default function Features() {
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <span className="inline-block text-sm font-semibold text-indigo-600">Sản phẩm</span>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">Tính năng theo từng giai đoạn</h1>
-            <p className="mt-3 text-gray-600 max-w-2xl">Tổ chức theo luồng làm việc để đội ngũ tập trung vào điều quan trọng.</p>
-          </div>
-          <Link className="underline text-sm" to="/product">← Sản phẩm</Link>
-        </div>
-
-        {/* Stages */}
-        <div className="space-y-8">
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">1) Xác định & tìm kiếm</h2>
-            <p className="mt-2 text-sm text-gray-600">Bắt đầu đúng: rõ mục tiêu, shortlist creator liên quan.</p>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Creator Matching</div>
-                <div className="mt-1 text-sm text-gray-700">Lọc theo nền tảng, ngành và phong cách nội dung.</div>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Hồ sơ rõ ràng</div>
-                <div className="mt-1 text-sm text-gray-700">Thông tin nhất quán, giúp ra quyết định nhanh.</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">2) Brief & thỏa thuận</h2>
-            <p className="mt-2 text-sm text-gray-600">Chuẩn hoá đầu vào để giảm sai lệch kỳ vọng.</p>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Brief Template</div>
-                <div className="mt-1 text-sm text-gray-700">Đủ nội dung cần thiết, tránh vòng feedback kéo dài.</div>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Deal rõ ràng</div>
-                <div className="mt-1 text-sm text-gray-700">Phạm vi công việc, timeline, tiêu chí nghiệm thu.</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">3) Thực thi & nghiệm thu</h2>
-            <p className="mt-2 text-sm text-gray-600">Giảm sai sót vận hành, theo dõi tiến độ minh bạch.</p>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Checklist Deliver</div>
-                <div className="mt-1 text-sm text-gray-700">Rõ từng hạng mục để nghiệm thu chính xác.</div>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Tracking</div>
-                <div className="mt-1 text-sm text-gray-700">Theo dõi trạng thái và deadline của từng deliver.</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">4) Tổng hợp & cải tiến</h2>
-            <p className="mt-2 text-sm text-gray-600">Đo lường để tối ưu, thay vì chỉ báo cáo để hoàn tất.</p>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Report theo chiến dịch</div>
-                <div className="mt-1 text-sm text-gray-700">Nhìn tổng quan để rút kinh nghiệm và phân bổ lại.</div>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-5">
-                <div className="text-sm font-semibold text-indigo-600">Chuẩn hoá để scale</div>
-                <div className="mt-1 text-sm text-gray-700">Giữ chất lượng khi chạy nhiều chiến dịch song song.</div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div className="mt-10 flex gap-3">
-          <Link to="/pricing" className="px-5 py-3 rounded-full border border-gray-200">Xem bảng giá</Link>
-          <Link to="/" className="px-5 py-3 rounded-full border border-gray-200">Trang chủ</Link>
-        </div>
-      </div>
-    </div>
   );
 }
 </file>
@@ -4748,43 +5286,219 @@ import { Link } from "react-router-dom";
 
 export default function ForBrands() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <span className="inline-block text-sm font-semibold text-indigo-600">Sản phẩm</span>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">Dành cho Brands</h1>
-            <p className="mt-3 text-gray-600 max-w-2xl">Kiểm soát chất lượng thực thi, tiến độ và nghiệm thu. Tập trung vào kết quả có thể đo lường.</p>
-          </div>
-          <Link className="underline text-sm" to="/product">← Sản phẩm</Link>
-        </div>
+    <div className="bg-white overflow-hidden">
 
-        {/* Value */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Tìm đúng creator</div>
-            <div className="mt-1 text-sm text-gray-700">Shortlist theo ngành, nền tảng, phong cách nội dung.</div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Vận hành ít sai</div>
-            <div className="mt-1 text-sm text-gray-700">Checklist, deadline, trạng thái rõ ràng trong một luồng.</div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Minh bạch deliver</div>
-            <div className="mt-1 text-sm text-gray-700">Biết chính xác đã nhận/chưa nhận để nghiệm thu đúng.</div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Báo cáo để tối ưu</div>
-            <div className="mt-1 text-sm text-gray-700">Tổng hợp theo chiến dịch để phân bổ ngân sách hợp lý.</div>
-          </div>
-        </div>
+      {/* ================= HERO ================= */}
+      <section className="relative pt-44 pb-32 bg-white">
+        <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
 
-        <div className="mt-10 flex gap-3">
-          <Link to="/pricing" className="px-5 py-3 rounded-full border border-gray-200">Bảng giá</Link>
-          <Link to="/" className="px-5 py-3 rounded-full border border-gray-200">Trang chủ</Link>
+        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          {/* Text */}
+          <div className="animate-fade-in-up">
+            <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+              Dành cho Brands
+            </span>
+
+            <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+              Vận hành Influencer <br />
+              Marketing <br />
+              có kiểm soát
+            </h1>
+
+            <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+              Alino giúp đội marketing kiểm soát
+              <strong> chất lượng thực thi, tiến độ và nghiệm thu</strong>
+              — để bạn tập trung vào kết quả truyền thông thực tế.
+            </p>
+
+            <div className="mt-10 flex gap-4">
+              <Link
+                to="/signup"
+                className="px-8 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-500 transition"
+              >
+                Bắt đầu cho Brand
+              </Link>
+              <Link
+                to="/features"
+                className="px-8 py-4 border border-gray-300 rounded-full font-semibold hover:bg-gray-50 transition"
+              >
+                Xem tính năng
+              </Link>
+            </div>
+          </div>
+
+          {/* Hero Visual – Campaign Overview */}
+          <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+            <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-4">
+              <div className="font-semibold text-gray-900">
+                Tổng quan chiến dịch
+              </div>
+              <div className="text-sm text-gray-600">
+                Ra mắt sản phẩm mới • Q3
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full">
+                <div className="h-full w-3/4 bg-indigo-600 rounded-full" />
+              </div>
+              <div className="text-xs text-gray-500">
+                12 / 16 Creator đã hoàn thành
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ================= SOLUTION ================= */}
+      <section className="py-32">
+        <div className="max-w-6xl mx-auto px-6 space-y-24">
+
+          {/* Intro */}
+          <div className="max-w-3xl animate-fade-in-up">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Alino giúp Brand làm việc có hệ thống
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed">
+              Từ lúc xác định nhu cầu đến nghiệm thu và đánh giá —
+              mọi bước đều có cấu trúc rõ ràng.
+            </p>
+          </div>
+
+          {/* Feature 1 – Creator Selection */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div>
+              <h3 className="text-3xl font-bold">
+                Tìm & chọn đúng Creator
+              </h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Shortlist Creator dựa trên ngành, nền tảng
+                và phong cách nội dung — không chọn theo cảm tính.
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Danh sách Creator
+                </div>
+                {["Beauty", "Lifestyle", "Tech"].map((c) => (
+                  <div
+                    key={c}
+                    className="flex items-center justify-between text-sm text-gray-600"
+                  >
+                    <span>{c}</span>
+                    <span className="text-indigo-600 font-semibold">✓</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 2 – Operation */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Vận hành chiến dịch
+                </div>
+                <div className="text-sm text-gray-600">
+                  Brief • Checklist • Deadline
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-1/2 bg-indigo-600 rounded-full" />
+                </div>
+              </div>
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <h3 className="text-3xl font-bold">
+                Vận hành chiến dịch mạch lạc
+              </h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Mọi thứ nằm trong một luồng thống nhất,
+                giảm sai sót và bỏ sót deliver.
+              </p>
+            </div>
+          </div>
+
+          {/* Feature 3 – Approval */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div>
+              <h3 className="text-3xl font-bold">
+                Nghiệm thu minh bạch
+              </h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Biết chính xác đã nhận đủ hay chưa,
+                tránh tranh cãi khi đánh giá chất lượng.
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm text-center space-y-3">
+                <div className="inline-flex px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+                  ✓ Đã nghiệm thu
+                </div>
+                <div className="text-sm text-gray-600">
+                  Nội dung đạt yêu cầu
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 4 – Report */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Báo cáo chiến dịch
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-4/5 bg-indigo-600 rounded-full" />
+                </div>
+                <div className="text-xs text-gray-500">
+                  Hiệu quả vượt KPI
+                </div>
+              </div>
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <h3 className="text-3xl font-bold">
+                Báo cáo để tối ưu ngân sách
+              </h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Tổng hợp kết quả theo chiến dịch
+                để phân bổ nguồn lực hiệu quả hơn.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CTA ================= */}
+      <section className="py-36 bg-indigo-600 text-white text-center">
+        <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+          Influencer Marketing hiệu quả <br />
+          bắt đầu từ quy trình đúng
+        </h2>
+        <p className="mt-6 text-xl text-white/80 leading-relaxed">
+          Bắt đầu vận hành chiến dịch
+          một cách chuyên nghiệp cùng Alino.
+        </p>
+
+        <div className="mt-10 flex justify-center gap-4">
+          <Link
+            to="/signup"
+            className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+          >
+            Bắt đầu cho Brand
+          </Link>
+          <Link
+            to="/creators"
+            className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+          >
+            Dành cho Creators
+          </Link>
+        </div>
+      </section>
+
     </div>
   );
 }
@@ -4795,43 +5509,221 @@ import { Link } from "react-router-dom";
 
 export default function ForCreators() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <span className="inline-block text-sm font-semibold text-indigo-600">Sản phẩm</span>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">Dành cho Creators</h1>
-            <p className="mt-3 text-gray-600 max-w-2xl">Làm việc chuyên nghiệp: rõ ràng về brief, phạm vi và tiêu chí nghiệm thu.</p>
-          </div>
-          <Link className="underline text-sm" to="/product">← Sản phẩm</Link>
-        </div>
+    <div className="bg-white overflow-hidden">
 
-        {/* Value */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Brief rõ ràng</div>
-            <div className="mt-1 text-sm text-gray-700">Thông tin đầu vào và mục tiêu cụ thể để tập trung vào chất lượng nội dung.</div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Checklist Deliver</div>
-            <div className="mt-1 text-sm text-gray-700">Giảm thiếu sót; dễ nghiệm thu và ghi nhận công sức đúng.</div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Tracking tiến độ</div>
-            <div className="mt-1 text-sm text-gray-700">Biết bạn đang ở bước nào; hạn chế miss timeline.</div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 p-6">
-            <div className="text-sm font-semibold text-indigo-600">Hồ sơ chuyên nghiệp</div>
-            <div className="mt-1 text-sm text-gray-700">Trình bày năng lực rõ ràng để tạo niềm tin với Brand.</div>
-          </div>
-        </div>
+      {/* ================= HERO ================= */}
+      <section className="relative pt-44 pb-32 bg-white">
+        <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
 
-        <div className="mt-10 flex gap-3">
-          <Link to="/brands" className="px-5 py-3 rounded-full border border-gray-200">Cho Brands</Link>
-          <Link to="/" className="px-5 py-3 rounded-full border border-gray-200">Trang chủ</Link>
+        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          {/* Text */}
+          <div className="animate-fade-in-up">
+            <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+              Dành cho Creators
+            </span>
+
+            <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+              Làm việc như <br />
+              một Creator <br />
+              chuyên nghiệp
+            </h1>
+
+            <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+              Alino giúp bạn tập trung vào sáng tạo nội dung —
+              còn brief, phạm vi công việc và nghiệm thu
+              được chuẩn hoá rõ ràng ngay từ đầu.
+            </p>
+
+            <div className="mt-10 flex gap-4">
+              <Link
+                to="/signup"
+                className="px-8 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-500 transition"
+              >
+                Tạo hồ sơ Creator
+              </Link>
+              <Link
+                to="/features"
+                className="px-8 py-4 border border-gray-300 rounded-full font-semibold hover:bg-gray-50 transition"
+              >
+                Xem tính năng
+              </Link>
+            </div>
+          </div>
+
+          {/* Hero Visual – Creator Workspace */}
+          <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+            <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-4">
+              <div className="font-semibold text-gray-900">
+                Dự án đang làm
+              </div>
+              <div className="text-sm text-gray-600">
+                Skincare Review • TikTok
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full">
+                <div className="h-full w-2/3 bg-indigo-600 rounded-full" />
+              </div>
+              <div className="text-xs text-gray-500">
+                Đang chờ duyệt nội dung
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ================= SOLUTION ================= */}
+      <section className="py-32">
+        <div className="max-w-6xl mx-auto px-6 space-y-24">
+
+          {/* Intro */}
+          <div className="max-w-3xl animate-fade-in-up">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Alino thay đổi cách Creator làm việc
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed">
+              Mọi hợp tác đều dựa trên cấu trúc rõ ràng —
+              giúp bạn làm đúng việc, đúng kỳ vọng và đúng giá trị.
+            </p>
+          </div>
+
+          {/* Feature 1 – Brief */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div>
+              <h3 className="text-3xl font-bold">Brief có cấu trúc</h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Bạn biết chính xác Brand muốn gì,
+                mục tiêu là gì và đâu là tiêu chí hoàn thành.
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="text-sm font-semibold text-indigo-600">
+                  BRIEF
+                </div>
+                <div className="font-medium text-gray-900">
+                  Video TikTok 60s
+                </div>
+                <div className="text-sm text-gray-600">
+                  Thông điệp: Da khoẻ tự nhiên
+                </div>
+                <div className="inline-flex px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
+                  Deadline: 25/06
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 2 – Checklist */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                <div className="font-semibold text-gray-900">
+                  Checklist nghiệm thu
+                </div>
+                {[
+                  "Đúng format",
+                  "Đúng thông điệp",
+                  "Gắn hashtag",
+                ].map((i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="text-green-600">✓</span> {i}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <h3 className="text-3xl font-bold">Checklist nghiệm thu</h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Công sức của bạn được ghi nhận
+                dựa trên checklist rõ ràng, không cảm tính.
+              </p>
+            </div>
+          </div>
+
+          {/* Feature 3 – Progress */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div>
+              <h3 className="text-3xl font-bold">Theo dõi tiến độ</h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Bạn luôn biết mình đang ở giai đoạn nào
+                và deadline tiếp theo là gì.
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                <div className="text-sm font-semibold mb-2">
+                  Tiến độ chiến dịch
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-1/2 bg-indigo-600 rounded-full" />
+                </div>
+                <div className="mt-2 text-xs text-gray-500">
+                  Đang chỉnh sửa nội dung
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 4 – Profile */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+            <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+                    C
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">
+                      Creator Profile
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Beauty • Lifestyle
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <h3 className="text-3xl font-bold">Hồ sơ Creator chuyên nghiệp</h3>
+              <p className="mt-4 text-lg text-gray-600">
+                Thể hiện năng lực và phong cách
+                một cách nhất quán để tạo niềm tin với Brand.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CTA ================= */}
+      <section className="py-36 bg-indigo-600 text-white text-center">
+        <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+          Sáng tạo tốt hơn <br />
+          khi mọi thứ đã rõ ràng
+        </h2>
+        <p className="mt-6 text-xl text-white/80 leading-relaxed">
+          Tạo hồ sơ Creator và bắt đầu làm việc
+          theo chuẩn chuyên nghiệp cùng Alino.
+        </p>
+
+        <div className="mt-10 flex justify-center gap-4">
+          <Link
+            to="/signup"
+            className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+          >
+            Bắt đầu miễn phí
+          </Link>
+          <Link
+            to="/brands"
+            className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+          >
+            Dành cho Brands
+          </Link>
+        </div>
+      </section>
+
     </div>
   );
 }
@@ -4841,127 +5733,518 @@ export default function ForCreators() {
 import { Link } from "react-router-dom";
 
 const TIERS = [
-    { name: "Starter", price: "Liên hệ", bullets: ["1–3 campaigns/tháng", "Brief + checklist", "Report cơ bản"] },
-    { name: "Growth", price: "Liên hệ", bullets: ["Nhiều campaigns", "Tracking tiến độ", "Report theo chiến dịch"] },
-    { name: "Scale", price: "Liên hệ", bullets: ["Team & phân quyền", "Template nâng cao", "Tuỳ biến workflow"] },
+  {
+    name: "Starter",
+    desc: "Dành cho team bắt đầu làm Influencer Marketing có cấu trúc",
+    highlight: false,
+    bullets: [
+      "1–3 chiến dịch / tháng",
+      "Brief & checklist chuẩn",
+      "Quản lý Creator cơ bản",
+      "Report tổng quan",
+    ],
+  },
+  {
+    name: "Growth",
+    desc: "Dành cho team đã có quy trình và cần tối ưu hiệu quả",
+    highlight: true,
+    bullets: [
+      "Nhiều chiến dịch song song",
+      "Tracking tiến độ chi tiết",
+      "Report theo từng chiến dịch",
+      "Quản lý Creator & deal nâng cao",
+    ],
+  },
+  {
+    name: "Scale",
+    desc: "Dành cho tổ chức lớn hoặc Agency",
+    highlight: false,
+    bullets: [
+      "Phân quyền theo team",
+      "Workflow tuỳ biến",
+      "Template nâng cao",
+      "Hỗ trợ triển khai riêng",
+    ],
+  },
 ];
 
 export default function Pricing() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <span className="inline-block text-sm font-semibold text-indigo-600">Sản phẩm</span>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">Bảng giá</h1>
-            <p className="mt-3 text-gray-600 max-w-2xl">Chúng tôi định giá theo mức độ sử dụng và giai đoạn trưởng thành của đội ngũ. Không ép buộc nâng gói, ưu tiên phù hợp.</p>
-          </div>
-          <Link className="underline text-sm" to="/product">← Sản phẩm</Link>
-        </div>
+    <div className="bg-white overflow-hidden">
 
-        {/* Tiers */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {TIERS.map((t) => (
-            <div key={t.name} className="rounded-2xl border border-gray-200 p-6">
-              <div className="text-sm font-semibold text-indigo-600">{t.name}</div>
-              <div className="mt-2 text-2xl font-bold">{t.price}</div>
-              <ul className="mt-4 space-y-2 text-sm text-gray-700">
-                {t.bullets.map((b) => (
-                  <li key={b} className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>{b}</li>
+      {/* ================= HERO ================= */}
+      <section className="pt-44 pb-32 text-center relative">
+        <div className="absolute -top-40 right-0 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+        <div className="relative max-w-4xl mx-auto px-6 animate-fade-in-up">
+          <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+            Bảng giá
+          </span>
+
+          <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+            Định giá theo <br />
+            giai đoạn phát triển
+          </h1>
+
+          <p className="mt-8 text-xl text-gray-600 leading-relaxed">
+            Alino không bán gói cứng.
+            Chúng tôi định giá dựa trên
+            <strong> quy mô, độ phức tạp và cách đội bạn làm việc</strong>.
+          </p>
+        </div>
+      </section>
+
+      {/* ================= TIERS ================= */}
+      <section className="py-32 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-10">
+          {TIERS.map((tier) => (
+            <div
+              key={tier.name}
+              className={`relative rounded-3xl p-8 border transition animate-fade-in-up
+                ${tier.highlight
+                  ? "bg-white border-indigo-600 shadow-xl scale-[1.03]"
+                  : "bg-white border-gray-200 hover:shadow-lg"
+                }
+              `}
+            >
+              {tier.highlight && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs px-4 py-1 rounded-full font-semibold">
+                  Phổ biến nhất
+                </div>
+              )}
+
+              <h3 className="text-2xl font-bold text-gray-900">
+                {tier.name}
+              </h3>
+              <p className="mt-3 text-gray-600">
+                {tier.desc}
+              </p>
+
+              <div className="mt-6 text-3xl font-extrabold text-gray-900">
+                Liên hệ
+              </div>
+              <div className="text-sm text-gray-500">
+                Báo giá theo nhu cầu thực tế
+              </div>
+
+              <ul className="mt-8 space-y-3 text-gray-700">
+                {tier.bullets.map((b) => (
+                  <li key={b} className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-indigo-600" />
+                    {b}
+                  </li>
                 ))}
               </ul>
-              <button className="mt-6 w-full rounded-full bg-black text-white py-3">Nhận demo / báo giá</button>
+
+              <button
+                className={`mt-10 w-full py-3 rounded-full font-semibold transition
+                  ${tier.highlight
+                    ? "bg-indigo-600 text-white hover:bg-indigo-500"
+                    : "border border-gray-300 hover:bg-gray-50"
+                  }
+                `}
+              >
+                Nhận demo & báo giá
+              </button>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* Notes */}
-        <div className="mt-10 rounded-2xl bg-indigo-50 p-6">
-          <div className="text-sm font-semibold text-gray-900">Triết lý định giá</div>
-          <p className="mt-2 text-sm text-gray-700">Bắt đầu từ nhu cầu thực tế của đội bạn. Khi tăng quy mô hoặc độ phức tạp, chúng tôi điều chỉnh theo khối lượng sử dụng.</p>
-        </div>
+      {/* ================= PHILOSOPHY ================= */}
+      <section className="py-32">
+        <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+          <div className="animate-fade-in-up">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Triết lý định giá của Alino
+            </h2>
+            <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+              Chúng tôi không khuyến khích đội bạn
+              nâng gói sớm hơn cần thiết.
+            </p>
+            <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+              Khi quy mô tăng, số chiến dịch nhiều hơn
+              hoặc workflow phức tạp hơn —
+              mức giá sẽ điều chỉnh tương ứng.
+            </p>
+          </div>
+          {/* Pricing Philosophy Visual */}
+          <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
 
-        <div className="mt-10 flex gap-3">
-          <Link to="/features" className="px-5 py-3 rounded-full border border-gray-200">Xem tính năng</Link>
-          <Link to="/" className="px-5 py-3 rounded-full border border-gray-200">Trang chủ</Link>
+              <div className="text-sm font-semibold text-indigo-600">
+                GIAI ĐOẠN PHÁT TRIỂN
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">Starter</div>
+                    <div className="h-2 mt-1 bg-gray-200 rounded-full">
+                      <div className="h-full w-1/3 bg-indigo-400 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">Growth</div>
+                    <div className="h-2 mt-1 bg-gray-200 rounded-full">
+                      <div className="h-full w-2/3 bg-indigo-500 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">Scale</div>
+                    <div className="h-2 mt-1 bg-gray-200 rounded-full">
+                      <div className="h-full w-full bg-indigo-600 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-sm text-gray-600 pt-2">
+                Quy mô & độ phức tạp tăng dần theo giai đoạn sử dụng
+              </div>
+
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ================= FAQ ================= */}
+      <section className="py-32 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6 space-y-10 animate-fade-in-up">
+          <h2 className="text-4xl font-bold tracking-tight text-gray-900 text-center">
+            Câu hỏi thường gặp
+          </h2>
+
+          {[
+            {
+              q: "Vì sao Alino không công khai giá?",
+              a: "Vì mỗi đội có cách làm việc và quy mô khác nhau. Công khai một mức giá cố định thường dẫn đến sử dụng không phù hợp."
+            },
+            {
+              q: "Có dùng thử không?",
+              a: "Có. Chúng tôi thường demo theo use case thực tế của đội bạn."
+            },
+            {
+              q: "Có hợp đồng dài hạn không?",
+              a: "Không bắt buộc. Chúng tôi ưu tiên sự phù hợp lâu dài."
+            },
+          ].map((f, i) => (
+            <div key={i} className="border border-gray-200 rounded-2xl p-6 bg-white">
+              <h3 className="font-semibold text-gray-900">{f.q}</h3>
+              <p className="mt-2 text-gray-600">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ================= CTA ================= */}
+      <section className="py-36 bg-indigo-600 text-white text-center">
+        <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+          Chọn đúng giai đoạn, <br />
+          làm việc hiệu quả hơn
+        </h2>
+        <p className="mt-6 text-xl text-white/80">
+          Chúng tôi sẵn sàng tư vấn để bạn chọn gói phù hợp nhất.
+        </p>
+
+        <div className="mt-10 flex justify-center gap-4">
+          <Link
+            to="/signup"
+            className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+          >
+            Bắt đầu miễn phí
+          </Link>
+          <Link
+            to="/features"
+            className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+          >
+            Xem tính năng
+          </Link>
+        </div>
+      </section>
+
     </div>
   );
 }
 </file>
 
 <file path="src/pages/product/Product.tsx">
-import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { buildTitle } from "../../seo";
 
 export default function Product() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-6">
-          <div>
-            <span className="inline-block text-sm font-semibold text-indigo-600">Sản phẩm</span>
-            <h1 className="mt-2 text-5xl font-extrabold tracking-tight">Alino là hệ thống cộng tác Brand × Creator</h1>
-            <p className="mt-4 max-w-2xl text-gray-600 leading-relaxed">
-              Chúng tôi không phải marketplace. Alino chuẩn hoá quy trình hợp tác để đội marketing và creators làm việc
-              rõ ràng, đo lường được và kiểm soát được chất lượng thực thi.
+    <>
+      <Helmet>
+        <title>{buildTitle("Sản phẩm")}</title>
+        <meta
+          name="description"
+          content="Alino giúp Brand và Creator làm việc rõ ràng, minh bạch và đo lường được kết quả Influencer Marketing."
+        />
+      </Helmet>
+
+      <div className="bg-white overflow-hidden">
+        {/* HERO */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-32 -right-32 w-[520px] h-[520px] bg-indigo-100/40 rounded-full blur-3xl" />
+
+          <div className="relative max-w-7xl mx-auto px-6 text-center animate-fade-in-up">
+            <span className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+              Sản phẩm
+            </span>
+
+            <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+              Một nền tảng <br />
+              để Brand & Creator <br />
+              làm việc đúng cách
+            </h1>
+
+            <p className="mt-8 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Alino chuẩn hoá toàn bộ quy trình Influencer Marketing —
+              từ hồ sơ, brief, trao đổi đến nghiệm thu —
+              giúp hai bên tập trung vào kết quả thay vì xử lý ma sát.
             </p>
           </div>
-          <Link to="/" className="underline text-sm text-gray-700">Trang chủ</Link>
-        </div>
+        </section>
 
-        {/* Problem / Fit */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Vấn đề chúng tôi giải</h2>
-            <ul className="mt-3 space-y-2 text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Brief thiếu, đổi nhiều, khó thống nhất.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tiến độ, phạm vi, nghiệm thu rời rạc.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Khó tổng hợp kết quả để tối ưu ngân sách.</li>
-            </ul>
-          </section>
-          <section className="rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Alino phù hợp khi</h2>
-            <ul className="mt-3 space-y-2 text-gray-700">
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Bạn muốn kiểm soát chất lượng và tiến độ.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Bạn ưu tiên luồng làm việc rõ ràng hơn là tính năng phô diễn.</li>
-              <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Bạn cần đo lường kết quả để ra quyết định.</li>
-            </ul>
-          </section>
-        </div>
+        {/* VALUE */}
+        <section className="py-28 bg-indigo-50/40">
+          <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-10">
+            {[
+              {
+                title: "Rõ ràng ngay từ đầu",
+                desc: "Hồ sơ, brief và phạm vi công việc được chuẩn hoá để tránh hiểu nhầm."
+              },
+              {
+                title: "Một luồng làm việc duy nhất",
+                desc: "Trao đổi, tiến độ và nghiệm thu nằm trong cùng một hệ thống."
+              },
+              {
+                title: "Đo lường được kết quả",
+                desc: "Đánh giá dựa trên mục tiêu truyền thông, không chỉ số bề nổi."
+              }
+            ].map((v, i) => (
+              <div
+                key={i}
+                className="rounded-3xl bg-white p-8 border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition animate-fade-in-up"
+              >
+                <h3 className="text-xl font-semibold text-gray-900">{v.title}</h3>
+                <p className="mt-4 text-gray-600 text-lg">{v.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        {/* Shortcuts */}
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link to="/features" className="rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 transition">
-            <div className="text-sm text-gray-500">Tính năng</div>
-            <div className="mt-1 font-semibold">Chuẩn hoá workflow</div>
-            <div className="mt-2 text-sm text-gray-600">Matching → Brief → Deliver → Report</div>
-          </Link>
-          <Link to="/pricing" className="rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 transition">
-            <div className="text-sm text-gray-500">Bảng giá</div>
-            <div className="mt-1 font-semibold">Theo mức độ sử dụng</div>
-            <div className="mt-2 text-sm text-gray-600">Individual / Team / Scale</div>
-          </Link>
-          <Link to="/creators" className="rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 transition">
-            <div className="text-sm text-gray-500">Cho Creators</div>
-            <div className="mt-1 font-semibold">Làm việc chuyên nghiệp</div>
-            <div className="mt-2 text-sm text-gray-600">Brief rõ ràng, checklist minh bạch</div>
-          </Link>
-          <Link to="/brands" className="rounded-2xl border border-gray-200 p-6 hover:bg-gray-50 transition">
-            <div className="text-sm text-gray-500">Cho Brands</div>
-            <div className="mt-1 font-semibold">Kiểm soát thực thi</div>
-            <div className="mt-2 text-sm text-gray-600">Tiến độ, phạm vi, nghiệm thu</div>
-          </Link>
-        </div>
+        {/* FEATURES */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6 space-y-24">
 
-        <div className="mt-10 flex gap-3">
-          <Link to="/features" className="px-5 py-3 rounded-full bg-black text-white">Xem tính năng</Link>
-          <Link to="/pricing" className="px-5 py-3 rounded-full border border-gray-200">Xem bảng giá</Link>
-        </div>
+            <div className="max-w-3xl animate-fade-in-up">
+              <h2 className="text-4xl lg:text-5xl font-bold tracking-tight text-gray-900">
+                Những khối chức năng cốt lõi
+              </h2>
+              <p className="mt-6 text-xl text-gray-600">
+                Mỗi tính năng đều được thiết kế để giảm ma sát
+                và tăng chất lượng hợp tác.
+              </p>
+            </div>
+
+            {/* FEATURE 1 */}
+            <div className="grid md:grid-cols-2 gap-14 items-center animate-fade-in-up">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  Hồ sơ Creator & Brand có cấu trúc
+                </h3>
+                <p className="mt-4 text-gray-600 text-lg leading-relaxed">
+                  Thông tin năng lực, phong cách, ngân sách và kỳ vọng
+                  được chuẩn hoá để hai bên hiểu nhau ngay từ đầu.
+                </p>
+              </div>
+
+              {/* Profile Mock */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+                      C
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">
+                        Linh Nguyen
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Fashion • Lifestyle
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-sm text-gray-600">
+                    Ngân sách kỳ vọng: <span className="font-medium">5–10 triệu / post</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FEATURE 2 */}
+            <div className="grid md:grid-cols-2 gap-14 items-center animate-fade-in-up">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  Brief & phạm vi công việc rõ ràng
+                </h3>
+                <p className="mt-4 text-gray-600 text-lg leading-relaxed">
+                  Mỗi chiến dịch đều có mục tiêu, yêu cầu nội dung
+                  và tiêu chí nghiệm thu cụ thể.
+                </p>
+              </div>
+
+              {/* Brief Mock */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="text-sm font-semibold text-indigo-600">
+                    CHIẾN DỊCH
+                  </div>
+                  <div className="text-gray-900 font-medium">
+                    Ra mắt BST mùa hè
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    1 video TikTok • 1 post Instagram
+                  </div>
+                  <div className="inline-flex px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
+                    Deadline: 30/06
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FEATURE 3 */}
+            <div className="grid md:grid-cols-2 gap-14 items-center animate-fade-in-up">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  Theo dõi tiến độ & trao đổi tập trung
+                </h3>
+                <p className="mt-4 text-gray-600 text-lg leading-relaxed">
+                  Toàn bộ trao đổi, chỉnh sửa và trạng thái
+                  nằm trong cùng một luồng làm việc.
+                </p>
+              </div>
+
+              {/* Progress Mock */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                  <div className="text-sm font-semibold text-gray-900 mb-3">
+                    Tiến độ chiến dịch
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full w-3/4 bg-indigo-600" />
+                  </div>
+                  <div className="mt-3 text-sm text-gray-600">
+                    Đang chờ duyệt nội dung
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FEATURE 4 */}
+            <div className="grid md:grid-cols-2 gap-14 items-center animate-fade-in-up">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  Nghiệm thu & đánh giá minh bạch
+                </h3>
+                <p className="mt-4 text-gray-600 text-lg leading-relaxed">
+                  Đánh giá dựa trên những gì đã thống nhất,
+                  không phát sinh mơ hồ sau cùng.
+                </p>
+              </div>
+
+              {/* Approval Mock */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+                    ✓ Đã nghiệm thu
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600">
+                    Thanh toán được mở khoá
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* WORKFLOW */}
+        <section className="py-32 bg-white">
+          <div className="max-w-6xl mx-auto px-6 animate-fade-in-up">
+            <h2 className="text-4xl lg:text-5xl font-bold tracking-tight text-gray-900">
+              Cách Alino vận hành
+            </h2>
+
+            <div className="mt-20 grid md:grid-cols-4 gap-10">
+              {[
+                "Tạo hồ sơ",
+                "Xác định nhu cầu",
+                "Làm việc & theo dõi",
+                "Nghiệm thu & đánh giá"
+              ].map((step, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-gray-200 p-6 text-center hover:-translate-y-1 hover:shadow-lg transition"
+                >
+                  <div className="text-sm text-indigo-600 font-semibold">
+                    Bước {i + 1}
+                  </div>
+                  <div className="mt-3 font-semibold text-gray-900">
+                    {step}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* DIFFERENCE */}
+        <section className="py-32 bg-indigo-50/40">
+          <div className="max-w-5xl mx-auto px-6 text-center animate-fade-in-up">
+            <h2 className="text-4xl lg:text-5xl font-bold tracking-tight text-gray-900">
+              Điều tạo nên sự khác biệt
+            </h2>
+
+            <p className="mt-8 text-xl text-gray-600 leading-relaxed">
+              Alino không chạy theo số lượng Creator hay chiến dịch,
+              mà tập trung xây dựng chuẩn mực làm việc bền vững.
+            </p>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-36 bg-white text-center">
+          <h2 className="text-5xl font-extrabold tracking-tight text-gray-900 animate-fade-in-up">
+            Bắt đầu làm việc <br /> một cách rõ ràng hơn
+          </h2>
+          <p className="mt-8 text-xl text-gray-600">
+            Tạo tài khoản miễn phí và trải nghiệm quy trình của Alino.
+          </p>
+          <div className="mt-12 inline-flex px-10 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:scale-105 transition">
+            Bắt đầu ngay
+          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }
 </file>
@@ -5396,7 +6679,12 @@ const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const isLanding = location.pathname === ROUTES.HOME;
+    const isMarketingPage =
+        !location.pathname.startsWith('/app') &&
+        !location.pathname.startsWith('/onboarding') &&
+        !location.pathname.startsWith('/settings') &&
+        !location.pathname.startsWith('/profile');
+
     const isOnboarding = location.pathname.startsWith('/onboarding');
 
     const [displayName, setDisplayName] = useState('User');
@@ -5445,8 +6733,8 @@ const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
                 <div className="flex items-center gap-10">
                     <AppLogo />
 
-                    {/* 👉 Navigation chỉ hiện ở Landing & chưa login */}
-                    {isLanding && <LandingNav />}
+                    {/* 👉 Navigation chỉ hiện ở Marketing & chưa login */}
+                    {isMarketingPage && <LandingNav />}
                 </div>
 
                 {/* RIGHT */}
@@ -5535,6 +6823,101 @@ const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
 };
 
 export default AppHeader;
+</file>
+
+<file path="src/pages/auth/ResetPassword.tsx">
+import { useState } from 'react';
+import { supabase } from '../../lib/supabase/client';
+import { ROUTES } from '../../shared/routes';
+import { getSiteUrl } from '../../lib/siteUrl';
+
+const ResetPassword = () => {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+        setError('');
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${getSiteUrl()}${ROUTES.UPDATE_PASSWORD}`,
+        });
+
+        if (error) {
+            // Không leak thông tin email có tồn tại hay không
+            setError('Không thể gửi email reset. Vui lòng thử lại.');
+        } else {
+            // Luôn báo thành công (best practice)
+            setMessage(
+                'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu.'
+            );
+        }
+
+        setLoading(false);
+    };
+
+    return (
+        <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-border p-8">
+                <h1 className="text-2xl font-bold text-primary mb-2 text-center">
+                    Quên mật khẩu
+                </h1>
+
+                <p className="text-secondary text-sm text-center mb-6">
+                    Nhập email để nhận link đặt lại mật khẩu
+                </p>
+
+                {message && (
+                    <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                        {message}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleReset} className="flex flex-col gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-primary mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand hover:bg-brandHover text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                        {loading ? 'Đang gửi...' : 'Gửi link reset'}
+                    </button>
+
+                    <a
+                        href={ROUTES.LOGIN}
+                        className="text-center text-sm text-brand hover:underline mt-2"
+                    >
+                        Quay lại Đăng nhập
+                    </a>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default ResetPassword;
 </file>
 
 <file path="src/pages/auth/VerifyEmailPending.tsx">
@@ -6570,6 +7953,12 @@ const Onboarding = () => {
 export default Onboarding;
 </file>
 
+<file path=".env.example">
+VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
+VITE_SITE_URL=http://localhost:5173
+</file>
+
 <file path="src/pages/onboarding/RoleSelection.tsx">
 import { useState } from 'react';
 import { useAuth } from '../../app/providers/AuthProvider';
@@ -6618,10 +8007,49 @@ const RoleSelection = () => {
 export default RoleSelection;
 </file>
 
-<file path=".env.example">
-VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
-VITE_SITE_URL=http://localhost:5173
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node modules
+node_modules
+**/node_modules
+
+# Build artifacts
+dist
+dist-ssr
+*.local
+out
+build
+coverage
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*.njsproj
+*.sln
+*.sw?
+
+# Typescript
+*.tsbuildinfo
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Generator
+repomix.md
 </file>
 
 <file path="src/pages/auth/AuthCallback.tsx">
@@ -6764,51 +8192,6 @@ const AuthCallback = () => {
 };
 
 export default AuthCallback;
-</file>
-
-<file path=".gitignore">
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Node modules
-node_modules
-**/node_modules
-
-# Build artifacts
-dist
-dist-ssr
-*.local
-out
-build
-coverage
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*.njsproj
-*.sln
-*.sw?
-
-# Typescript
-*.tsbuildinfo
-
-# Env
-.env
-.env.*
-!.env.example
-
-# Generator
-repomix.md
 </file>
 
 <file path="src/pages/onboarding/BrandOnboarding.tsx">
@@ -8176,13 +9559,11 @@ import VerifyEmailPending from '@/pages/auth/VerifyEmailPending';
 
 // About pages
 import AboutUs from "@/pages/about/AboutUs";
-import AboutAlino from "@/pages/about/AboutAlino";
 import Partners from "@/pages/about/Partners";
 import Careers from "@/pages/about/Careers";
 
 // Product pages
 import Product from "@/pages/product/Product";
-import Features from "@/pages/product/Features";
 import Pricing from "@/pages/product/Pricing";
 import ForCreators from "@/pages/product/ForCreators";
 import ForBrands from "@/pages/product/ForBrands";
@@ -8212,54 +9593,52 @@ function App() {
                     <ScrollToTop />
                     <AuthProvider>
                         <Routes>
-                        {/* Shared Layout Routes */}
-                        <Route element={<AppLayout />}>
-                        {/* Public Route - Landing */}
-                        <Route path={ROUTES.HOME} element={<Landing />} />
+                            {/* Shared Layout Routes */}
+                            <Route element={<AppLayout />}>
+                                {/* Public Route - Landing */}
+                                <Route path={ROUTES.HOME} element={<Landing />} />
 
-                        {/* About public routes */}
-                        <Route path="/about" element={<AboutUs />} />
-                        <Route path="/about-alino" element={<AboutAlino />} />
-                        <Route path="/partners" element={<Partners />} />
-                        <Route path="/careers" element={<Careers />} />
+                                {/* About public routes */}
+                                <Route path="/about" element={<AboutUs />} />
+                                <Route path="/partners" element={<Partners />} />
+                                <Route path="/careers" element={<Careers />} />
 
-                        {/* Product public routes */}
-                        <Route path="/product" element={<Product />} />
-                        <Route path="/features" element={<Features />} />
-                        <Route path="/pricing" element={<Pricing />} />
-                        <Route path="/creators" element={<ForCreators />} />
-                        <Route path="/brands" element={<ForBrands />} />
+                                {/* Product public routes */}
+                                <Route path="/product" element={<Product />} />
+                                <Route path="/pricing" element={<Pricing />} />
+                                <Route path="/creators" element={<ForCreators />} />
+                                <Route path="/brands" element={<ForBrands />} />
 
-                        {/* Insights public routes */}
-                        <Route path="/trends" element={<Trends />} />
-                        <Route path="/news" element={<News />} />
-                        <Route path="/blog" element={<Blog />} />
-                        <Route path="/events" element={<Events />} />
+                                {/* Insights public routes */}
+                                <Route path="/trends" element={<Trends />} />
+                                <Route path="/news" element={<News />} />
+                                <Route path="/blog" element={<Blog />} />
+                                <Route path="/events" element={<Events />} />
 
-                        {/* Auth Pages */}
-                        <Route path={ROUTES.LOGIN} element={<Login />} />
-                        <Route path={ROUTES.SIGNUP} element={<Signup />} />
-                        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
-                        <Route path={ROUTES.UPDATE_PASSWORD} element={<UpdatePassword />} />
-                        <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
-                        <Route path={ROUTES.VERIFY_EMAIL_PENDING} element={<VerifyEmailPending />} />
+                                {/* Auth Pages */}
+                                <Route path={ROUTES.LOGIN} element={<Login />} />
+                                <Route path={ROUTES.SIGNUP} element={<Signup />} />
+                                <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+                                <Route path={ROUTES.UPDATE_PASSWORD} element={<UpdatePassword />} />
+                                <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
+                                <Route path={ROUTES.VERIFY_EMAIL_PENDING} element={<VerifyEmailPending />} />
 
-                        {/* Protected Routes */}
-                        <Route path={ROUTES.APP} element={<RequireAuth><AppGate /></RequireAuth>} />
-                        <Route path={ROUTES.PROFILE} element={<RequireAuth><ProfilePage /></RequireAuth>} />
-                        <Route path={ROUTES.SETTINGS} element={<RequireAuth><SettingsPage /></RequireAuth>} />
+                                {/* Protected Routes */}
+                                <Route path={ROUTES.APP} element={<RequireAuth><AppGate /></RequireAuth>} />
+                                <Route path={ROUTES.PROFILE} element={<RequireAuth><ProfilePage /></RequireAuth>} />
+                                <Route path={ROUTES.SETTINGS} element={<RequireAuth><SettingsPage /></RequireAuth>} />
 
-                        {/* Onboarding */}
-                        <Route path={ROUTES.ONBOARDING} element={<RequireAuth><Onboarding /></RequireAuth>} />
-                        <Route path={ROUTES.ONBOARDING_ROLE} element={<RequireAuth><RoleSelection /></RequireAuth>} />
+                                {/* Onboarding */}
+                                <Route path={ROUTES.ONBOARDING} element={<RequireAuth><Onboarding /></RequireAuth>} />
+                                <Route path={ROUTES.ONBOARDING_ROLE} element={<RequireAuth><RoleSelection /></RequireAuth>} />
 
-                        {/* Dashboards */}
-                        <Route path={ROUTES.APP_CREATOR} element={<RequireAuth><CreatorDashboard /></RequireAuth>} />
-                        <Route path={ROUTES.APP_BRAND} element={<RequireAuth><BrandDashboard /></RequireAuth>} />
-                        </Route>
-                    </Routes>
-                </AuthProvider>
-            </BrowserRouter>
+                                {/* Dashboards */}
+                                <Route path={ROUTES.APP_CREATOR} element={<RequireAuth><CreatorDashboard /></RequireAuth>} />
+                                <Route path={ROUTES.APP_BRAND} element={<RequireAuth><BrandDashboard /></RequireAuth>} />
+                            </Route>
+                        </Routes>
+                    </AuthProvider>
+                </BrowserRouter>
             </QueryClientProvider>
         </ErrorBoundary>
     );

@@ -17,7 +17,12 @@ const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const isLanding = location.pathname === ROUTES.HOME;
+    const isMarketingPage =
+        !location.pathname.startsWith('/app') &&
+        !location.pathname.startsWith('/onboarding') &&
+        !location.pathname.startsWith('/settings') &&
+        !location.pathname.startsWith('/profile');
+
     const isOnboarding = location.pathname.startsWith('/onboarding');
 
     const [displayName, setDisplayName] = useState('User');
@@ -66,8 +71,8 @@ const AppHeader = ({ onSignupClick, isModalOpen }: AppHeaderProps) => {
                 <div className="flex items-center gap-10">
                     <AppLogo />
 
-                    {/* 👉 Navigation chỉ hiện ở Landing & chưa login */}
-                    {isLanding && <LandingNav />}
+                    {/* 👉 Navigation chỉ hiện ở Marketing & chưa login */}
+                    {isMarketingPage && <LandingNav />}
                 </div>
 
                 {/* RIGHT */}

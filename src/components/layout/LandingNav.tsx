@@ -16,7 +16,6 @@ const NAV_ITEMS: NavGroup[] = [
     {
         label: "Về chúng tôi", to: "/about",
         items: [
-            { label: "Về Alino", to: "/about-alino" },
             { label: "Đối tác", to: "/partners" },
             { label: "Tuyển dụng", to: "/careers" },
         ],
@@ -24,7 +23,6 @@ const NAV_ITEMS: NavGroup[] = [
     {
         label: "Sản phẩm", to: "/product",
         items: [
-            { label: "Tính năng", to: "/features" },
             { label: "Bảng giá", to: "/pricing" },
             { label: "Cho Creators", to: "/creators" },
             { label: "Cho Brands", to: "/brands" },

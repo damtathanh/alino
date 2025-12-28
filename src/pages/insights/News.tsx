@@ -6,87 +6,197 @@ export default function News() {
   return (
     <>
       <Helmet>
-        <title>{buildTitle("Tin tức")}</title>
+        <title>{buildTitle("Tin tức & cập nhật ngành")}</title>
         <meta
           name="description"
-          content="Chủ đề tin tức quan trọng cho hợp tác Brand–Creator: thuật toán, monetization, chính sách nền tảng."
+          content="Những cập nhật quan trọng ảnh hưởng đến cách Brand và Creator làm việc: thuật toán, monetization và chính sách nền tảng."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          {/* Header */}
-          <div className="mb-8 flex items-start justify-between gap-6">
-            <div>
-              <span className="inline-block text-sm font-semibold text-indigo-600">Insights</span>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">Tin tức theo chủ đề</h1>
-              <p className="mt-3 text-gray-600">
-                Tổng hợp những chủ đề ảnh hưởng tới cách làm việc của Brand và Creator. Mang tính định hướng, không
-                phải đưa tin thời sự.
+      <div className="bg-white overflow-hidden">
+
+        {/* ================= HERO ================= */}
+        <section className="relative pt-44 pb-32 bg-white">
+          <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-indigo-100/40 blur-3xl" />
+
+          <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+            {/* TEXT */}
+            <div className="animate-fade-in-up">
+              <span className="inline-block text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+                Insights
+              </span>
+
+              <h1 className="mt-6 text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] text-gray-900">
+                Những thay đổi <br />
+                bạn không thể <br />
+                bỏ qua
+              </h1>
+
+              <p className="mt-8 text-xl text-gray-600 leading-relaxed max-w-xl">
+                Không chạy theo tin thời sự.
+                Chúng tôi chọn lọc những cập nhật
+                <strong> thực sự ảnh hưởng</strong> đến cách
+                Brand và Creator hợp tác & vận hành.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
-              <Link className="underline" to="/trends">
-                ← Xu hướng
-              </Link>
-              <Link className="underline" to="/">
-                Trang chủ
-              </Link>
+
+            {/* Hero Visual – Industry Signals */}
+            <div className="rounded-3xl bg-indigo-50 p-6 animate-slow-zoom">
+              <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-4">
+                <div className="font-semibold text-gray-900">
+                  Tín hiệu ngành
+                </div>
+                <div className="text-sm text-gray-600">
+                  Thuật toán • Monetization • Chính sách
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full">
+                  <div className="h-full w-4/5 bg-indigo-600 rounded-full" />
+                </div>
+                <div className="text-xs text-gray-500">
+                  Tác động trực tiếp đến vận hành
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Themed sections */}
-          <div className="space-y-8">
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Thuật toán & phân phối nội dung</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Thay đổi thuật toán có thể làm lệch reach đột ngột. Điều quan trọng là duy trì chất lượng nội dung và
-                lịch đăng nhất quán.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Tối ưu theo mục tiêu thay vì chạy theo trend ngắn hạn.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Chuẩn bị phương án A/B khi reach dao động.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Giữ tiêu chuẩn nghiệm thu ổn định giữa các đợt thay đổi.</li>
-              </ul>
-            </section>
-
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Monetization & mô hình hợp tác</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Khi nền tảng thay đổi chính sách monetization, cách định giá và phạm vi công việc cần được cập nhật
-                tương ứng.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Gắn fee với kết quả/đầu ra cụ thể (khi hợp lý).</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Làm rõ phạm vi deliverables theo từng nền tảng.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Dự phòng phương án nếu chính sách đổi giữa campaign.</li>
-              </ul>
-            </section>
-
-            <section className="rounded-2xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">Chính sách nền tảng & tuân thủ</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Tuân thủ guideline (quảng cáo, disclosure, nhạc/bản quyền) là bắt buộc. Vi phạm dẫn đến hạ phân phối hoặc
-                gỡ nội dung.
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Checklist tuân thủ theo kênh và loại nội dung.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Phê duyệt nội dung nhạy cảm trước khi đăng.</li>
-                <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-indigo-600"/>Lưu trữ bằng chứng nghiệm thu để đối soát.</li>
-              </ul>
-            </section>
+        {/* ================= INTRO ================= */}
+        <section className="py-24 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-6 text-center animate-fade-in-up">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Tin tức theo góc nhìn vận hành
+            </h2>
+            <p className="mt-6 text-lg text-gray-700 leading-relaxed">
+              Mỗi thay đổi về thuật toán, monetization hay chính sách
+              đều kéo theo tác động trực tiếp tới
+              brief, deliverables và cách nghiệm thu.
+            </p>
           </div>
+        </section>
 
-          {/* Footer links */}
-          <div className="mt-10 flex gap-3">
-            <Link to="/blog" className="px-5 py-3 rounded-full border border-gray-200">
+        {/* ================= SECTIONS ================= */}
+        <section className="py-32">
+          <div className="max-w-6xl mx-auto px-6 space-y-24">
+
+            {/* ALGORITHM */}
+            <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+              <div>
+                <span className="text-sm font-semibold text-indigo-600">
+                  Thuật toán & phân phối
+                </span>
+
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                  Khi reach thay đổi, <br />
+                  quy trình phải vững
+                </h3>
+              </div>
+
+              {/* Algorithm Visual */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="font-semibold text-gray-900">
+                    Phân phối nội dung
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full">
+                    <div className="h-full w-2/5 bg-indigo-400 rounded-full" />
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full">
+                    <div className="h-full w-3/5 bg-indigo-500 rounded-full" />
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Reach dao động theo update
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* MONETIZATION */}
+            <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+              {/* Monetization Visual */}
+              <div className="order-2 lg:order-1 rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="font-semibold text-gray-900">
+                    Cấu trúc chi phí
+                  </div>
+                  {["Deliverables", "Phạm vi", "Kết quả"].map((i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-indigo-600">✓</span> {i}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="order-1 lg:order-2">
+                <span className="text-sm font-semibold text-indigo-600">
+                  Monetization
+                </span>
+
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                  Định giá không còn <br />
+                  là chuyện cảm tính
+                </h3>
+              </div>
+            </div>
+
+            {/* POLICY */}
+            <div className="grid lg:grid-cols-2 gap-16 items-center animate-fade-in-up">
+              <div>
+                <span className="text-sm font-semibold text-indigo-600">
+                  Chính sách & tuân thủ
+                </span>
+
+                <h3 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                  Tuân thủ không phải <br />
+                  lựa chọn
+                </h3>
+              </div>
+
+              {/* Policy Visual */}
+              <div className="rounded-3xl bg-indigo-50 p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm space-y-3">
+                  <div className="font-semibold text-gray-900">
+                    Checklist tuân thủ
+                  </div>
+                  {["Gắn disclosure", "Đúng guideline", "Lưu bằng chứng"].map((i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-green-600">✓</span> {i}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ================= CTA ================= */}
+        <section className="py-36 bg-indigo-600 text-white text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-tight animate-fade-in-up">
+            Muốn theo kịp ngành <br />
+            mà không bị quá tải?
+          </h2>
+
+          <p className="mt-6 text-xl text-white/80">
+            Đọc blog và tham gia sự kiện của Alino
+            để cập nhật đúng thứ quan trọng.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4">
+            <Link
+              to="/blog"
+              className="px-10 py-4 bg-white text-indigo-600 rounded-full font-semibold hover:scale-105 transition"
+            >
               Đọc Blog
             </Link>
-            <Link to="/events" className="px-5 py-3 rounded-full border border-gray-200">
+            <Link
+              to="/events"
+              className="px-10 py-4 border border-white/40 rounded-full font-semibold hover:bg-white/10 transition"
+            >
               Xem Sự kiện
             </Link>
           </div>
-        </div>
+        </section>
+
       </div>
     </>
   );
