@@ -171,8 +171,7 @@ export default function Partners() {
                     Đối tác #{i + 1}
                   </h3>
                   <p className="mt-4 text-gray-700">
-                    Mô tả ngắn về việc hợp tác thành công, kết quả đạt được
-                    và lợi ích đôi bên.
+                    Đang cập nhật...
                   </p>
                 </div>
               ))}
