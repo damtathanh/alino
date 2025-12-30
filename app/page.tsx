@@ -1,10 +1,15 @@
+'use client';
+
+import Header from '@/app/components/layout/Header';
+import Footer from '@/app/components/layout/Footer';
+import HomeBody from '@/app/components/home';
+
 export default function HomePage() {
   return (
-    <main className="container">
-      <div className="content">
-        <h1>Welcome to MVP</h1>
-        <p>Your application is ready for development.</p>
-      </div>
-    </main>
+    <div className="relative overflow-x-hidden bg-white">
+      <Header />
+      <HomeBody />
+      <Footer />
+    </div>
   );
 }

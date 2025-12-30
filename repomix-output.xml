@@ -52,6 +52,21 @@ app/
         route.ts
     health/
       route.ts
+  components/
+    home/
+      Compare.tsx
+      CTA.tsx
+      ForWho.tsx
+      Hero.tsx
+      HowItWorks.tsx
+      index.tsx
+      Problems.tsx
+      Solutions.tsx
+      TrustedBy.tsx
+      WhyAlino.tsx
+    layout/
+      Footer.tsx
+      Header.tsx
   globals.css
   layout.tsx
   page.tsx
@@ -75,21 +90,12 @@ infra/
       InsforgeCreatorRepository.ts
     client.ts
     index.ts
-  .gitkeep
 lib/
-  .gitkeep
   api-response.ts
   container.ts
 public/
-  Image/
-    image.png
-    user.png
   logo/
     logo.png
-  .gitkeep
-scripts/
-  .gitkeep
-  backup.ts
 .env.example
 .gitignore
 next.config.js
@@ -104,6 +110,775 @@ vercel.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="app/components/home/Compare.tsx">
+'use client';
+
+export default function Compare() {
+  return (
+    <section className="relative pt-8 md:pt-12 pb-12 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full blur-[110px] opacity-20"
+        style={{ background: '#DDD6FE' }}
+      />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
+          Trước và sau khi dùng ALINO
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-10 border-2 border-[#E5E7EB] shadow-lg">
+            <h3 className="text-2xl font-semibold mb-8 tracking-tight">
+              Trước khi có ALINO
+            </h3>
+            <ul className="space-y-4">
+              {[
+                'Tin nhắn Zalo/Messenger bị trôi, mất context',
+                'File Google Drive lộn xộn, không đồng bộ',
+                'Theo dõi deadline bằng Excel, dễ sai sót',
+                'Không có lịch sử trao đổi rõ ràng',
+                'Thanh toán và hợp đồng rải rác nhiều nơi',
+                'Không đo lường được hiệu quả hợp tác',
+              ].map((item, idx) => (
+                <li key={idx} className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-[#9CA3AF]" />
+                  <span className="text-[#6B7280]">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative rounded-3xl p-[2px] bg-gradient-to-r from-[#6366F1] to-[#EC4899] shadow-xl">
+            <div className="bg-gradient-to-br from-white to-[#FAFBFF] rounded-3xl p-10 h-full">
+              <h3 className="text-2xl font-semibold mb-8 tracking-tight">
+                Với ALINO
+              </h3>
+              <ul className="space-y-4">
+                {[
+                  'Nền tảng chung minh bạch cho cả hai phía',
+                  'File và phiên bản được quản lý rõ ràng, đồng bộ',
+                  'Timeline tự động, deadline được nhắc nhở',
+                  'Lịch sử trao đổi đầy đủ, dễ tìm lại',
+                  'Thanh toán và hợp đồng tập trung, minh bạch',
+                  'Báo cáo hiệu quả hợp tác tự động, cả hai phía đều thấy',
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899]" />
+                    <span className="text-[#6B7280]">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/CTA.tsx">
+'use client';
+
+export default function CTA() {
+  return (
+    <section className="relative py-12 md:py-16 bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white overflow-hidden">
+      <div
+        className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-40"
+        style={{ background: '#C7D2FE' }}
+      />
+      <div
+        className="absolute bottom-0 right-1/4 w-[480px] h-[480px] rounded-full blur-[115px] opacity-35"
+        style={{ background: '#F6C1D1' }}
+      />
+
+      <div className="relative max-w-4xl mx-auto px-6 text-center space-y-6">
+        <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-tight">
+          Bắt đầu hợp tác{' '}
+          <br className="hidden md:block" />
+          một cách chuyên nghiệp hơn
+        </h2>
+        <p className="text-xl text-[#6B7280] max-w-2xl mx-auto">
+          ALINO giúp bạn làm việc cùng đối tác một cách minh bạch, rõ ràng và hiệu quả hơn.
+        </p>
+        <div className="flex flex-col items-center gap-4">
+          <a
+            href="/register"
+            className="px-10 py-5 rounded-full font-semibold text-lg text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-2xl shadow-[#6366F1]/40"
+          >
+            Bắt đầu miễn phí
+          </a>
+          <p className="text-sm text-[#9CA3AF]">
+            Không cần thẻ tín dụng • Thiết lập trong 5 phút
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/ForWho.tsx">
+'use client';
+
+export default function ForWho() {
+  return (
+    <section className="relative py-12 md:py-16 bg-gradient-to-b from-[#FAFBFF] via-white to-[#F5F7FF]">
+      <div
+        className="absolute top-20 left-20 w-[380px] h-[380px] rounded-full blur-[100px] opacity-25"
+        style={{ background: '#C7D2FE' }}
+      />
+      <div
+        className="absolute bottom-20 right-20 w-[350px] h-[350px] rounded-full blur-[90px] opacity-20"
+        style={{ background: '#F6C1D1' }}
+      />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
+          ALINO dành cho ai?
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-10 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all border border-black/5">
+            <h3 className="text-2xl font-semibold mb-6 tracking-tight">
+              Creator
+            </h3>
+            <p className="text-[#6B7280] mb-8 leading-relaxed">
+              Dành cho nhà sáng tạo nội dung muốn làm việc chuyên nghiệp với nhiều Brand và quản lý các dự án hợp tác hiệu quả.
+            </p>
+            <ul className="space-y-4 mb-10">
+              {[
+                'Khám phá và nhận lời mời hợp tác từ nhiều Brand',
+                'Làm việc trong nền tảng chung, minh bạch với Brand',
+                'Giao nội dung và nhận feedback có lịch sử đầy đủ',
+                'Theo dõi deadline và tiến độ của từng dự án hợp tác',
+                'Xem thống kê hiệu quả và kết quả công việc',
+              ].map((benefit, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex-shrink-0 mt-0.5 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  </div>
+                  <span className="text-[#6B7280]">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="/register"
+              className="inline-block px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+            >
+              Dùng thử miễn phí
+            </a>
+          </div>
+
+          <div className="bg-gradient-to-br from-[#FAFBFF] to-white rounded-3xl p-10 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all border border-black/5">
+            <h3 className="text-2xl font-semibold mb-6 tracking-tight">
+              Brand / Agency
+            </h3>
+            <p className="text-[#6B7280] mb-8 leading-relaxed">
+              Dành cho nhãn hàng và các công ty cần tìm kiếm và hợp tác với nhiều Creator và quản lý tất cả dự án một cách chuyên nghiệp.
+            </p>
+            <ul className="space-y-4 mb-10">
+              {[
+                'Khám phá và kết nối với Creator phù hợp',
+                'Làm việc trong nền tảng chung với từng Creator',
+                'Theo dõi tiến độ và deadline của từng dự án hợp tác',
+                'Xem và phản hồi nội dung có lịch sử đầy đủ',
+                'Xem báo cáo tổng hợp hiệu quả của tất cả dự án',
+              ].map((benefit, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex-shrink-0 mt-0.5 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  </div>
+                  <span className="text-[#6B7280]">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="/register"
+              className="inline-block px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+            >
+              Dùng thử miễn phí
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/Hero.tsx">
+'use client';
+
+import TrustedBy from './TrustedBy';
+
+export default function Hero() {
+  return (
+    <section className="relative h-[calc(100vh-64px)] overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#EEF1FF] via-[#F5F7FF] to-white" />
+
+      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full blur-[120px] opacity-50 bg-[#C7D2FE]" />
+      <div className="absolute top-1/4 right-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-40 bg-[#F6C1D1]" />
+      <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] rounded-full blur-[90px] opacity-35 bg-[#DDD6FE]" />
+
+      <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col py-16">
+        <div className="flex-1 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
+              Nền tảng hợp tác{' '}
+              <span className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+                cho Creator & Brand
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-[#6B7280] leading-relaxed max-w-xl">
+              ALINO giúp Creator và Brand làm việc cùng nhau minh bạch, rõ ràng và hiệu quả — từ khám phá đối tác đến hoàn thành dự án.
+            </p>
+
+            <div className="flex items-center gap-5">
+              <a
+                href="/register"
+                className="px-7 py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/30"
+              >
+                Bắt đầu miễn phí
+              </a>
+              <span className="text-sm text-[#9CA3AF]">
+                Không cần thẻ • 5 phút setup
+              </span>
+            </div>
+          </div>
+
+          <div className="relative">
+  <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-black/5">
+    <div className="space-y-5">
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-24 bg-[#E5E7EB] rounded-full" />
+          <div className="h-3 w-16 bg-[#EEF2FF] rounded-full" />
+        </div>
+        <span className="text-xs text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-full">
+          Active
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Creator column */}
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-[#6366F1]">Creator</p>
+          <div className="bg-[#EEF2FF] rounded-xl p-3">
+            <p className="text-xs font-medium">Video TikTok</p>
+            <p className="text-[11px] text-[#6B7280]">Draft đang chờ duyệt</p>
+          </div>
+          <div className="bg-[#E0E7FF] rounded-xl p-3">
+            <p className="text-xs font-medium">Instagram Reel</p>
+            <p className="text-[11px] text-[#6B7280]">Đã gửi</p>
+          </div>
+        </div>
+
+        {/* Brand column */}
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-[#EC4899]">Brand</p>
+          <div className="bg-[#FCE7F3] rounded-xl p-3">
+            <p className="text-xs font-medium">Feedback</p>
+            <p className="text-[11px] text-[#6B7280]">
+              “Sửa caption đoạn đầu”
+            </p>
+          </div>
+          <div className="bg-[#FBCFE8] rounded-xl p-3">
+            <p className="text-xs font-medium">Approved</p>
+            <p className="text-[11px] text-[#6B7280]">
+              OK đăng ngày 25/12
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="flex items-center gap-2 pt-2">
+        <div className="h-2 w-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] rounded-full" />
+        <span className="text-[10px] text-[#6B7280]">75%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+        </div>
+
+        <div className="mt-10">
+          <TrustedBy />
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/HowItWorks.tsx">
+'use client';
+
+export default function HowItWorks() {
+  return (
+    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white to-[#FAFBFF]">
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-18"
+        style={{ background: '#F6C1D1' }}
+      />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
+          ALINO hoạt động như thế nào?
+        </h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+          {[
+            {
+              step: '1',
+              title: 'Tạo tài khoản',
+              desc: 'Đăng ký nhanh chóng, chọn vai trò Creator hoặc Brand.',
+            },
+            {
+              step: '2',
+              title: 'Khám phá & kết nối',
+              desc: 'Brand tìm Creator phù hợp, Creator nhận lời mời hợp tác.',
+            },
+            {
+              step: '3',
+              title: 'Làm việc cùng nhau',
+              desc: 'Creator tạo nội dung, Brand xem và phản hồi trực tiếp trên nền tảng chung.',
+            },
+            {
+              step: '4',
+              title: 'Theo dõi & đánh giá',
+              desc: 'Cả hai phía xem tiến độ, thống kê và kết quả hợp tác minh bạch.',
+            },
+          ].map((item, idx) => (
+            <div key={idx} className="relative">
+              <div className="bg-gradient-to-br from-white to-[#FAFBFF] rounded-3xl p-8 border border-black/5 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-xl font-bold text-white mb-6">
+                  {item.step}
+                </div>
+                <h3 className="font-semibold text-lg mb-3 tracking-tight">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-[#6B7280] leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+              {idx < 3 && (
+                <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#6366F1] to-[#EC4899]" />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/index.tsx">
+'use client';
+
+import Hero from './Hero';
+import Problems from './Problems';
+import Solutions from './Solutions';
+import HowItWorks from './HowItWorks';
+import ForWho from './ForWho';
+import Compare from './Compare';
+import WhyAlino from './WhyAlino';
+import CTA from './CTA';
+
+export default function HomeBody() {
+  return (
+    <main className="pt-16">
+      <Hero />
+      <Problems />
+      <Solutions />
+      <HowItWorks />
+      <ForWho />
+      <Compare />
+      <WhyAlino />
+      <CTA />
+    </main>
+  );
+}
+</file>
+
+<file path="app/components/home/Problems.tsx">
+'use client';
+
+export default function Problems() {
+  return (
+    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-[#F5F7FF]">
+      <div
+        className="absolute top-20 right-20 w-[350px] h-[350px] rounded-full blur-[90px] opacity-25"
+        style={{ background: '#F6C1D1' }}
+      />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
+          Hợp tác nhiều hơn{' '}
+          <br className="md:hidden" />
+          nhưng quy trình ngày càng rối
+        </h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            'Tin nhắn Zalo/Messenger bị trôi, mất context cuộc hội thoại',
+            'File Google Drive lộn xộn, không biết phiên bản nào là mới nhất',
+            'Theo dõi deadline bằng Excel, dễ bị quên hoặc trùng lịch',
+            'Không có lịch sử phản hồi, không nhớ đã trao đổi gì',
+            'Thanh toán và hợp đồng nằm rải rác nhiều nơi',
+            'Không đo lường được hiệu quả của từng dự án hợp tác',
+          ].map((point, idx) => (
+            <div
+              key={idx}
+              className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-black/5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-[#9CA3AF] mt-2 flex-shrink-0" />
+                <p className="text-[#6B7280] leading-relaxed">{point}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/Solutions.tsx">
+'use client';
+
+export default function Solutions() {
+  return (
+    <section className="relative pt-8 md:pt-12 pb-12 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
+      <div
+        className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-35"
+        style={{ background: '#C7D2FE' }}
+      />
+      <div
+        className="absolute bottom-0 right-0 w-[380px] h-[380px] rounded-full blur-[95px] opacity-30"
+        style={{ background: '#DDD6FE' }}
+      />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
+          ALINO tạo nền tảng hợp tác rõ ràng
+        </h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              title: 'Nền tảng chung',
+              desc: 'Creator và Brand làm việc cùng nhau trong một nơi duy nhất, minh bạch và đồng bộ.',
+            },
+            {
+              title: 'Quy trình rõ ràng',
+              desc: 'Timeline tự động: Yêu cầu → Draft → Feedback → Duyệt → Hoàn thành.',
+            },
+            {
+              title: 'Lịch sử đầy đủ',
+              desc: 'Mọi trao đổi, comment và thay đổi đều được lưu lại, không bao giờ mất context.',
+            },
+            {
+              title: 'Báo cáo minh bạch',
+              desc: 'Thống kê tiến độ và kết quả hợp tác được cập nhật tự động, cả hai phía đều thấy.',
+            },
+          ].map((feature, idx) => (
+            <div
+              key={idx}
+              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all border border-black/5"
+            >
+              <h3 className="font-semibold text-lg mb-3 tracking-tight">
+                {feature.title}
+              </h3>
+              <p className="text-sm text-[#6B7280] leading-relaxed">
+                {feature.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/home/TrustedBy.tsx">
+'use client';
+
+export default function TrustedBy() {
+  return (
+    <div className="pb-4 pt-6">
+      <p className="text-center text-[11px] uppercase tracking-widest text-[#9CA3AF] mb-3">
+        Được tin dùng bởi
+      </p>
+      <div className="flex justify-center gap-10 text-sm text-[#6B7280] font-medium">
+        <span>Tiktok</span>
+        <span>Instagram</span>
+        <span>Facebook</span>
+        <span>Youtube</span>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/components/home/WhyAlino.tsx">
+'use client';
+
+export default function WhyAlino() {
+  return (
+    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-white">
+      <div
+        className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-25"
+        style={{ background: '#C7D2FE' }}
+      />
+      <div
+        className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-[95px] opacity-20"
+        style={{ background: '#F6C1D1' }}
+      />
+
+      <div className="relative max-w-5xl mx-auto px-6">
+        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
+          Tại sao chọn ALINO?
+        </h2>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              title: 'Thiết kế cho thị trường Việt Nam',
+              desc: 'Hiểu rõ cách làm việc của Creator và Brand tại Việt Nam, ALINO được xây dựng phù hợp với thực tế hợp tác.',
+            },
+            {
+              title: 'Đơn giản, tập trung',
+              desc: 'Không phức tạp, không thừa tính năng. ALINO tập trung vào những gì thực sự cần thiết cho hợp tác hiệu quả.',
+            },
+            {
+              title: 'Xây dựng cho hợp tác lâu dài',
+              desc: 'Không chỉ một lần hợp tác, ALINO giúp bạn xây dựng mối quan hệ làm việc bền vững với đối tác.',
+            },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-black/5"
+            >
+              <h3 className="font-semibold text-lg mb-4 tracking-tight">
+                {item.title}
+              </h3>
+              <p className="text-sm text-[#6B7280] leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+</file>
+
+<file path="app/components/layout/Footer.tsx">
+'use client';
+
+import Image from 'next/image';
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin } from 'react-icons/fa';
+
+export default function Footer() {
+  return (
+    <footer className="relative py-20 bg-white border-t border-black/5">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-4 gap-12 mb-16">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/logo/logo.png"
+                alt="ALINO"
+                width={28}
+                height={28}
+                className="w-7 h-7"
+              />
+              <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+                ALINO
+              </span>
+            </div>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              Nền tảng hợp tác cho Creator và Brand chuyên nghiệp.
+            </p>
+            <div className="flex items-center gap-4 pt-2">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#1877F2] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaFacebook size={20} />
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#DD2A7B] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaInstagram size={20} />
+              </a>
+              <a
+                href="https://tiktok.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#000000] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaTiktok size={20} />
+              </a>
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#FF0000] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaYoutube size={20} />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaLinkedin size={20} />
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Sản phẩm</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#product" className="hover:text-[#6366F1] transition-colors">
+                  Tính năng
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" className="hover:text-[#6366F1] transition-colors">
+                  Bảng giá
+                </a>
+              </li>
+              <li>
+                <a href="#how-it-works" className="hover:text-[#6366F1] transition-colors">
+                  Cách hoạt động
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Công ty</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#about" className="hover:text-[#6366F1] transition-colors">
+                  Về chúng tôi
+                </a>
+              </li>
+              <li>
+                <a href="#news" className="hover:text-[#6366F1] transition-colors">
+                  Tin tức
+                </a>
+              </li>
+              <li>
+                <a href="#contact" className="hover:text-[#6366F1] transition-colors">
+                  Liên hệ
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Pháp lý</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#terms" className="hover:text-[#6366F1] transition-colors">
+                  Điều khoản sử dụng
+                </a>
+              </li>
+              <li>
+                <a href="#privacy" className="hover:text-[#6366F1] transition-colors">
+                  Chính sách bảo mật
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="pt-8 border-t border-black/5 text-center text-sm text-[#9CA3AF]">
+          © 2025 ALINO. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}
+</file>
+
+<file path="app/components/layout/Header.tsx">
+'use client';
+
+import Image from 'next/image';
+
+export default function Header() {
+  return (
+    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/logo/logo.png"
+            alt="ALINO"
+            width={32}
+            height={32}
+            className="w-8 h-8"
+          />
+          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+            ALINO
+          </span>
+        </div>
+
+        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
+          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Về chúng tôi
+          </a>
+          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Sản phẩm
+          </a>
+          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Tin tức
+          </a>
+          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Liên hệ
+          </a>
+        </nav>
+
+        <div className="flex items-center gap-4 text-sm">
+          <a
+            href="/login"
+            className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
+          >
+            Đăng nhập
+          </a>
+          <a
+            href="/register"
+            className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+          >
+            Đăng ký
+          </a>
+        </div>
+      </div>
+    </header>
+  );
+}
+</file>
 
 <file path="app/api/auth/session/route.ts">
 import { NextRequest, NextResponse } from 'next/server';
@@ -824,63 +1599,12 @@ module.exports = nextConfig
 </file>
 
 <file path="postcss.config.js">
-export default {
+module.exports = {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},
   },
 }
-</file>
-
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: ["./app/**/*.{js,ts,jsx,tsx}"],
-  theme: {
-    extend: {
-      colors: {
-        // Neutrals
-        bg: "#FFFFFF",
-        bgAlt: "#FAFAFA",
-        surface: "#F2F4F7",
-        border: "#E4E7EC",
-
-        // Text
-        primary: "#101828",
-        secondary: "#667085",
-        muted: "#98A2B3",
-
-        // Brand Indigo
-        brand: "#4F46E5",
-        brandHover: "#4338CA",
-        brandActive: "#3730A3",
-        brandSoft: "#EEF2FF",
-
-        // Semantic
-        success: "#16A34A",
-        warning: "#F59E0B",
-        error: "#DC2626",
-        info: "#2563EB",
-
-        // Deal status
-        dealNew: "#EEF2FF",
-        dealProgress: "#DBEAFE",
-        dealFeedback: "#FEF3C7",
-        dealDone: "#DCFCE7",
-      },
-      boxShadow: {
-        soft: "0 1px 2px rgba(16,24,40,0.04)",
-        card: "0 4px 12px rgba(16,24,40,0.08)",
-        lift: "0 12px 24px rgba(16,24,40,0.12)",
-      },
-      borderRadius: {
-        lg: "12px",
-        xl: "16px",
-      },
-    },
-  },
-  plugins: [],
-};
 </file>
 
 <file path="TECHNICAL_SUMMARY.md">
@@ -1223,140 +1947,24 @@ if (profile.role === Role.CREATOR) { ... }
 **END OF DOCUMENT**
 </file>
 
-<file path="app/globals.css">
-:root {
-  /* Colors */
-  --color-bg: #FFFFFF;
-  --color-bg-secondary: #FAFAFA;
-  --color-surface: #F2F4F7;
-  --color-border: #E4E7EC;
-  --color-text-primary: #101828;
-  --color-text-secondary: #667085;
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
-  --color-primary-active: #3730A3;
-  --color-primary-soft: #EEF2FF;
-  --color-success: #16A34A;
-  --color-warning: #F59E0B;
-  --color-error: #DC2626;
-  --color-info: #2563EB;
-
-  /* Typography */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-  --spacing-3xl: 4rem;
-
-  /* Layout */
-  --container-max-width: 1100px;
-  --border-radius: 8px;
-  --border-radius-lg: 12px;
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./app/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#0A0A0A',
+        border: '#E5E7EB',
+      },
+    },
+  },
+  plugins: [],
 }
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  font-family: var(--font-family);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-bg);
-  color: var(--color-text-primary);
-  line-height: 1.6;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-</file>
-
-<file path="app/layout.tsx">
-import type { Metadata } from 'next';
-import './globals.css';
-
-export const metadata: Metadata = {
-  title: 'MVP',
-  description: 'MVP Application',
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
-}
-</file>
-
-<file path="app/page.tsx">
-export default function HomePage() {
-  return (
-    <main className="container">
-      <div className="content">
-        <h1>Welcome to MVP</h1>
-        <p>Your application is ready for development.</p>
-      </div>
-    </main>
-  );
-}
-</file>
-
-<file path="core/.gitkeep">
-
-</file>
-
-<file path="infra/.gitkeep">
-
-</file>
-
-<file path="lib/.gitkeep">
-
-</file>
-
-<file path="public/.gitkeep">
-
-</file>
-
-<file path="scripts/.gitkeep">
-
 </file>
 
 <file path="vercel.json">
@@ -1370,120 +1978,91 @@ export default function HomePage() {
 }
 </file>
 
-<file path="scripts/backup.ts">
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+<file path="app/globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-const REMOTE_URL = 'https://github.com/damtathanh/alino.git';
-
-function run(command: string, suppressOutput = false): string {
-    try {
-        // stdio: 'pipe' allows us to capture output. 'ignore' just discards it.
-        // We use 'pipe' by default for capture, or 'inherit' if we want to stream to console.
-        // But execSync returns Buffer/string.
-        // If suppressOutput is true, we want to capture and return it but NOT show it? 
-        // Or just run silently?
-
-        // Implementation: Always capture output to return it. 
-        // If NOT suppressOutput, also log it to console (manual).
-        // Actually execSync with 'inherit' sends directly to TTY and returns null, which caused the bug.
-
-        const output = execSync(command, {
-            encoding: 'utf-8',
-            stdio: suppressOutput ? 'pipe' : 'pipe'
-        });
-
-        if (!suppressOutput && output) {
-            console.log(output);
-        }
-
-        return output.trim();
-    } catch (error: any) {
-        // If command fails, we might want to return empty string or rethrow.
-        // For checks like 'git remote', failure might mean 'no remote'.
-        // We return empty string on error so simple checks don't crash.
-        // But we log verbose if it wasn't suppressed.
-        if (!suppressOutput) {
-            // console.error(`Command failed: ${command}`);
-        }
-        return '';
-    }
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
 }
 
-function checkGitInit() {
-    if (!fs.existsSync(path.join(process.cwd(), '.git'))) {
-        console.log('📦 Initializing git repository...');
-        run('git init');
-        run('git branch -M main'); // Ensure main branch immediately
-    } else {
-        console.log('✅ Git repository already initialized.');
-    }
+.underline-gradient {
+  position: relative;
 }
 
-function checkRemote() {
-    const remotes = run('git remote -v', true);
-
-    if (!remotes.includes('origin')) {
-        console.log(`⚠️ No remote "origin" found. Adding ${REMOTE_URL}...`);
-        run(`git remote add origin ${REMOTE_URL}`);
-    } else {
-        // Check if origin matches
-        if (!remotes.includes(REMOTE_URL)) {
-            console.log(`⚠️ Remote "origin" exists but points elsewhere. Updating to ${REMOTE_URL}...`);
-            run(`git remote set-url origin ${REMOTE_URL}`);
-        } else {
-            console.log('✅ Remote "origin" is correct.');
-        }
-    }
+.underline-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366F1, #EC4899);
+  transition: width 0.3s ease;
 }
 
-function backup() {
-    const timestamp = new Date().toISOString();
-    const message = `backup: auto-save ${timestamp}`;
-
-    console.log('🚀 Starting backup process...');
-
-    checkGitInit();
-    checkRemote();
-
-    console.log('Stage changes...');
-    run('git add -A'); // -A handles deletions too
-
-    // Check if there are changes
-    const status = run('git status --porcelain', true);
-    if (!status) {
-        console.log('✨ No changes to commit.');
-    } else {
-        console.log(`Commit changes with message: "${message}"`);
-        run(`git commit -m "${message}"`);
-    }
-
-    console.log('Pushing to origin/main...');
-    try {
-        // Try normal push first
-        run('git push -u origin main');
-        console.log('✅ Backup successful!');
-    } catch (error) {
-        console.log('⚠️ Push failed. This might be due to history mismatch (fresh repo vs existing remote).');
-        console.warn('Attempting force push (safe for initial setup, careful in production!)...');
-        // For this specific task context, user implies they want to overwrite or sync. 
-        // But force push is dangerous. Let's try to pull --rebase first?
-        // Or just fail and let user handle. 
-        // USER instruction: "Backup code... simple script".
-        // "push lên nhánh main (tạo nhánh nếu chưa có)"
-
-        // Let's try simple push again but log error if fails.
-        try {
-            execSync('git push -u origin main', { stdio: 'inherit' });
-        } catch (e) {
-            console.error('❌ Push failed. Please check if you have write access to the repo or if you need to pull first.');
-            console.error('Git output should be visible above.');
-        }
-    }
+.underline-gradient:hover::after {
+  width: 100%;
 }
+</file>
 
-backup();
+<file path="app/layout.tsx">
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+export const metadata: Metadata = {
+  title: 'ALINO - Quản lý hợp tác Creator–Brand',
+  description: 'Nền tảng quản lý hợp tác giữa Creator và Brand chuyên nghiệp',
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="vi" className={inter.variable}>
+      <body className="font-sans antialiased">{children}</body>
+    </html>
+  );
+}
+</file>
+
+<file path="app/page.tsx">
+'use client';
+
+import Header from '@/app/components/layout/Header';
+import Footer from '@/app/components/layout/Footer';
+import HomeBody from '@/app/components/home';
+
+export default function HomePage() {
+  return (
+    <div className="relative overflow-x-hidden bg-white">
+      <Header />
+      <HomeBody />
+      <Footer />
+    </div>
+  );
+}
+</file>
+
+<file path="core/.gitkeep">
+
 </file>
 
 <file path="README.md">
@@ -1560,6 +2139,12 @@ The project uses TypeScript in strict mode with absolute imports:
 - `@/lib` - Shared utilities
 </file>
 
+<file path=".env.example">
+VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
+VITE_SITE_URL=http://localhost:5173
+</file>
+
 <file path="tsconfig.json">
 {
   "compilerOptions": {
@@ -1588,12 +2173,6 @@ The project uses TypeScript in strict mode with absolute imports:
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
-</file>
-
-<file path=".env.example">
-VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
-VITE_SITE_URL=http://localhost:5173
 </file>
 
 <file path=".gitignore">
@@ -1666,13 +2245,17 @@ repomix-output.*
     "@insforge/sdk": "^1.0.4",
     "next": "^14.2.35",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
     "repomix": "^1.7.3",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5.5.4"
   }
 }
