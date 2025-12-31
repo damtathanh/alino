@@ -81,15 +81,10 @@ core/
     creator.ts
   .gitkeep
 infra/
-  insforge/
+  supabase/
     auth/
-      InsforgeAuthRepository.ts
-    brand-request/
-      InsforgeBrandRequestRepository.ts
-    creator/
-      InsforgeCreatorRepository.ts
+      SupabaseAuthRepository.ts
     client.ts
-    index.ts
 lib/
   api-response.ts
   container.ts
@@ -111,55 +106,69 @@ vercel.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path="app/api/auth/session/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { getServices } from '@/lib/container';
+<file path="infra/supabase/auth/SupabaseAuthRepository.ts">
+import type { AuthRepository } from '@/core/contracts/auth-repository';
+import type { Session } from '@/core/domain/auth';
+import { supabase } from '../client';
 
-/**
- * Extract access token from request headers or cookies
- */
-function extractAccessToken(request: NextRequest): string | undefined {
-  // Check Authorization header (Bearer token)
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.substring(7);
+export class SupabaseAuthRepository implements AuthRepository {
+  async getSession(): Promise<Session | null> {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error || !data.session) {
+      return null;
+    }
+
+    const { session } = data;
+
+    return {
+      user: {
+        id: session.user.id,
+        email: session.user.email ?? null,
+        name: session.user.user_metadata?.name ?? session.user.user_metadata?.full_name ?? null,
+      },
+      accessToken: session.access_token,
+      expiresAt: new Date(session.expires_at! * 1000).toISOString(),
+    };
   }
 
-  // Check for token in cookies (common pattern: sb-<project-ref>-auth-token or similar)
-  const cookies = request.cookies;
-  // Common cookie names for auth tokens
-  const tokenCookie = cookies.get('sb-access-token') || cookies.get('access_token') || cookies.get('auth-token');
-  if (tokenCookie) {
-    return tokenCookie.value;
+  async signOut(): Promise<void> {
+    await supabase.auth.signOut();
   }
-
-  return undefined;
 }
+</file>
+
+<file path="infra/supabase/client.ts">
+import { createClient } from '@supabase/supabase-js';
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
+}
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+</file>
+
+<file path="app/api/auth/session/route.ts">
+import { NextResponse } from 'next/server';
+import { getServices } from '@/lib/container';
 
 /**
  * Get current session endpoint
  * GET /api/auth/session
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const { authRepository } = getServices();
-    
-    // Extract token from request
-    const accessToken = extractAccessToken(request);
-    
-    // Set token on repository if available
-    // Note: This requires the repository to have setAccessToken method
-    // For now, we'll use a type assertion since we know it's InsforgeAuthRepository
-    if ('setAccessToken' in authRepository && typeof (authRepository as any).setAccessToken === 'function') {
-      (authRepository as any).setAccessToken(accessToken);
-    }
-    
     const session = await authRepository.getSession();
 
-    return NextResponse.json({
-      session,
-      message: 'Lấy phiên đăng nhập thành công',
-    });
+    return NextResponse.json({ session });
   } catch (error) {
     console.error('Error getting session:', error);
     return NextResponse.json(
@@ -260,6 +269,654 @@ export async function GET() {
     message: 'Hệ thống hoạt động',
   });
 }
+</file>
+
+<file path="app/components/home/index.tsx">
+'use client';
+
+import Hero from './Hero';
+import Problems from './Problems';
+import Solutions from './Solutions';
+import HowItWorks from './HowItWorks';
+import ForWho from './ForWho';
+import Compare from './Compare';
+import WhyAlino from './WhyAlino';
+import CTA from './CTA';
+
+export default function HomeBody() {
+  return (
+    <main className="pt-16">
+      <Hero />
+      <Problems />
+      <Solutions />
+      <HowItWorks />
+      <ForWho />
+      <Compare />
+      <WhyAlino />
+      <CTA />
+    </main>
+  );
+}
+</file>
+
+<file path="app/components/layout/Header.tsx">
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+
+export default function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (pathname !== '/') {
+      router.push('/');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <Link
+          href="/"
+          onClick={handleLogoClick}
+          className="flex items-center gap-3 cursor-pointer"
+        >
+          <Image
+            src="/logo/logo.png"
+            alt="ALINO"
+            width={32}
+            height={32}
+            className="w-8 h-8"
+          />
+          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+            ALINO
+          </span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
+          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Về chúng tôi
+          </a>
+          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Sản phẩm
+          </a>
+          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Tin tức
+          </a>
+          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Liên hệ
+          </a>
+        </nav>
+
+        <div className="flex items-center gap-4 text-sm">
+          <a
+            href="/login"
+            className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
+          >
+            Đăng nhập
+          </a>
+          <a
+            href="/register"
+            className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+          >
+            Đăng ký
+          </a>
+        </div>
+      </div>
+    </header>
+  );
+}
+</file>
+
+<file path="core/contracts/auth-repository.ts">
+import type { Session } from '@/core/domain/auth';
+
+export interface AuthRepository {
+  /**
+   * Get the current session
+   * @returns The current session or null if not authenticated
+   */
+  getSession(): Promise<Session | null>;
+
+  /**
+   * Sign out the current user
+   */
+  signOut(): Promise<void>;
+}
+</file>
+
+<file path="core/contracts/brand-request-repository.ts">
+import type { BrandRequest } from '@/core/domain/brand-request';
+
+export interface BrandRequestRepository {
+  /**
+   * List all brand requests for a creator
+   * @param creatorId The creator ID
+   * @returns Array of brand requests
+   */
+  listByCreatorId(creatorId: string): Promise<BrandRequest[]>;
+
+  /**
+   * Get a brand request by ID
+   * @param id The brand request ID
+   * @returns Brand request or null if not found
+   */
+  getById(id: string): Promise<BrandRequest | null>;
+}
+</file>
+
+<file path="core/contracts/creator-repository.ts">
+import type { Creator } from '@/core/domain/creator';
+
+export interface CreatorRepository {
+  /**
+   * Get creator by user ID
+   * @param userId The user ID
+   * @returns Creator or null if not found
+   */
+  getByUserId(userId: string): Promise<Creator | null>;
+
+  /**
+   * Create or update creator profile by user ID
+   * @param userId The user ID
+   * @param input Creator profile data
+   * @returns Updated creator
+   */
+  upsertByUserId(
+    userId: string,
+    input: { displayName: string; bio?: string | null; niche?: string | null }
+  ): Promise<Creator>;
+}
+</file>
+
+<file path="core/domain/auth.ts">
+export type UserId = string;
+
+export type User = {
+  id: UserId;
+  email?: string | null;
+  name?: string | null;
+};
+
+export type Session = {
+  user: User;
+  accessToken?: string;
+  expiresAt?: string;
+};
+</file>
+
+<file path="core/domain/brand-request.ts">
+export type BrandRequestId = string;
+
+export type BrandRequestStatus =
+  | 'moi'
+  | 'dang_thao_luan'
+  | 'da_ky'
+  | 'dang_duyet_noi_dung'
+  | 'hoan_thanh'
+  | 'huy';
+
+export type BrandRequest = {
+  id: BrandRequestId;
+  creatorId: string;
+  brandName: string;
+  campaignName: string;
+  budget?: number | null;
+  status: BrandRequestStatus;
+  createdAt?: string;
+  updatedAt?: string;
+};
+</file>
+
+<file path="core/domain/creator.ts">
+export type CreatorId = string;
+
+export type Creator = {
+  id: CreatorId;
+  userId: string;
+  displayName: string;
+  bio?: string | null;
+  niche?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+</file>
+
+<file path="lib/api-response.ts">
+import { NextResponse } from 'next/server';
+
+/**
+ * Standard API response helper
+ * Ensures consistent response format with Vietnamese messages
+ */
+
+export interface ApiSuccessResponse<T> {
+  ok: true;
+  data: T;
+  message: string;
+}
+
+export interface ApiErrorResponse {
+  ok: false;
+  message: string;
+  details?: unknown;
+}
+
+/**
+ * Create a successful API response
+ * @param data Response data
+ * @param message Vietnamese message
+ * @param status HTTP status code (default: 200)
+ */
+export function ok<T>(
+  data: T,
+  message: string,
+  status: number = 200
+): NextResponse<ApiSuccessResponse<T>> {
+  return NextResponse.json(
+    {
+      ok: true as const,
+      data,
+      message,
+    },
+    { status }
+  );
+}
+
+/**
+ * Create an error API response
+ * @param message Vietnamese error message
+ * @param status HTTP status code (default: 400)
+ * @param details Optional error details
+ */
+export function fail(
+  message: string,
+  status: number = 400,
+  details?: unknown
+): NextResponse<ApiErrorResponse> {
+  return NextResponse.json(
+    {
+      ok: false as const,
+      message,
+      ...(details !== undefined && { details }),
+    },
+    { status }
+  );
+}
+</file>
+
+<file path="lib/container.ts">
+import type { AuthRepository } from '@/core/contracts/auth-repository';
+import type { CreatorRepository } from '@/core/contracts/creator-repository';
+import type { BrandRequestRepository } from '@/core/contracts/brand-request-repository';
+import { SupabaseAuthRepository } from '@/infra/supabase/auth/SupabaseAuthRepository';
+
+export function getServices(): {
+  authRepository: AuthRepository;
+  creatorRepository: CreatorRepository;
+  brandRequestRepository: BrandRequestRepository;
+} {
+  return {
+    authRepository: new SupabaseAuthRepository(),
+    creatorRepository: null as any,
+    brandRequestRepository: null as any,
+  };
+}
+</file>
+
+<file path="next.config.js">
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Next.js configuration
+  // Add any custom config here if needed
+}
+
+module.exports = nextConfig
+</file>
+
+<file path="TECHNICAL_SUMMARY.md">
+# ALINO APP - TECHNICAL SUMMARY
+
+> **Tài liệu handover & review**  
+> **Ngày cập nhật:** 26/12/2025  
+> **Version:** Phase 1-3 Complete
+
+---
+
+## 1. PROJECT OVERVIEW
+
+### Mục tiêu
+Nền tảng kết nối **Creators** và **Brands** để tạo tăng trưởng thông qua Creator Marketing.
+
+- **Creator**: Tạo profile chuyên nghiệp, quản lý booking, hợp đồng, nhận thanh toán
+- **Brand**: Tìm creator phù hợp, quản lý campaign, tracking, báo cáo
+
+### Tech Stack
+- **Frontend**: React 18.2 + TypeScript
+- **Build Tool**: Vite 5.0
+- **Styling**: TailwindCSS 3.4
+- **Routing**: React Router DOM v7.11
+- **Backend**: Supabase (Auth + Database + Storage)
+- **State**: React Query (profile data) + React Context (auth)
+- **Deployment**: Vercel
+
+### Bundle Size
+- **Total**: 645KB (gzip: 184KB)
+- **Acceptable** cho SaaS app với nhiều tính năng
+
+---
+
+## 2. KIẾN TRÚC HIỆN TẠI
+
+### Folder Structure
+```
+src/
+├── app/providers/         # Context providers (Auth)
+├── components/            # Shared UI (Layout, Skeleton, Toast, ErrorBoundary)
+├── features/              # Feature modules (auth, dashboard, landing, onboarding)
+├── lib/                   # Utils (supabase, queries, errors, env)
+├── pages/                 # Route entry points
+└── shared/                # Types, routes, constants, enums
+```
+
+### Data Flow
+```
+Component → React Query (useProfile) → Supabase Client → PostgreSQL
+                ↓ (cache 5min)
+            Query Cache → Auto sync khi update
+```
+
+### Auth Flow
+```
+Login/Signup → Supabase Auth → Session → AuthProvider → RequireAuth → Pages
+                                              ↓
+                                        AppGate (check role + onboarding)
+                                              ↓
+                                    Dashboard (Creator/Brand)
+```
+
+### Core Components
+- **ErrorBoundary**: Bắt lỗi toàn app, hiển thị fallback UI
+- **AuthProvider**: Quản lý session/user, subscribe auth changes
+- **RequireAuth**: Guard cho protected routes, check email verification
+- **AppGate**: Logic routing theo role + onboarding status
+- **Onboarding**: Chia thành CreatorOnboarding + BrandOnboarding
+- **Profile**: Dynamic render theo role (Creator/Brand)
+
+---
+
+## 3. QUYẾT ĐỊNH KỸ THUẬT QUAN TRỌNG
+
+### ✅ Phase 1: Critical Fixes
+
+#### 1.1. Refactor Onboarding (657 lines → 3 files)
+**Lý do**: Component quá lớn, khó maintain  
+**Giải pháp**:
+- `Onboarding.tsx`: Router (fetch + route theo role)
+- `CreatorOnboarding.tsx`: Form riêng cho creator
+- `BrandOnboarding.tsx`: Form riêng cho brand
+
+**Trade-off**: Có duplicate code (avatar, validation) nhưng dễ extend độc lập.
+
+#### 1.2. ErrorBoundary
+**Lý do**: App crash → white screen, UX tệ  
+**Giải pháp**: Class component bọc toàn app, catch errors, show fallback UI
+
+#### 1.3. Fix Race Conditions
+**Vấn đề**: Navigate trước khi data ready → query null  
+**Giải pháp**:
+- AuthProvider: Check `mounted` trong callbacks
+- AuthCallback/AppGate: Thêm delay 100ms sau upsert trước khi navigate
+- **Trade-off**: Delay nhỏ (100ms) nhưng đảm bảo data consistency
+
+---
+
+### ✅ Phase 2: React Query
+
+#### 2.1. Tại sao dùng React Query?
+**Vấn đề**:
+- Profile fetch nhiều lần (AppGate, Profile, Settings)
+- Không có cache → lãng phí bandwidth
+- Update profile → phải refetch thủ công
+
+**Giải pháp**:
+- `useProfile()`: Fetch + cache 5 phút
+- `useUpdateProfile()`: Mutation + auto invalidate cache
+- **Scope**: CHỈ profile data (không migrate toàn bộ)
+
+**Lợi ích**:
+- Giảm API calls ~70%
+- Data sync tự động across components
+- Loading/error states nhất quán
+
+#### 2.2. Tại sao không dùng Redux/Zustand?
+- **Profile data**: Server state → React Query phù hợp
+- **Auth state**: Simple context đủ (session + user)
+- **Không có complex client state** cần global store
+
+---
+
+### ✅ Phase 3: Code Quality
+
+#### 3.1. Enums thay Magic Strings
+**Trước**:
+```tsx
+const checks = [['fullName', !fullName.trim()], ...];
+if (profile.role === 'creator') { ... }
+```
+
+**Sau**:
+```tsx
+const checks = [[ProfileField.FULL_NAME, !fullName.trim()], ...];
+if (profile.role === Role.CREATOR) { ... }
+```
+
+**Lợi ích**: Type safety, autocomplete, không typo
+
+#### 3.2. Structured Error Handling
+**Trước**: `catch (err) { setError('Lỗi...') }`  
+**Sau**: `catch (err) { setError(handleError(new AppError(...))) }`
+
+**Lợi ích**:
+- Error codes cho debugging
+- User-friendly messages (Tiếng Việt)
+- Severity levels (info/warning/error/critical)
+- Dễ tích hợp Sentry sau này
+
+#### 3.3. Loading Skeletons
+**Trước**: Spinner hoặc text "Đang tải..."  
+**Sau**: Skeleton UI (giống content layout)
+
+**Lợi ích**: Professional UX, perceived performance tốt hơn
+
+---
+
+## 4. NHỮNG THỨ CỐ TÌNH CHƯA LÀM
+
+### ❌ React Hook Form + Zod
+**Lý do**: 
+- Form hiện tại đơn giản, validation thủ công đủ
+- Thêm dependency ~50KB, chưa cần thiết
+- **Khi nào cần**: Khi có form phức tạp (dynamic fields, nested validation)
+
+### ❌ Form Validation Refactor
+**Lý do**:
+- Logic validation đang work, không có bug
+- Refactor = high risk, low reward
+- **Khi nào cần**: Khi scale form (thêm 10+ fields mới)
+
+### ❌ Dashboard Implementation
+**Lý do**: 
+- Chỉ placeholder, chờ business confirm features
+- Không rõ data model, workflow cụ thể
+- **Đúng quyết định**: Không build blind
+
+### ❌ Unit Tests
+**Lý do**:
+- MVP phase, focus stability trước
+- Manual test đủ cho core flows
+- **Khi nào cần**: Sau khi có 2-3 features nữa, setup CI/CD
+
+### ❌ i18n (Internationalization)
+**Lý do**:
+- Target thị trường Việt Nam
+- Thêm i18n = overhead, chậm development
+- **Khi nào cần**: Khi expand sang thị trường nước ngoài
+
+### ❌ Analytics/Monitoring
+**Lý do**: Chưa có traffic, chưa cần optimize
+- **Khi nào cần**: Sau khi launch public (100+ users)
+
+---
+
+## 5. HƯỚNG MỞ RỘNG TIẾP THEO
+
+### 🎯 Business Priority
+
+#### Ngắn hạn (1-2 tháng)
+1. **Dashboard thực tế**
+   - Creator: Deal management, content calendar, payment tracking
+   - Brand: Campaign creation, creator discovery, analytics
+
+2. **Booking Flow**
+   - Brand gửi booking request
+   - Creator accept/reject
+   - Contract generation
+
+3. **Payment Integration**
+   - Escrow system
+   - Invoice management
+   - Payment history
+
+#### Trung hạn (3-6 tháng)
+4. **Messaging System** (Creator ↔ Brand communication)
+5. **Content Review Flow** (upload → feedback → approve)
+6. **Analytics Dashboard** (campaign performance, ROI)
+
+#### Dài hạn (6-12 tháng)
+7. **Marketplace** (public creator profiles, search/filter)
+8. **AI Matching** (recommend creator based on brand needs)
+9. **Mobile App** (React Native hoặc PWA)
+
+---
+
+### 🛠️ Tech Improvements
+
+#### High Priority
+1. **Unit Tests cho Critical Flows**
+   - Auth (login, signup, password reset)
+   - Onboarding (validation, data save)
+   - Profile (update, avatar upload)
+   - **Tool**: Vitest + React Testing Library
+
+2. **Bundle Optimization**
+   - Code splitting (React.lazy + Suspense)
+   - Dynamic imports cho landing sections
+   - Target: 645KB → 400KB
+   - **Tool**: Vite rollupOptions
+
+3. **Error Monitoring**
+   - Integrate Sentry
+   - Track errors với context (user, page, action)
+   - Alert cho critical errors
+
+#### Medium Priority
+4. **Performance Monitoring**
+   - Web Vitals (LCP, FID, CLS)
+   - Custom metrics (API latency, query cache hit rate)
+   - **Tool**: Vercel Analytics hoặc Google Analytics
+
+5. **CI/CD Pipeline**
+   - GitHub Actions
+   - Auto test → build → deploy on PR
+   - Branch previews
+
+6. **Database Optimization**
+   - Add indexes cho queries thường dùng
+   - Setup RLS (Row Level Security) policies
+   - Backup strategy
+
+#### Nice to Have
+7. **Design System** (Storybook for components)
+8. **Accessibility Audit** (a11y compliance)
+9. **PWA Support** (offline capability, push notifications)
+
+---
+
+## 📊 CURRENT STATUS
+
+### ✅ Đã hoàn thành
+- Auth flow (email/password + Google OAuth)
+- Email verification
+- Onboarding (Creator + Brand)
+- Profile management
+- Settings (account, security, password)
+- Error handling
+- Loading states
+- Responsive design
+
+### 🚧 Đang phát triển
+- Dashboard (placeholder sẵn sàng)
+- Business features (chờ spec)
+
+### 📋 Technical Debt
+- **Minimal** - Code quality cao, technical decisions đúng
+- Chỉ có duplicate code nhỏ ở validation logic
+- Không có major refactor cần thiết
+
+---
+
+## 🎓 LEARNING & BEST PRACTICES
+
+### Quyết định đúng
+✅ Dùng Vite (fast build)  
+✅ Supabase (không cần backend riêng)  
+✅ React Query (chỉ cho server state)  
+✅ TypeScript strict mode (catch bugs sớm)  
+✅ Feature-based folder structure (dễ scale)  
+✅ ErrorBoundary (stability)  
+
+### Trade-offs Hợp lý
+⚖️ Delay 100ms (race condition fix) vs UX impact → OK  
+⚖️ Manual validation vs library → OK cho form đơn giản  
+⚖️ Client-side routing vs SSR → OK cho SaaS app  
+
+### Patterns Nên Giữ
+🔁 Gate pattern (AppGate cho routing logic)  
+🔁 Provider pattern (AuthProvider)  
+🔁 Feature modules (landing, auth, dashboard)  
+🔁 Shared UI components (components/ui)  
+
+---
+
+## 📞 CONTACT & HANDOVER
+
+### Codebase Ready
+- ✅ Build thành công
+- ✅ TypeScript no errors
+- ✅ Git history sạch (3 commits cho 3 phases)
+- ✅ Comments rõ ràng trong code
+
+### Knowledge Transfer
+- Đọc file này trước
+- Review 3 commits: Phase 1, 2, 3
+- Chạy local: `npm install` → `npm run dev`
+- Check `.env.example` cho env vars
+
+### Next Developer Should Know
+1. **Auth flow** phức tạp (email verify, OAuth, role selection)
+2. **Profile data** dùng React Query → check cache khi debug
+3. **Validation logic** ở onboarding/profile → extend carefully
+4. **AppGate** là single source of truth cho routing logic
+
+---
+
+**END OF DOCUMENT**
 </file>
 
 <file path="app/components/home/Compare.tsx">
@@ -632,34 +1289,6 @@ export default function HowItWorks() {
 }
 </file>
 
-<file path="app/components/home/index.tsx">
-'use client';
-
-import Hero from './Hero';
-import Problems from './Problems';
-import Solutions from './Solutions';
-import HowItWorks from './HowItWorks';
-import ForWho from './ForWho';
-import Compare from './Compare';
-import WhyAlino from './WhyAlino';
-import CTA from './CTA';
-
-export default function HomeBody() {
-  return (
-    <main className="pt-16">
-      <Hero />
-      <Problems />
-      <Solutions />
-      <HowItWorks />
-      <ForWho />
-      <Compare />
-      <WhyAlino />
-      <CTA />
-    </main>
-  );
-}
-</file>
-
 <file path="app/components/home/Problems.tsx">
 'use client';
 
@@ -840,13 +1469,13 @@ export default function WhyAlino() {
 'use client';
 
 import Image from 'next/image';
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin } from 'react-icons/fa';
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 
 export default function Footer() {
   return (
     <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-12 mb-8">
+        <div className="grid md:grid-cols-5 gap-12 mb-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image
@@ -964,6 +1593,32 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Liên hệ</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li className="flex items-start gap-3">
+                <FaPhone className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="tel:+84707970216" className="hover:text-[#6366F1] transition-colors">
+                  +84 707 970 216
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaEnvelope className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="mailto:contact@alino.net" className="hover:text-[#6366F1] transition-colors">
+                  contact@alino.net
+                </a>
+              </li>
+              <li className="flex items-start gap-3 leading-relaxed">
+                <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={16} />
+                <span>
+                  Landmark 81
+                  <br />
+                  720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh, Việt Nam
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div className="pt-8 border-t border-black/5 text-center text-sm text-[#9CA3AF]">
@@ -973,970 +1628,6 @@ export default function Footer() {
     </footer>
   );
 }
-</file>
-
-<file path="app/components/layout/Header.tsx">
-'use client';
-
-import Image from 'next/image';
-
-export default function Header() {
-  return (
-    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/logo/logo.png"
-            alt="ALINO"
-            width={32}
-            height={32}
-            className="w-8 h-8"
-          />
-          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-            ALINO
-          </span>
-        </div>
-
-        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
-          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Về chúng tôi
-          </a>
-          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Sản phẩm
-          </a>
-          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Tin tức
-          </a>
-          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Liên hệ
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-4 text-sm">
-          <a
-            href="/login"
-            className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
-          >
-            Đăng nhập
-          </a>
-          <a
-            href="/register"
-            className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
-          >
-            Đăng ký
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
-</file>
-
-<file path="core/contracts/auth-repository.ts">
-import type { Session } from '@/core/domain/auth';
-
-export interface AuthRepository {
-  /**
-   * Get the current session
-   * @returns The current session or null if not authenticated
-   */
-  getSession(): Promise<Session | null>;
-
-  /**
-   * Sign out the current user
-   */
-  signOut(): Promise<void>;
-}
-</file>
-
-<file path="core/contracts/brand-request-repository.ts">
-import type { BrandRequest } from '@/core/domain/brand-request';
-
-export interface BrandRequestRepository {
-  /**
-   * List all brand requests for a creator
-   * @param creatorId The creator ID
-   * @returns Array of brand requests
-   */
-  listByCreatorId(creatorId: string): Promise<BrandRequest[]>;
-
-  /**
-   * Get a brand request by ID
-   * @param id The brand request ID
-   * @returns Brand request or null if not found
-   */
-  getById(id: string): Promise<BrandRequest | null>;
-}
-</file>
-
-<file path="core/contracts/creator-repository.ts">
-import type { Creator } from '@/core/domain/creator';
-
-export interface CreatorRepository {
-  /**
-   * Get creator by user ID
-   * @param userId The user ID
-   * @returns Creator or null if not found
-   */
-  getByUserId(userId: string): Promise<Creator | null>;
-
-  /**
-   * Create or update creator profile by user ID
-   * @param userId The user ID
-   * @param input Creator profile data
-   * @returns Updated creator
-   */
-  upsertByUserId(
-    userId: string,
-    input: { displayName: string; bio?: string | null; niche?: string | null }
-  ): Promise<Creator>;
-}
-</file>
-
-<file path="core/domain/auth.ts">
-export type UserId = string;
-
-export type User = {
-  id: UserId;
-  email?: string | null;
-  name?: string | null;
-};
-
-export type Session = {
-  user: User;
-  accessToken?: string;
-  expiresAt?: string;
-};
-</file>
-
-<file path="core/domain/brand-request.ts">
-export type BrandRequestId = string;
-
-export type BrandRequestStatus =
-  | 'moi'
-  | 'dang_thao_luan'
-  | 'da_ky'
-  | 'dang_duyet_noi_dung'
-  | 'hoan_thanh'
-  | 'huy';
-
-export type BrandRequest = {
-  id: BrandRequestId;
-  creatorId: string;
-  brandName: string;
-  campaignName: string;
-  budget?: number | null;
-  status: BrandRequestStatus;
-  createdAt?: string;
-  updatedAt?: string;
-};
-</file>
-
-<file path="core/domain/creator.ts">
-export type CreatorId = string;
-
-export type Creator = {
-  id: CreatorId;
-  userId: string;
-  displayName: string;
-  bio?: string | null;
-  niche?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-};
-</file>
-
-<file path="infra/insforge/auth/InsforgeAuthRepository.ts">
-import type { AuthRepository } from '@/core/contracts/auth-repository';
-import type { Session, User } from '@/core/domain/auth';
-import { getInsforgeClient } from '../client';
-
-/**
- * InsForge implementation of AuthRepository
- * Handles authentication using InsForge backend
- */
-export class InsforgeAuthRepository implements AuthRepository {
-  private accessToken?: string;
-
-  /**
-   * Set the access token for authenticated requests
-   * @param token The access token
-   */
-  setAccessToken(token: string | undefined): void {
-    this.accessToken = token;
-  }
-
-  /**
-   * Get the current session from InsForge
-   * Uses the access token set via setAccessToken()
-   * @returns The current session or null if not authenticated
-   */
-  async getSession(): Promise<Session | null> {
-    try {
-      // If no token is available, cannot get authenticated session
-      if (!this.accessToken) {
-        return null;
-      }
-
-      // Create client with accessToken for authenticated requests
-      const client = getInsforgeClient({ accessToken: this.accessToken });
-
-      // Use InsForge SDK auth.getCurrentUser() to get current user
-      // This method requires the token to be set via edgeFunctionToken in client config
-      const { data, error } = await client.auth.getCurrentUser();
-
-      if (error || !data || !data.user) {
-        return null;
-      }
-
-      const insforgeUser = data.user;
-
-      // Map InsForge user to domain User type
-      // UserSchema has: id, email, emailVerified, profile (with name, avatar_url), metadata
-      const user: User = {
-        id: insforgeUser.id,
-        email: insforgeUser.email ?? null,
-        name: insforgeUser.profile?.name ?? null,
-      };
-
-      const session: Session = {
-        user,
-        accessToken: this.accessToken,
-      };
-
-      return session;
-    } catch (error) {
-      // If auth fails, user is not authenticated
-      console.error('Error getting session:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Sign out the current user
-   */
-  async signOut(): Promise<void> {
-    try {
-      if (this.accessToken) {
-        const client = getInsforgeClient({ accessToken: this.accessToken });
-        await client.auth.signOut();
-      }
-      // Clear the token after sign out
-      this.accessToken = undefined;
-    } catch (error) {
-      // Silently fail - sign out might already be completed
-      console.error('Error during sign out:', error);
-    }
-  }
-}
-</file>
-
-<file path="infra/insforge/brand-request/InsforgeBrandRequestRepository.ts">
-import type { BrandRequestRepository } from '@/core/contracts/brand-request-repository';
-import type { BrandRequest } from '@/core/domain/brand-request';
-
-/**
- * InsForge implementation of BrandRequestRepository
- * TODO: Implement actual InsForge database calls
- * TODO: Determine correct table name (e.g., 'brand_requests' or 'collaborations')
- */
-export class InsforgeBrandRequestRepository implements BrandRequestRepository {
-  /**
-   * List all brand requests for a creator
-   * @param creatorId The creator ID
-   * @returns Array of brand requests
-   */
-  async listByCreatorId(creatorId: string): Promise<BrandRequest[]> {
-    // TODO: Implement InsForge database query
-    // Example: client.database.from('brand_requests').select('*').eq('creator_id', creatorId).order('created_at', { ascending: false })
-    return [];
-  }
-
-  /**
-   * Get a brand request by ID
-   * @param id The brand request ID
-   * @returns Brand request or null if not found
-   */
-  async getById(id: string): Promise<BrandRequest | null> {
-    // TODO: Implement InsForge database query
-    // Example: client.database.from('brand_requests').select('*').eq('id', id).single()
-    return null;
-  }
-}
-</file>
-
-<file path="infra/insforge/creator/InsforgeCreatorRepository.ts">
-import type { CreatorRepository } from '@/core/contracts/creator-repository';
-import type { Creator } from '@/core/domain/creator';
-
-/**
- * InsForge implementation of CreatorRepository
- * TODO: Implement actual InsForge database calls
- * TODO: Determine correct table name (e.g., 'creators' or 'creator_profiles')
- */
-export class InsforgeCreatorRepository implements CreatorRepository {
-  /**
-   * Get creator by user ID
-   * @param userId The user ID
-   * @returns Creator or null if not found
-   */
-  async getByUserId(userId: string): Promise<Creator | null> {
-    // TODO: Implement InsForge database query
-    // Example: client.database.from('creators').select('*').eq('user_id', userId).single()
-    return null;
-  }
-
-  /**
-   * Create or update creator profile by user ID
-   * @param userId The user ID
-   * @param input Creator profile data
-   * @returns Updated creator
-   */
-  async upsertByUserId(
-    userId: string,
-    input: { displayName: string; bio?: string | null; niche?: string | null }
-  ): Promise<Creator> {
-    // TODO: Implement InsForge database upsert
-    // Example: client.database.from('creators').upsert({ user_id: userId, ...input }, { onConflict: 'user_id' }).select().single()
-    
-    // Return mocked structure for now
-    const now = new Date().toISOString();
-    return {
-      id: `creator-${userId}`, // TODO: Use actual generated ID
-      userId,
-      displayName: input.displayName,
-      bio: input.bio ?? null,
-      niche: input.niche ?? null,
-      createdAt: now,
-      updatedAt: now,
-    };
-  }
-}
-</file>
-
-<file path="infra/insforge/client.ts">
-import { createClient as createInsForgeClient } from '@insforge/sdk';
-
-/**
- * InsForge API endpoint path for getting current user
- * Adjust this constant if the actual endpoint path differs
- */
-const INSFORGE_ME_PATH = '/auth/user';
-
-/**
- * InsForge client configuration
- */
-export interface InsForgeClientConfig {
-  accessToken?: string;
-}
-
-/**
- * Get InsForge API base URL from environment variables
- * @returns Base URL
- * @throws Error if required environment variables are missing
- */
-function getInsforgeBaseUrl(): string {
-  const baseUrl =
-    process.env.INSFORGE_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_INSFORGE_BASE_URL;
-
-  if (!baseUrl) {
-    throw new Error(
-      'INSFORGE_API_BASE_URL or NEXT_PUBLIC_INSFORGE_BASE_URL environment variable is required'
-    );
-  }
-
-  return baseUrl;
-}
-
-/**
- * Make a fetch request to InsForge API
- * @param path API path (e.g., '/auth/user')
- * @param options Fetch options
- * @param accessToken Optional access token for authenticated requests
- * @returns Fetch response
- */
-export async function insforgeFetch(
-  path: string,
-  options: RequestInit = {},
-  accessToken?: string
-): Promise<Response> {
-  const baseUrl = getInsforgeBaseUrl();
-  const url = `${baseUrl}${path}`;
-
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
-
-  return fetch(url, {
-    ...options,
-    headers,
-  });
-}
-
-/**
- * Get current user from InsForge API using access token
- * @param accessToken The access token
- * @returns User data object or null if not authenticated
- */
-export async function getInsforgeCurrentUser(
-  accessToken: string
-): Promise<{
-  id: string;
-  email?: string | null;
-  name?: string | null;
-  [key: string]: unknown;
-} | null> {
-  try {
-    const response = await insforgeFetch(INSFORGE_ME_PATH, {
-      method: 'GET',
-    }, accessToken);
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        // Not authenticated
-        return null;
-      }
-      // Other errors - log and return null
-      console.error(`InsForge API error: ${response.status} ${response.statusText}`);
-      return null;
-    }
-
-    const data = await response.json();
-
-    // Normalize the response - handle different possible structures
-    // Common patterns: { user: {...} }, { data: {...} }, or direct user object
-    const userData = data.user || data.data || data;
-
-    if (!userData || !userData.id) {
-      return null;
-    }
-
-    return {
-      id: userData.id,
-      email: userData.email ?? null,
-      name: userData.name ?? userData.user_metadata?.name ?? userData.profile?.name ?? null,
-      ...userData,
-    };
-  } catch (error) {
-    console.error('Error fetching current user from InsForge:', error);
-    return null;
-  }
-}
-
-/**
- * Get InsForge client instance
- * Reads INSFORGE_API_BASE_URL from environment variables
- * @param config Optional configuration (e.g., accessToken for authenticated requests)
- * @returns InsForge client instance
- * @throws Error if required environment variables are missing
- */
-export function getInsforgeClient(config?: InsForgeClientConfig) {
-  const baseUrl = getInsforgeBaseUrl();
-
-  const clientConfig: Parameters<typeof createInsForgeClient>[0] = {
-    baseUrl,
-  };
-
-  // Use accessToken if provided (for authenticated requests)
-  if (config?.accessToken) {
-    clientConfig.edgeFunctionToken = config.accessToken;
-  } else {
-    // Fallback to environment variable for anonymous access
-    const anonKey =
-      process.env.INSFORGE_API_KEY || process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY;
-    if (anonKey) {
-      clientConfig.anonKey = anonKey;
-    }
-  }
-
-  return createInsForgeClient(clientConfig);
-}
-</file>
-
-<file path="infra/insforge/index.ts">
-import { InsforgeAuthRepository } from './auth/InsforgeAuthRepository';
-import { InsforgeCreatorRepository } from './creator/InsforgeCreatorRepository';
-import { InsforgeBrandRequestRepository } from './brand-request/InsforgeBrandRequestRepository';
-import type { AuthRepository } from '@/core/contracts/auth-repository';
-import type { CreatorRepository } from '@/core/contracts/creator-repository';
-import type { BrandRequestRepository } from '@/core/contracts/brand-request-repository';
-
-/**
- * Factory function to create an InsForge AuthRepository instance
- * @returns AuthRepository implementation using InsForge
- */
-export function createAuthRepository(): AuthRepository {
-  return new InsforgeAuthRepository();
-}
-
-/**
- * Factory function to create an InsForge CreatorRepository instance
- * @returns CreatorRepository implementation using InsForge
- */
-export function createCreatorRepository(): CreatorRepository {
-  return new InsforgeCreatorRepository();
-}
-
-/**
- * Factory function to create an InsForge BrandRequestRepository instance
- * @returns BrandRequestRepository implementation using InsForge
- */
-export function createBrandRequestRepository(): BrandRequestRepository {
-  return new InsforgeBrandRequestRepository();
-}
-</file>
-
-<file path="lib/api-response.ts">
-import { NextResponse } from 'next/server';
-
-/**
- * Standard API response helper
- * Ensures consistent response format with Vietnamese messages
- */
-
-export interface ApiSuccessResponse<T> {
-  ok: true;
-  data: T;
-  message: string;
-}
-
-export interface ApiErrorResponse {
-  ok: false;
-  message: string;
-  details?: unknown;
-}
-
-/**
- * Create a successful API response
- * @param data Response data
- * @param message Vietnamese message
- * @param status HTTP status code (default: 200)
- */
-export function ok<T>(
-  data: T,
-  message: string,
-  status: number = 200
-): NextResponse<ApiSuccessResponse<T>> {
-  return NextResponse.json(
-    {
-      ok: true as const,
-      data,
-      message,
-    },
-    { status }
-  );
-}
-
-/**
- * Create an error API response
- * @param message Vietnamese error message
- * @param status HTTP status code (default: 400)
- * @param details Optional error details
- */
-export function fail(
-  message: string,
-  status: number = 400,
-  details?: unknown
-): NextResponse<ApiErrorResponse> {
-  return NextResponse.json(
-    {
-      ok: false as const,
-      message,
-      ...(details !== undefined && { details }),
-    },
-    { status }
-  );
-}
-</file>
-
-<file path="lib/container.ts">
-import {
-  createAuthRepository,
-  createCreatorRepository,
-  createBrandRequestRepository,
-} from '@/infra/insforge';
-import type { AuthRepository } from '@/core/contracts/auth-repository';
-import type { CreatorRepository } from '@/core/contracts/creator-repository';
-import type { BrandRequestRepository } from '@/core/contracts/brand-request-repository';
-
-/**
- * Service container for dependency injection
- * All vendor-specific implementations are wired here
- */
-export interface Services {
-  authRepository: AuthRepository;
-  creatorRepository: CreatorRepository;
-  brandRequestRepository: BrandRequestRepository;
-}
-
-/**
- * Get service instances
- * This is the single composition root for all services
- * @returns Service instances
- */
-export function getServices(): Services {
-  return {
-    authRepository: createAuthRepository(),
-    creatorRepository: createCreatorRepository(),
-    brandRequestRepository: createBrandRequestRepository(),
-  };
-}
-</file>
-
-<file path="next.config.js">
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Next.js configuration
-  // Add any custom config here if needed
-}
-
-module.exports = nextConfig
-</file>
-
-<file path="TECHNICAL_SUMMARY.md">
-# ALINO APP - TECHNICAL SUMMARY
-
-> **Tài liệu handover & review**  
-> **Ngày cập nhật:** 26/12/2025  
-> **Version:** Phase 1-3 Complete
-
----
-
-## 1. PROJECT OVERVIEW
-
-### Mục tiêu
-Nền tảng kết nối **Creators** và **Brands** để tạo tăng trưởng thông qua Creator Marketing.
-
-- **Creator**: Tạo profile chuyên nghiệp, quản lý booking, hợp đồng, nhận thanh toán
-- **Brand**: Tìm creator phù hợp, quản lý campaign, tracking, báo cáo
-
-### Tech Stack
-- **Frontend**: React 18.2 + TypeScript
-- **Build Tool**: Vite 5.0
-- **Styling**: TailwindCSS 3.4
-- **Routing**: React Router DOM v7.11
-- **Backend**: Supabase (Auth + Database + Storage)
-- **State**: React Query (profile data) + React Context (auth)
-- **Deployment**: Vercel
-
-### Bundle Size
-- **Total**: 645KB (gzip: 184KB)
-- **Acceptable** cho SaaS app với nhiều tính năng
-
----
-
-## 2. KIẾN TRÚC HIỆN TẠI
-
-### Folder Structure
-```
-src/
-├── app/providers/         # Context providers (Auth)
-├── components/            # Shared UI (Layout, Skeleton, Toast, ErrorBoundary)
-├── features/              # Feature modules (auth, dashboard, landing, onboarding)
-├── lib/                   # Utils (supabase, queries, errors, env)
-├── pages/                 # Route entry points
-└── shared/                # Types, routes, constants, enums
-```
-
-### Data Flow
-```
-Component → React Query (useProfile) → Supabase Client → PostgreSQL
-                ↓ (cache 5min)
-            Query Cache → Auto sync khi update
-```
-
-### Auth Flow
-```
-Login/Signup → Supabase Auth → Session → AuthProvider → RequireAuth → Pages
-                                              ↓
-                                        AppGate (check role + onboarding)
-                                              ↓
-                                    Dashboard (Creator/Brand)
-```
-
-### Core Components
-- **ErrorBoundary**: Bắt lỗi toàn app, hiển thị fallback UI
-- **AuthProvider**: Quản lý session/user, subscribe auth changes
-- **RequireAuth**: Guard cho protected routes, check email verification
-- **AppGate**: Logic routing theo role + onboarding status
-- **Onboarding**: Chia thành CreatorOnboarding + BrandOnboarding
-- **Profile**: Dynamic render theo role (Creator/Brand)
-
----
-
-## 3. QUYẾT ĐỊNH KỸ THUẬT QUAN TRỌNG
-
-### ✅ Phase 1: Critical Fixes
-
-#### 1.1. Refactor Onboarding (657 lines → 3 files)
-**Lý do**: Component quá lớn, khó maintain  
-**Giải pháp**:
-- `Onboarding.tsx`: Router (fetch + route theo role)
-- `CreatorOnboarding.tsx`: Form riêng cho creator
-- `BrandOnboarding.tsx`: Form riêng cho brand
-
-**Trade-off**: Có duplicate code (avatar, validation) nhưng dễ extend độc lập.
-
-#### 1.2. ErrorBoundary
-**Lý do**: App crash → white screen, UX tệ  
-**Giải pháp**: Class component bọc toàn app, catch errors, show fallback UI
-
-#### 1.3. Fix Race Conditions
-**Vấn đề**: Navigate trước khi data ready → query null  
-**Giải pháp**:
-- AuthProvider: Check `mounted` trong callbacks
-- AuthCallback/AppGate: Thêm delay 100ms sau upsert trước khi navigate
-- **Trade-off**: Delay nhỏ (100ms) nhưng đảm bảo data consistency
-
----
-
-### ✅ Phase 2: React Query
-
-#### 2.1. Tại sao dùng React Query?
-**Vấn đề**:
-- Profile fetch nhiều lần (AppGate, Profile, Settings)
-- Không có cache → lãng phí bandwidth
-- Update profile → phải refetch thủ công
-
-**Giải pháp**:
-- `useProfile()`: Fetch + cache 5 phút
-- `useUpdateProfile()`: Mutation + auto invalidate cache
-- **Scope**: CHỈ profile data (không migrate toàn bộ)
-
-**Lợi ích**:
-- Giảm API calls ~70%
-- Data sync tự động across components
-- Loading/error states nhất quán
-
-#### 2.2. Tại sao không dùng Redux/Zustand?
-- **Profile data**: Server state → React Query phù hợp
-- **Auth state**: Simple context đủ (session + user)
-- **Không có complex client state** cần global store
-
----
-
-### ✅ Phase 3: Code Quality
-
-#### 3.1. Enums thay Magic Strings
-**Trước**:
-```tsx
-const checks = [['fullName', !fullName.trim()], ...];
-if (profile.role === 'creator') { ... }
-```
-
-**Sau**:
-```tsx
-const checks = [[ProfileField.FULL_NAME, !fullName.trim()], ...];
-if (profile.role === Role.CREATOR) { ... }
-```
-
-**Lợi ích**: Type safety, autocomplete, không typo
-
-#### 3.2. Structured Error Handling
-**Trước**: `catch (err) { setError('Lỗi...') }`  
-**Sau**: `catch (err) { setError(handleError(new AppError(...))) }`
-
-**Lợi ích**:
-- Error codes cho debugging
-- User-friendly messages (Tiếng Việt)
-- Severity levels (info/warning/error/critical)
-- Dễ tích hợp Sentry sau này
-
-#### 3.3. Loading Skeletons
-**Trước**: Spinner hoặc text "Đang tải..."  
-**Sau**: Skeleton UI (giống content layout)
-
-**Lợi ích**: Professional UX, perceived performance tốt hơn
-
----
-
-## 4. NHỮNG THỨ CỐ TÌNH CHƯA LÀM
-
-### ❌ React Hook Form + Zod
-**Lý do**: 
-- Form hiện tại đơn giản, validation thủ công đủ
-- Thêm dependency ~50KB, chưa cần thiết
-- **Khi nào cần**: Khi có form phức tạp (dynamic fields, nested validation)
-
-### ❌ Form Validation Refactor
-**Lý do**:
-- Logic validation đang work, không có bug
-- Refactor = high risk, low reward
-- **Khi nào cần**: Khi scale form (thêm 10+ fields mới)
-
-### ❌ Dashboard Implementation
-**Lý do**: 
-- Chỉ placeholder, chờ business confirm features
-- Không rõ data model, workflow cụ thể
-- **Đúng quyết định**: Không build blind
-
-### ❌ Unit Tests
-**Lý do**:
-- MVP phase, focus stability trước
-- Manual test đủ cho core flows
-- **Khi nào cần**: Sau khi có 2-3 features nữa, setup CI/CD
-
-### ❌ i18n (Internationalization)
-**Lý do**:
-- Target thị trường Việt Nam
-- Thêm i18n = overhead, chậm development
-- **Khi nào cần**: Khi expand sang thị trường nước ngoài
-
-### ❌ Analytics/Monitoring
-**Lý do**: Chưa có traffic, chưa cần optimize
-- **Khi nào cần**: Sau khi launch public (100+ users)
-
----
-
-## 5. HƯỚNG MỞ RỘNG TIẾP THEO
-
-### 🎯 Business Priority
-
-#### Ngắn hạn (1-2 tháng)
-1. **Dashboard thực tế**
-   - Creator: Deal management, content calendar, payment tracking
-   - Brand: Campaign creation, creator discovery, analytics
-
-2. **Booking Flow**
-   - Brand gửi booking request
-   - Creator accept/reject
-   - Contract generation
-
-3. **Payment Integration**
-   - Escrow system
-   - Invoice management
-   - Payment history
-
-#### Trung hạn (3-6 tháng)
-4. **Messaging System** (Creator ↔ Brand communication)
-5. **Content Review Flow** (upload → feedback → approve)
-6. **Analytics Dashboard** (campaign performance, ROI)
-
-#### Dài hạn (6-12 tháng)
-7. **Marketplace** (public creator profiles, search/filter)
-8. **AI Matching** (recommend creator based on brand needs)
-9. **Mobile App** (React Native hoặc PWA)
-
----
-
-### 🛠️ Tech Improvements
-
-#### High Priority
-1. **Unit Tests cho Critical Flows**
-   - Auth (login, signup, password reset)
-   - Onboarding (validation, data save)
-   - Profile (update, avatar upload)
-   - **Tool**: Vitest + React Testing Library
-
-2. **Bundle Optimization**
-   - Code splitting (React.lazy + Suspense)
-   - Dynamic imports cho landing sections
-   - Target: 645KB → 400KB
-   - **Tool**: Vite rollupOptions
-
-3. **Error Monitoring**
-   - Integrate Sentry
-   - Track errors với context (user, page, action)
-   - Alert cho critical errors
-
-#### Medium Priority
-4. **Performance Monitoring**
-   - Web Vitals (LCP, FID, CLS)
-   - Custom metrics (API latency, query cache hit rate)
-   - **Tool**: Vercel Analytics hoặc Google Analytics
-
-5. **CI/CD Pipeline**
-   - GitHub Actions
-   - Auto test → build → deploy on PR
-   - Branch previews
-
-6. **Database Optimization**
-   - Add indexes cho queries thường dùng
-   - Setup RLS (Row Level Security) policies
-   - Backup strategy
-
-#### Nice to Have
-7. **Design System** (Storybook for components)
-8. **Accessibility Audit** (a11y compliance)
-9. **PWA Support** (offline capability, push notifications)
-
----
-
-## 📊 CURRENT STATUS
-
-### ✅ Đã hoàn thành
-- Auth flow (email/password + Google OAuth)
-- Email verification
-- Onboarding (Creator + Brand)
-- Profile management
-- Settings (account, security, password)
-- Error handling
-- Loading states
-- Responsive design
-
-### 🚧 Đang phát triển
-- Dashboard (placeholder sẵn sàng)
-- Business features (chờ spec)
-
-### 📋 Technical Debt
-- **Minimal** - Code quality cao, technical decisions đúng
-- Chỉ có duplicate code nhỏ ở validation logic
-- Không có major refactor cần thiết
-
----
-
-## 🎓 LEARNING & BEST PRACTICES
-
-### Quyết định đúng
-✅ Dùng Vite (fast build)  
-✅ Supabase (không cần backend riêng)  
-✅ React Query (chỉ cho server state)  
-✅ TypeScript strict mode (catch bugs sớm)  
-✅ Feature-based folder structure (dễ scale)  
-✅ ErrorBoundary (stability)  
-
-### Trade-offs Hợp lý
-⚖️ Delay 100ms (race condition fix) vs UX impact → OK  
-⚖️ Manual validation vs library → OK cho form đơn giản  
-⚖️ Client-side routing vs SSR → OK cho SaaS app  
-
-### Patterns Nên Giữ
-🔁 Gate pattern (AppGate cho routing logic)  
-🔁 Provider pattern (AuthProvider)  
-🔁 Feature modules (landing, auth, dashboard)  
-🔁 Shared UI components (components/ui)  
-
----
-
-## 📞 CONTACT & HANDOVER
-
-### Codebase Ready
-- ✅ Build thành công
-- ✅ TypeScript no errors
-- ✅ Git history sạch (3 commits cho 3 phases)
-- ✅ Comments rõ ràng trong code
-
-### Knowledge Transfer
-- Đọc file này trước
-- Review 3 commits: Phase 1, 2, 3
-- Chạy local: `npm install` → `npm run dev`
-- Check `.env.example` cho env vars
-
-### Next Developer Should Know
-1. **Auth flow** phức tạp (email verify, OAuth, role selection)
-2. **Profile data** dùng React Query → check cache khi debug
-3. **Validation logic** ở onboarding/profile → extend carefully
-4. **AppGate** là single source of truth cho routing logic
-
----
-
-**END OF DOCUMENT**
 </file>
 
 <file path="postcss.config.js">
@@ -2243,7 +1934,7 @@ repomix-output.*
     "backup": "git add -A && git commit -m \"chore: backup\" || echo \"No changes to commit\"; git push"
   },
   "dependencies": {
-    "@insforge/sdk": "^1.0.4",
+    "@supabase/supabase-js": "^2.89.0",
     "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

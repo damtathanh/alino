@@ -1,13 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin } from 'react-icons/fa';
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 
 export default function Footer() {
   return (
     <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-12 mb-8">
+        <div className="grid md:grid-cols-5 gap-12 mb-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image
@@ -122,6 +122,32 @@ export default function Footer() {
                 <a href="#privacy" className="hover:text-[#6366F1] transition-colors">
                   Chính sách bảo mật
                 </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Liên hệ</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li className="flex items-start gap-3">
+                <FaPhone className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="tel:+84707970216" className="hover:text-[#6366F1] transition-colors">
+                  +84 707 970 216
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaEnvelope className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="mailto:contact@alino.net" className="hover:text-[#6366F1] transition-colors">
+                  contact@alino.net
+                </a>
+              </li>
+              <li className="flex items-start gap-3 leading-relaxed">
+                <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={16} />
+                <span>
+                  Landmark 81
+                  <br />
+                  720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh, Việt Nam
+                </span>
               </li>
             </ul>
           </div>

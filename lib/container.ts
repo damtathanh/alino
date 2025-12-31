@@ -1,31 +1,17 @@
-import {
-  createAuthRepository,
-  createCreatorRepository,
-  createBrandRequestRepository,
-} from '@/infra/insforge';
 import type { AuthRepository } from '@/core/contracts/auth-repository';
 import type { CreatorRepository } from '@/core/contracts/creator-repository';
 import type { BrandRequestRepository } from '@/core/contracts/brand-request-repository';
+import { SupabaseAuthRepository } from '@/infra/supabase/auth/SupabaseAuthRepository';
 
-/**
- * Service container for dependency injection
- * All vendor-specific implementations are wired here
- */
-export interface Services {
+export function getServices(): {
   authRepository: AuthRepository;
   creatorRepository: CreatorRepository;
   brandRequestRepository: BrandRequestRepository;
-}
-
-/**
- * Get service instances
- * This is the single composition root for all services
- * @returns Service instances
- */
-export function getServices(): Services {
+} {
   return {
-    authRepository: createAuthRepository(),
-    creatorRepository: createCreatorRepository(),
-    brandRequestRepository: createBrandRequestRepository(),
+    authRepository: new SupabaseAuthRepository(),
+    creatorRepository: null as any,
+    brandRequestRepository: null as any,
   };
 }
+
