@@ -58,12 +58,12 @@ export default function Header() {
           >
             Đăng nhập
           </a>
-          <a
-            href="/register"
+          <Link
+            href="/signup"
             className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
           >
             Đăng ký
-          </a>
+          </Link>
         </div>
       </div>
     </header>
