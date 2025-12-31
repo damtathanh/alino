@@ -2,7 +2,7 @@
 
 export default function WhyAlino() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-white">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-white">
       <div
         className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-25"
         style={{ background: '#C7D2FE' }}

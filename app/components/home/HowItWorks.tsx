@@ -2,7 +2,7 @@
 
 export default function HowItWorks() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white to-[#FAFBFF]">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white to-[#FAFBFF]">
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-18"
         style={{ background: '#F6C1D1' }}

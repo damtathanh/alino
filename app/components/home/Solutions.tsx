@@ -2,7 +2,7 @@
 
 export default function Solutions() {
   return (
-    <section className="relative pt-8 md:pt-12 pb-12 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
+    <section className="relative pt-12 md:pt-14 pb-14 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
       <div
         className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-35"
         style={{ background: '#C7D2FE' }}

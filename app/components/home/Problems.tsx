@@ -2,7 +2,7 @@
 
 export default function Problems() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-[#F5F7FF]">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-[#F5F7FF]">
       <div
         className="absolute top-20 right-20 w-[350px] h-[350px] rounded-full blur-[90px] opacity-25"
         style={{ background: '#F6C1D1' }}

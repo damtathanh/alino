@@ -2,7 +2,7 @@
 
 export default function CTA() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white overflow-hidden">
+    <section className="relative py-20 bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white overflow-hidden">
       <div
         className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-40"
         style={{ background: '#C7D2FE' }}
@@ -30,6 +30,9 @@ export default function CTA() {
           </a>
           <p className="text-sm text-[#9CA3AF]">
             Không cần thẻ tín dụng • Thiết lập trong 5 phút
+          </p>
+          <p className="text-xs text-[#9CA3AF] mt-2">
+            Đăng ký → chọn Creator hoặc Brand → tạo workspace đầu tiên
           </p>
         </div>
       </div>

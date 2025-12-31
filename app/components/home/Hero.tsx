@@ -11,21 +11,21 @@ export default function Hero() {
       <div className="absolute top-1/4 right-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-40 bg-[#F6C1D1]" />
       <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] rounded-full blur-[90px] opacity-35 bg-[#DDD6FE]" />
 
-      <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col py-16">
+      <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col pt-16 pb-20">
         <div className="flex-1 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
-              Nền tảng hợp tác{' '}
-              <span className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-                cho Creator & Brand
-              </span>
+              Workspace chung cho
+              <br />
+              <span className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">Creator & Brand</span> hợp tác hiệu quả
             </h1>
 
             <p className="text-lg md:text-xl text-[#6B7280] leading-relaxed max-w-xl">
-              ALINO giúp Creator và Brand làm việc cùng nhau minh bạch, rõ ràng và hiệu quả — từ khám phá đối tác đến hoàn thành dự án.
+              Không còn Zalo – Excel – Drive rời rạc.<br />
+              ALINO gom toàn bộ dự án, nội dung và tiến độ vào một nơi duy nhất.
             </p>
 
-            <div className="flex items-center gap-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <a
                 href="/register"
                 className="px-7 py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/30"
@@ -33,7 +33,7 @@ export default function Hero() {
                 Bắt đầu miễn phí
               </a>
               <span className="text-sm text-[#9CA3AF]">
-                Không cần thẻ • 5 phút setup
+                Không cần thẻ • 5 phút thiết lập
               </span>
             </div>
           </div>
@@ -94,9 +94,7 @@ export default function Hero() {
     </div>
   </div>
 </div>
-
         </div>
-
         <div className="mt-10">
           <TrustedBy />
         </div>

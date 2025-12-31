@@ -2,7 +2,7 @@
 
 export default function Compare() {
   return (
-    <section className="relative pt-8 md:pt-12 pb-12 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
+    <section className="relative pt-12 md:pt-14 pb-14 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full blur-[110px] opacity-20"
         style={{ background: '#DDD6FE' }}

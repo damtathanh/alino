@@ -2,7 +2,7 @@
 
 export default function ForWho() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-[#FAFBFF] via-white to-[#F5F7FF]">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-[#FAFBFF] via-white to-[#F5F7FF]">
       <div
         className="absolute top-20 left-20 w-[380px] h-[380px] rounded-full blur-[100px] opacity-25"
         style={{ background: '#C7D2FE' }}
@@ -23,7 +23,7 @@ export default function ForWho() {
               Creator
             </h3>
             <p className="text-[#6B7280] mb-8 leading-relaxed">
-              Dành cho nhà sáng tạo nội dung muốn làm việc chuyên nghiệp với nhiều Brand và quản lý các dự án hợp tác hiệu quả.
+              Dành cho nhà sáng tạo nội dung muốn làm việc chuyên nghiệp với nhiều Brand trong workspace chung, minh bạch và hiệu quả.
             </p>
             <ul className="space-y-4 mb-10">
               {[
@@ -54,7 +54,7 @@ export default function ForWho() {
               Brand / Agency
             </h3>
             <p className="text-[#6B7280] mb-8 leading-relaxed">
-              Dành cho nhãn hàng và các công ty cần tìm kiếm và hợp tác với nhiều Creator và quản lý tất cả dự án một cách chuyên nghiệp.
+              Dành cho nhãn hàng và các công ty cần hợp tác với nhiều Creator trong workspace chung, cùng theo dõi tiến độ và hiệu quả.
             </p>
             <ul className="space-y-4 mb-10">
               {[

@@ -111,12 +111,163 @@ vercel.json
 <files>
 This section contains the contents of the repository's files.
 
+<file path="app/api/auth/session/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import { getServices } from '@/lib/container';
+
+/**
+ * Extract access token from request headers or cookies
+ */
+function extractAccessToken(request: NextRequest): string | undefined {
+  // Check Authorization header (Bearer token)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  // Check for token in cookies (common pattern: sb-<project-ref>-auth-token or similar)
+  const cookies = request.cookies;
+  // Common cookie names for auth tokens
+  const tokenCookie = cookies.get('sb-access-token') || cookies.get('access_token') || cookies.get('auth-token');
+  if (tokenCookie) {
+    return tokenCookie.value;
+  }
+
+  return undefined;
+}
+
+/**
+ * Get current session endpoint
+ * GET /api/auth/session
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { authRepository } = getServices();
+    
+    // Extract token from request
+    const accessToken = extractAccessToken(request);
+    
+    // Set token on repository if available
+    // Note: This requires the repository to have setAccessToken method
+    // For now, we'll use a type assertion since we know it's InsforgeAuthRepository
+    if ('setAccessToken' in authRepository && typeof (authRepository as any).setAccessToken === 'function') {
+      (authRepository as any).setAccessToken(accessToken);
+    }
+    
+    const session = await authRepository.getSession();
+
+    return NextResponse.json({
+      session,
+      message: 'Lấy phiên đăng nhập thành công',
+    });
+  } catch (error) {
+    console.error('Error getting session:', error);
+    return NextResponse.json(
+      {
+        session: null,
+        message: 'Có lỗi xảy ra khi lấy phiên đăng nhập',
+      },
+      { status: 500 }
+    );
+  }
+}
+</file>
+
+<file path="app/api/brand-requests/route.ts">
+import { getServices } from '@/lib/container';
+import { ok, fail } from '@/lib/api-response';
+
+/**
+ * List brand requests for current creator
+ * GET /api/brand-requests
+ */
+export async function GET() {
+  try {
+    const { authRepository, creatorRepository, brandRequestRepository } =
+      getServices();
+
+    // Get current session
+    const session = await authRepository.getSession();
+
+    if (!session) {
+      return fail('Bạn chưa đăng nhập', 401);
+    }
+
+    // Get creator profile
+    const creator = await creatorRepository.getByUserId(session.user.id);
+
+    if (!creator) {
+      return fail('Chưa có hồ sơ creator', 404);
+    }
+
+    // List brand requests for this creator
+    const brandRequests = await brandRequestRepository.listByCreatorId(
+      creator.id
+    );
+
+    return ok(brandRequests, 'Lấy danh sách yêu cầu hợp tác thành công');
+  } catch (error) {
+    console.error('Error listing brand requests:', error);
+    return fail('Có lỗi xảy ra khi lấy danh sách yêu cầu hợp tác', 500, error);
+  }
+}
+</file>
+
+<file path="app/api/creator/me/route.ts">
+import { getServices } from '@/lib/container';
+import { ok, fail } from '@/lib/api-response';
+
+/**
+ * Get current creator profile
+ * GET /api/creator/me
+ */
+export async function GET() {
+  try {
+    const { authRepository, creatorRepository } = getServices();
+
+    // Get current session
+    const session = await authRepository.getSession();
+
+    if (!session) {
+      return fail('Bạn chưa đăng nhập', 401);
+    }
+
+    // Get creator profile by user ID
+    const creator = await creatorRepository.getByUserId(session.user.id);
+
+    if (!creator) {
+      return ok(null, 'Chưa có hồ sơ creator');
+    }
+
+    return ok(creator, 'Lấy hồ sơ creator thành công');
+  } catch (error) {
+    console.error('Error getting creator profile:', error);
+    return fail('Có lỗi xảy ra khi lấy hồ sơ creator', 500, error);
+  }
+}
+</file>
+
+<file path="app/api/health/route.ts">
+import { NextResponse } from 'next/server';
+
+/**
+ * Health check endpoint
+ * GET /api/health
+ */
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    message: 'Hệ thống hoạt động',
+  });
+}
+</file>
+
 <file path="app/components/home/Compare.tsx">
 'use client';
 
 export default function Compare() {
   return (
-    <section className="relative pt-8 md:pt-12 pb-12 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
+    <section className="relative pt-12 md:pt-14 pb-14 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full blur-[110px] opacity-20"
         style={{ background: '#DDD6FE' }}
@@ -183,7 +334,7 @@ export default function Compare() {
 
 export default function CTA() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white overflow-hidden">
+    <section className="relative py-20 bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white overflow-hidden">
       <div
         className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-40"
         style={{ background: '#C7D2FE' }}
@@ -212,6 +363,9 @@ export default function CTA() {
           <p className="text-sm text-[#9CA3AF]">
             Không cần thẻ tín dụng • Thiết lập trong 5 phút
           </p>
+          <p className="text-xs text-[#9CA3AF] mt-2">
+            Đăng ký → chọn Creator hoặc Brand → tạo workspace đầu tiên
+          </p>
         </div>
       </div>
     </section>
@@ -224,7 +378,7 @@ export default function CTA() {
 
 export default function ForWho() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-[#FAFBFF] via-white to-[#F5F7FF]">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-[#FAFBFF] via-white to-[#F5F7FF]">
       <div
         className="absolute top-20 left-20 w-[380px] h-[380px] rounded-full blur-[100px] opacity-25"
         style={{ background: '#C7D2FE' }}
@@ -245,7 +399,7 @@ export default function ForWho() {
               Creator
             </h3>
             <p className="text-[#6B7280] mb-8 leading-relaxed">
-              Dành cho nhà sáng tạo nội dung muốn làm việc chuyên nghiệp với nhiều Brand và quản lý các dự án hợp tác hiệu quả.
+              Dành cho nhà sáng tạo nội dung muốn làm việc chuyên nghiệp với nhiều Brand trong workspace chung, minh bạch và hiệu quả.
             </p>
             <ul className="space-y-4 mb-10">
               {[
@@ -276,7 +430,7 @@ export default function ForWho() {
               Brand / Agency
             </h3>
             <p className="text-[#6B7280] mb-8 leading-relaxed">
-              Dành cho nhãn hàng và các công ty cần tìm kiếm và hợp tác với nhiều Creator và quản lý tất cả dự án một cách chuyên nghiệp.
+              Dành cho nhãn hàng và các công ty cần hợp tác với nhiều Creator trong workspace chung, cùng theo dõi tiến độ và hiệu quả.
             </p>
             <ul className="space-y-4 mb-10">
               {[
@@ -322,21 +476,21 @@ export default function Hero() {
       <div className="absolute top-1/4 right-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-40 bg-[#F6C1D1]" />
       <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] rounded-full blur-[90px] opacity-35 bg-[#DDD6FE]" />
 
-      <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col py-16">
+      <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col pt-16 pb-20">
         <div className="flex-1 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
-              Nền tảng hợp tác{' '}
-              <span className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-                cho Creator & Brand
-              </span>
+              Workspace chung cho
+              <br />
+              <span className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">Creator & Brand</span> hợp tác hiệu quả
             </h1>
 
             <p className="text-lg md:text-xl text-[#6B7280] leading-relaxed max-w-xl">
-              ALINO giúp Creator và Brand làm việc cùng nhau minh bạch, rõ ràng và hiệu quả — từ khám phá đối tác đến hoàn thành dự án.
+              Không còn Zalo – Excel – Drive rời rạc.<br />
+              ALINO gom toàn bộ dự án, nội dung và tiến độ vào một nơi duy nhất.
             </p>
 
-            <div className="flex items-center gap-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <a
                 href="/register"
                 className="px-7 py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/30"
@@ -344,7 +498,7 @@ export default function Hero() {
                 Bắt đầu miễn phí
               </a>
               <span className="text-sm text-[#9CA3AF]">
-                Không cần thẻ • 5 phút setup
+                Không cần thẻ • 5 phút thiết lập
               </span>
             </div>
           </div>
@@ -405,9 +559,7 @@ export default function Hero() {
     </div>
   </div>
 </div>
-
         </div>
-
         <div className="mt-10">
           <TrustedBy />
         </div>
@@ -422,7 +574,7 @@ export default function Hero() {
 
 export default function HowItWorks() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white to-[#FAFBFF]">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white to-[#FAFBFF]">
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-18"
         style={{ background: '#F6C1D1' }}
@@ -513,7 +665,7 @@ export default function HomeBody() {
 
 export default function Problems() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-[#F5F7FF]">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-[#F5F7FF]">
       <div
         className="absolute top-20 right-20 w-[350px] h-[350px] rounded-full blur-[90px] opacity-25"
         style={{ background: '#F6C1D1' }}
@@ -557,7 +709,7 @@ export default function Problems() {
 
 export default function Solutions() {
   return (
-    <section className="relative pt-8 md:pt-12 pb-12 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
+    <section className="relative pt-12 md:pt-14 pb-14 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
       <div
         className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-35"
         style={{ background: '#C7D2FE' }}
@@ -617,7 +769,7 @@ export default function TrustedBy() {
   return (
     <div className="pb-4 pt-6">
       <p className="text-center text-[11px] uppercase tracking-widest text-[#9CA3AF] mb-3">
-        Được tin dùng bởi
+        Được tin dùng trên các nền tảng
       </p>
       <div className="flex justify-center gap-10 text-sm text-[#6B7280] font-medium">
         <span>Tiktok</span>
@@ -635,7 +787,7 @@ export default function TrustedBy() {
 
 export default function WhyAlino() {
   return (
-    <section className="relative py-12 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-white">
+    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-white">
       <div
         className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-25"
         style={{ background: '#C7D2FE' }}
@@ -692,9 +844,9 @@ import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin } from 'react-
 
 export default function Footer() {
   return (
-    <footer className="relative py-20 bg-white border-t border-black/5">
+    <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
+        <div className="grid md:grid-cols-4 gap-12 mb-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Image
@@ -877,157 +1029,6 @@ export default function Header() {
       </div>
     </header>
   );
-}
-</file>
-
-<file path="app/api/auth/session/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { getServices } from '@/lib/container';
-
-/**
- * Extract access token from request headers or cookies
- */
-function extractAccessToken(request: NextRequest): string | undefined {
-  // Check Authorization header (Bearer token)
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-
-  // Check for token in cookies (common pattern: sb-<project-ref>-auth-token or similar)
-  const cookies = request.cookies;
-  // Common cookie names for auth tokens
-  const tokenCookie = cookies.get('sb-access-token') || cookies.get('access_token') || cookies.get('auth-token');
-  if (tokenCookie) {
-    return tokenCookie.value;
-  }
-
-  return undefined;
-}
-
-/**
- * Get current session endpoint
- * GET /api/auth/session
- */
-export async function GET(request: NextRequest) {
-  try {
-    const { authRepository } = getServices();
-    
-    // Extract token from request
-    const accessToken = extractAccessToken(request);
-    
-    // Set token on repository if available
-    // Note: This requires the repository to have setAccessToken method
-    // For now, we'll use a type assertion since we know it's InsforgeAuthRepository
-    if ('setAccessToken' in authRepository && typeof (authRepository as any).setAccessToken === 'function') {
-      (authRepository as any).setAccessToken(accessToken);
-    }
-    
-    const session = await authRepository.getSession();
-
-    return NextResponse.json({
-      session,
-      message: 'Lấy phiên đăng nhập thành công',
-    });
-  } catch (error) {
-    console.error('Error getting session:', error);
-    return NextResponse.json(
-      {
-        session: null,
-        message: 'Có lỗi xảy ra khi lấy phiên đăng nhập',
-      },
-      { status: 500 }
-    );
-  }
-}
-</file>
-
-<file path="app/api/brand-requests/route.ts">
-import { getServices } from '@/lib/container';
-import { ok, fail } from '@/lib/api-response';
-
-/**
- * List brand requests for current creator
- * GET /api/brand-requests
- */
-export async function GET() {
-  try {
-    const { authRepository, creatorRepository, brandRequestRepository } =
-      getServices();
-
-    // Get current session
-    const session = await authRepository.getSession();
-
-    if (!session) {
-      return fail('Bạn chưa đăng nhập', 401);
-    }
-
-    // Get creator profile
-    const creator = await creatorRepository.getByUserId(session.user.id);
-
-    if (!creator) {
-      return fail('Chưa có hồ sơ creator', 404);
-    }
-
-    // List brand requests for this creator
-    const brandRequests = await brandRequestRepository.listByCreatorId(
-      creator.id
-    );
-
-    return ok(brandRequests, 'Lấy danh sách yêu cầu hợp tác thành công');
-  } catch (error) {
-    console.error('Error listing brand requests:', error);
-    return fail('Có lỗi xảy ra khi lấy danh sách yêu cầu hợp tác', 500, error);
-  }
-}
-</file>
-
-<file path="app/api/creator/me/route.ts">
-import { getServices } from '@/lib/container';
-import { ok, fail } from '@/lib/api-response';
-
-/**
- * Get current creator profile
- * GET /api/creator/me
- */
-export async function GET() {
-  try {
-    const { authRepository, creatorRepository } = getServices();
-
-    // Get current session
-    const session = await authRepository.getSession();
-
-    if (!session) {
-      return fail('Bạn chưa đăng nhập', 401);
-    }
-
-    // Get creator profile by user ID
-    const creator = await creatorRepository.getByUserId(session.user.id);
-
-    if (!creator) {
-      return ok(null, 'Chưa có hồ sơ creator');
-    }
-
-    return ok(creator, 'Lấy hồ sơ creator thành công');
-  } catch (error) {
-    console.error('Error getting creator profile:', error);
-    return fail('Có lỗi xảy ra khi lấy hồ sơ creator', 500, error);
-  }
-}
-</file>
-
-<file path="app/api/health/route.ts">
-import { NextResponse } from 'next/server';
-
-/**
- * Health check endpoint
- * GET /api/health
- */
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    message: 'Hệ thống hoạt động',
-  });
 }
 </file>
 
@@ -1598,15 +1599,6 @@ const nextConfig = {
 module.exports = nextConfig
 </file>
 
-<file path="postcss.config.js">
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-</file>
-
 <file path="TECHNICAL_SUMMARY.md">
 # ALINO APP - TECHNICAL SUMMARY
 
@@ -1947,6 +1939,30 @@ if (profile.role === Role.CREATOR) { ... }
 **END OF DOCUMENT**
 </file>
 
+<file path="postcss.config.js">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="vercel.json">
+{
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "/"
+        }
+    ]
+}
+</file>
+
+<file path="core/.gitkeep">
+
+</file>
+
 <file path="tailwind.config.js">
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -1964,17 +1980,6 @@ module.exports = {
     },
   },
   plugins: [],
-}
-</file>
-
-<file path="vercel.json">
-{
-    "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "/"
-        }
-    ]
 }
 </file>
 
@@ -2059,10 +2064,6 @@ export default function HomePage() {
     </div>
   );
 }
-</file>
-
-<file path="core/.gitkeep">
-
 </file>
 
 <file path="README.md">
@@ -2235,7 +2236,7 @@ repomix-output.*
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start",
     "repomix": "repomix",
