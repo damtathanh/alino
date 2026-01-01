@@ -65,3 +65,50 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// PUT: Update user's own profile
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = createServerClientWithCookies();
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Phiên đăng nhập không hợp lệ' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+    const { onboarding_data } = await request.json();
+
+    // Update profile (RLS will enforce user can only update their own)
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        onboarding_data: onboarding_data || {},
+      })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating profile:', error);
+      return NextResponse.json(
+        { error: error.message || 'Không thể cập nhật profile' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Profile đã được cập nhật thành công',
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return NextResponse.json(
+      { error: 'Có lỗi xảy ra khi cập nhật profile' },
+      { status: 500 }
+    );
+  }
+}

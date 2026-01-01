@@ -1,12 +1,60 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import UserMenu from './UserMenu';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const [userData, setUserData] = useState<{
+    email: string;
+    displayName?: string;
+    role?: string | null;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch('/api/auth/session', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        const { session } = await res.json()
+
+        if (session?.user?.email) {
+          const profileRes = await fetch('/api/auth/profile-check', {
+            credentials: 'include',
+            cache: 'no-store',
+          })
+          const profileData = await profileRes.json()
+
+          const profile = profileData.profile
+          const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' ? profile.onboarding_data : {}
+          const displayName = onboardingData.displayName || onboardingData.companyName
+
+          setUserData({
+            email: session.user.email,
+            displayName,
+            role: profile?.role || null,
+          })
+        } else {
+          setUserData(null)
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        setUserData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [])
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -52,18 +100,35 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-4 text-sm">
-          <a
-            href="/login"
-            className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
-          >
-            Đăng nhập
-          </a>
-          <Link
-            href="/signup"
-            className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
-          >
-            Đăng ký
-          </Link>
+          {loading ? (
+            <>
+              <div className="text-[#6B7280]">Đăng nhập</div>
+              <div className="px-5 py-2.5 rounded-full bg-gray-200" />
+            </>
+          ) : userData ? (
+            <>
+              <UserMenu
+                userEmail={userData.email}
+                displayName={userData.displayName}
+                role={userData.role}
+              />
+            </>
+          ) : (
+            <>
+              <a
+                href="/login"
+                className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
+              >
+                Đăng nhập
+              </a>
+              <Link
+                href="/signup"
+                className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

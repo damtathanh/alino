@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,33 +10,35 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
+  
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await res.json();
-
+  
       if (!res.ok) {
         setError(data.error || 'Đăng nhập thất bại');
         setLoading(false);
         return;
       }
-
+  
       window.location.href = '/';
     } catch {
       setError('Có lỗi xảy ra');
       setLoading(false);
     }
-  };
+  };  
 
   const handleGoogleLogin = async () => {
     const res = await fetch('/api/auth/oauth', {

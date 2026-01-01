@@ -1,8 +1,54 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function VerifyEmailPage() {
+  const [email, setEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Get email from localStorage
+    if (typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('pendingVerificationEmail');
+      setEmail(storedEmail);
+    }
+  }, []);
+
+  const handleResend = async () => {
+    if (!email) {
+      setError('Không tìm thấy email');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Không thể gửi lại email');
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
       <div className="w-full max-w-md">
@@ -22,12 +68,40 @@ export default function VerifyEmailPage() {
             Vui lòng kiểm tra hộp thư và nhấp vào link để xác thực tài khoản.
           </p>
 
-          <div className="bg-[#EEF2FF] rounded-xl p-4 mb-8">
+          {email && (
+            <p className="text-sm text-[#6366F1] mb-6 font-medium">
+              {email}
+            </p>
+          )}
+
+          <div className="bg-[#EEF2FF] rounded-xl p-4 mb-6">
             <p className="text-sm text-[#6B7280]">
               <strong>Lưu ý:</strong> Link xác thực có hiệu lực trong 24 giờ. 
               Nếu bạn không thấy email, vui lòng kiểm tra thư mục spam.
             </p>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              Email đã được gửi lại thành công!
+            </div>
+          )}
+
+          {email && (
+            <button
+              onClick={handleResend}
+              disabled={loading}
+              className="w-full mb-4 px-6 py-3 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] hover:bg-[#6366F1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Đang gửi...' : 'Gửi lại email xác thực'}
+            </button>
+          )}
 
           <Link
             href="/login"
@@ -40,4 +114,3 @@ export default function VerifyEmailPage() {
     </div>
   );
 }
-

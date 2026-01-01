@@ -42,6 +42,10 @@ export default function SignupPage() {
         return;
       }
 
+      // Store email in localStorage for resend functionality
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pendingVerificationEmail', email);
+      }
       window.location.href = '/verify-email';
     } catch {
       setError('Có lỗi xảy ra');

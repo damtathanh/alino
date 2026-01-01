@@ -20,7 +20,7 @@ export async function GET() {
     // Check profile from database (source of truth)
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('id, role, onboarding_completed')
+      .select('id, role, onboarding_completed, onboarding_data')
       .eq('id', session.user.id)
       .single();
 
