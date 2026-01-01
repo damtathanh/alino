@@ -1,15 +1,16 @@
-'use client';
+import { redirect } from 'next/navigation';
+import HomePageClient from './components/home/HomePageClient';
 
-import Header from '@/app/components/layout/Header';
-import Footer from '@/app/components/layout/Footer';
-import HomeBody from '@/app/components/home';
+export default function HomePage({
+  searchParams,
+}: {
+  searchParams: { code?: string };
+}) {
+  // 🔥 Intercept email verification code from Supabase
+  // Supabase always redirects to Site URL (/) with ?code=...
+  if (searchParams?.code) {
+    redirect(`/auth/callback?code=${searchParams.code}`);
+  }
 
-export default function HomePage() {
-  return (
-    <div className="relative overflow-x-hidden bg-white">
-      <Header />
-      <HomeBody />
-      <Footer />
-    </div>
-  );
+  return <HomePageClient />;
 }

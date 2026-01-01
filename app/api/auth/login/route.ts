@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClientWithCookies } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const supabase = createServerClientWithCookies();
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -24,6 +24,22 @@ export async function POST(request: NextRequest) {
         { error: error.message },
         { status: 400 }
       );
+    }
+
+    // ✅ ENSURE PROFILE EXISTS (IDEMPOTENT)
+    const userId = data.user.id;
+
+    const { error: upsertError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
+        onboarding_completed: false,
+        onboarding_data: {},
+      });
+
+    if (upsertError) {
+      console.error('Error upserting profile after login:', upsertError);
+      // Không fail request – profile sẽ được sửa ở bước sau
     }
 
     return NextResponse.json({
@@ -38,4 +54,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

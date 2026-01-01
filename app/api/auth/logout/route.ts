@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClientWithCookies } from '@/lib/supabase-server'
+;
 
 export async function POST() {
   try {
-    const supabase = createServerClient();
+    const supabase = createServerClientWithCookies()
+;
     await supabase.auth.signOut();
 
     return NextResponse.json({ message: 'Đã đăng xuất' });
