@@ -1,4 +1,3 @@
-// lib/hooks/useAuth.ts
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -11,32 +10,19 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   const router = useRouter()
-  const supabase = getBrowserSupabase() // ✅ SINGLETON
+  const supabase = getBrowserSupabase()
 
   useEffect(() => {
     let mounted = true
 
-    // 🔥 LUÔN HỎI SERVER TRƯỚC
-    fetch('/api/auth/session')
-      .then((res) => res.json())
-      .then(({ session }) => {
-        if (!mounted) return
+    // ✅ 1. LẤY SESSION TỪ SUPABASE CLIENT (SYNC)
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return
+      setSession(data.session ?? null)
+      setLoading(false)
+    })
 
-        if (!session) {
-          supabase.auth.signOut()
-          setSession(null)
-        } else {
-          setSession(session)
-        }
-        setLoading(false)
-      })
-      .catch(() => {
-        supabase.auth.signOut()
-        setSession(null)
-        setLoading(false)
-      })
-
-    // 🔁 Lắng nghe auth change (login/logout)
+    // ✅ 2. LISTEN AUTH CHANGE
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
