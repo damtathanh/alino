@@ -442,7 +442,6 @@ function Step3Metrics({
     creator_platforms: formData.creator_platforms || [],
     followers_count: formData.followers_count || undefined,
     avg_views: formData.avg_views || undefined,
-    engagement_rate: formData.engagement_rate || undefined,
     content_categories: formData.content_categories || [],
     company_size: formData.company_size || '',
     monthly_marketing_budget: formData.monthly_marketing_budget || undefined,
@@ -480,7 +479,6 @@ function Step3Metrics({
         creator_platforms: localData.creator_platforms,
         followers_count: localData.followers_count,
         avg_views: localData.avg_views,
-        engagement_rate: localData.engagement_rate,
         content_categories: localData.content_categories,
       })
     } else {
@@ -551,21 +549,6 @@ function Step3Metrics({
                 onChange={(e) => setLocalData({ ...localData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 placeholder="Ví dụ: 50000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Tỷ lệ tương tác (%)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={localData.engagement_rate || ''}
-                onChange={(e) => setLocalData({ ...localData, engagement_rate: e.target.value ? parseFloat(e.target.value) : undefined })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: 3.5"
               />
             </div>
             <div>

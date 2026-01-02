@@ -16,6 +16,8 @@ export interface OnboardingData {
   country?: string
   city?: string
   birth_year?: number
+  gender?: 'male' | 'female' | 'other'
+  phone_number?: string
 
   // Brand fields
   brand_name?: string
@@ -26,7 +28,6 @@ export interface OnboardingData {
   creator_platforms?: string[]
   followers_count?: number
   avg_views?: number
-  engagement_rate?: number
   content_categories?: string[]
 
   // Brand fields
