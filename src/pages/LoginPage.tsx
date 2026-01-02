@@ -22,12 +22,17 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError(error.message || 'Đăng nhập thất bại')
+        // Map error messages to Vietnamese
+        if (error.message === 'Email not confirmed') {
+          setError('Tài khoản chưa được xác thực')
+        } else {
+          setError('Email hoặc mật khẩu không đúng')
+        }
         setLoading(false)
         return
       }
 
-      navigate('/dashboard')
+      navigate('/app')
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -38,7 +43,7 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/app`,
       },
     })
 

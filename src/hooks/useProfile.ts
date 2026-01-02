@@ -8,13 +8,16 @@ interface Profile {
   onboarding_data?: any
 }
 
-export function useProfile(userId: string | undefined) {
+export function useProfile(
+  userId: string | undefined,
+  enabled: boolean
+) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = getSupabase()
 
   useEffect(() => {
-    if (!userId) {
+    if (!enabled || !userId) {
       setProfile(null)
       setLoading(false)
       return
@@ -23,6 +26,8 @@ export function useProfile(userId: string | undefined) {
     let mounted = true
 
     async function fetchProfile() {
+      setLoading(true)
+
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -36,13 +41,10 @@ export function useProfile(userId: string | undefined) {
           setProfile(data)
           setLoading(false)
         }
-      } catch (error) {
-        console.error('Error fetching profile:', error)
+      } catch (err) {
         if (mounted) {
           setProfile(null)
           setLoading(false)
-          // If profile is missing, sign out user
-          await supabase.auth.signOut()
         }
       }
     }
@@ -52,8 +54,9 @@ export function useProfile(userId: string | undefined) {
     return () => {
       mounted = false
     }
-  }, [userId])
+  }, [userId, enabled])
 
   return { profile, loading }
 }
+
 

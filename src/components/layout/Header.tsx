@@ -1,12 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { useProfile } from '../../hooks/useProfile'
 import UserMenu from './UserMenu'
 
 export default function Header() {
-  const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id)
-  const loading = authLoading || profileLoading
+  const { session, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -18,11 +15,6 @@ export default function Header() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' 
-    ? profile.onboarding_data 
-    : {}
-  const displayName = onboardingData.displayName || onboardingData.companyName
-
   return (
     <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
@@ -31,54 +23,28 @@ export default function Header() {
           onClick={handleLogoClick}
           className="flex items-center gap-3 cursor-pointer"
         >
-          <img
-            src="/logo/logo.png"
-            alt="ALINO"
-            className="w-8 h-8"
-          />
+          <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
           <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
             ALINO
           </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
-          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Về chúng tôi
-          </a>
-          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Sản phẩm
-          </a>
-          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Tin tức
-          </a>
-          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Liên hệ
-          </a>
+          <a href="#about">Về chúng tôi</a>
+          <a href="#product">Sản phẩm</a>
+          <a href="#news">Tin tức</a>
+          <a href="#contact">Liên hệ</a>
         </nav>
 
         <div className="flex items-center gap-4 text-sm">
-          {loading ? (
-            <>
-              <div className="text-[#6B7280]">Đăng nhập</div>
-              <div className="px-5 py-2.5 rounded-full bg-gray-200" />
-            </>
-          ) : session ? (
-            <UserMenu
-              userEmail={session.user.email || ''}
-              displayName={displayName}
-              role={profile?.role || null}
-            />
+          {loading ? null : session ? (
+            <UserMenu userEmail={session.user.email || ''} />
           ) : (
             <>
-              <Link
-                to="/login"
-                className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
-              >
-                Đăng nhập
-              </Link>
+              <Link to="/login">Đăng nhập</Link>
               <Link
                 to="/signup"
-                className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+                className="px-5 py-2.5 rounded-full text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
               >
                 Đăng ký
               </Link>
@@ -89,4 +55,3 @@ export default function Header() {
     </header>
   )
 }
-

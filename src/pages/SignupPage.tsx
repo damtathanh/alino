@@ -32,7 +32,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/verify-email`,
         },
       })
 
@@ -42,8 +42,7 @@ export default function SignupPage() {
         return
       }
 
-      localStorage.setItem('signupEmail', email)
-      navigate('/verify-email')
+      navigate('/?signup=success', { replace: true })
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -54,7 +53,7 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/app`,
       },
     })
 

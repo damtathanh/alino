@@ -1,38 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
 import { getSupabase } from '../lib/supabase'
 
 export default function RolePage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id)
-  const [selectedRole, setSelectedRole] = useState<'creator' | 'brand' | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const supabase = getSupabase()
 
-  useEffect(() => {
-    if (profile?.role) {
-      navigate('/onboarding', { replace: true })
-    }
-  }, [profile, navigate])
-
   const handleSelectRole = async (role: 'creator' | 'brand') => {
     if (!session) return
 
-    setSelectedRole(role)
     setLoading(true)
 
     try {
+      // Get existing onboarding_data
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('onboarding_data')
+        .eq('id', session.user.id)
+        .single()
+
+      const existingData = (existingProfile?.onboarding_data as any) || {}
+
+      // Update role and save role_selected_at timestamp in onboarding_data
       const { error } = await supabase
         .from('profiles')
-        .update({ role })
+        .update({
+          role,
+          onboarding_data: {
+            ...existingData,
+            role_selected_at: new Date().toISOString(),
+          },
+        })
         .eq('id', session.user.id)
 
       if (error) throw error
 
-      navigate('/onboarding')
+      // After success → navigate('/app')
+      navigate('/app', { replace: true })
     } catch (err: any) {
       setLoading(false)
       alert(err.message || 'Có lỗi xảy ra khi chọn vai trò')
@@ -78,4 +85,3 @@ export default function RolePage() {
     </div>
   )
 }
-

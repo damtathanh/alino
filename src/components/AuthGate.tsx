@@ -2,17 +2,14 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
-import { getSupabase } from '../lib/supabase'
 
-interface AuthGateProps {
-  children: React.ReactNode
-}
-
-export default function AuthGate({ children }: AuthGateProps) {
-  const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id)
+export default function AuthGate({ children }: { children: React.ReactNode }) {
+  const { session, loading: authLoading, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(
+    session?.user?.id,
+    isAuthenticated
+  )
   const navigate = useNavigate()
-  const supabase = getSupabase()
 
   useEffect(() => {
     if (authLoading || profileLoading) return
@@ -22,11 +19,7 @@ export default function AuthGate({ children }: AuthGateProps) {
       return
     }
 
-    if (!profile) {
-      supabase.auth.signOut()
-      navigate('/login', { replace: true })
-      return
-    }
+    if (!profile) return
 
     if (!profile.role) {
       navigate('/role', { replace: true })
@@ -37,20 +30,15 @@ export default function AuthGate({ children }: AuthGateProps) {
       navigate('/onboarding', { replace: true })
       return
     }
-  }, [session, profile, authLoading, profileLoading, navigate, supabase])
+  }, [session, profile, authLoading, profileLoading, navigate])
 
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
+        Đang tải...
       </div>
     )
   }
 
-  if (!session || !profile || !profile.role || !profile.onboarding_completed) {
-    return null
-  }
-
   return <>{children}</>
 }
-

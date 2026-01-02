@@ -56,6 +56,7 @@ src/
   lib/
     supabase.ts
   pages/
+    AppGate.tsx
     BrandDashboard.tsx
     CreatorDashboard.tsx
     LandingPage.tsx
@@ -66,6 +67,8 @@ src/
     SettingsPage.tsx
     SignupPage.tsx
     VerifyEmailPage.tsx
+  types/
+    profile.ts
   App.tsx
   index.css
   main.tsx
@@ -91,6 +94,155 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/pages/AppGate.tsx">
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { getSupabase } from '../lib/supabase'
+
+export default function AppGate() {
+  const { session, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const supabase = getSupabase()
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (authLoading) return
+
+    // a) No session → redirect to landing
+    if (!session) {
+      navigate('/', { replace: true })
+      return
+    }
+
+    // b) Email NOT verified → sign out → redirect to /
+    if (!session.user.email_confirmed_at) {
+      supabase.auth.signOut().finally(() => {
+        navigate('/', { replace: true })
+      })
+      return
+    }
+
+    // c) Fetch profile DIRECTLY from Supabase (no cached hook)
+    runGate()
+  }, [authLoading, session, navigate, supabase])
+
+  async function runGate() {
+    if (!session) return
+
+    setLoading(true)
+
+    try {
+      // Fetch profile directly from Supabase
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, role, onboarding_completed')
+        .eq('id', session.user.id)
+        .single()
+
+      // d) If profile does NOT exist → insert profile → redirect /role
+      if (error && error.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            role: null,
+            onboarding_completed: false,
+          })
+
+        if (insertError) throw insertError
+
+        navigate('/role', { replace: true })
+        return
+      }
+
+      if (error) throw error
+
+      // e) If profile.role is null → redirect /role
+      if (!profile.role) {
+        navigate('/role', { replace: true })
+        return
+      }
+
+      // f) If onboarding_completed is false → redirect /onboarding
+      if (!profile.onboarding_completed) {
+        navigate('/onboarding', { replace: true })
+        return
+      }
+
+      // g) Else → redirect /dashboard (or next param)
+      const next = searchParams.get('next')
+      if (next === 'projects' || next === 'profile' || next === 'settings') {
+        navigate(`/${next}`, { replace: true })
+      } else {
+        navigate('/dashboard', { replace: true })
+      }
+    } catch (error) {
+      console.error('AppGate error:', error)
+      navigate('/', { replace: true })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  return null
+}
+</file>
+
+<file path="src/types/profile.ts">
+export interface Profile {
+  id: string
+  role: 'creator' | 'brand' | null
+  onboarding_completed: boolean
+  onboarding_data?: OnboardingData
+}
+
+export interface OnboardingData {
+  // Step 1 - Role
+  role_selected_at?: string
+
+  // Step 2 - Basic Identity
+  // Creator fields
+  display_name?: string
+  avatar_url?: string
+  country?: string
+  city?: string
+  birth_year?: number
+
+  // Brand fields
+  brand_name?: string
+  industry?: string
+
+  // Step 3 - Business/Creator Metrics
+  // Creator fields
+  creator_platforms?: string[]
+  followers_count?: number
+  avg_views?: number
+  engagement_rate?: number
+  content_categories?: string[]
+
+  // Brand fields
+  company_size?: string
+  monthly_marketing_budget?: number
+  target_platforms?: string[]
+
+  // Step 4 - Collaboration Intent
+  // Creator
+  collaboration_expectation?: string
+  // Brand
+  collaboration_goal?: string
+}
+</file>
 
 <file path="src/components/layout/Footer.tsx">
 import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa'
@@ -255,13 +407,10 @@ export default function Footer() {
 <file path="src/components/layout/Header.tsx">
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { useProfile } from '../../hooks/useProfile'
 import UserMenu from './UserMenu'
 
 export default function Header() {
-  const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id)
-  const loading = authLoading || profileLoading
+  const { session, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -273,11 +422,6 @@ export default function Header() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' 
-    ? profile.onboarding_data 
-    : {}
-  const displayName = onboardingData.displayName || onboardingData.companyName
-
   return (
     <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
@@ -286,54 +430,28 @@ export default function Header() {
           onClick={handleLogoClick}
           className="flex items-center gap-3 cursor-pointer"
         >
-          <img
-            src="/logo/logo.png"
-            alt="ALINO"
-            className="w-8 h-8"
-          />
+          <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
           <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
             ALINO
           </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
-          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Về chúng tôi
-          </a>
-          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Sản phẩm
-          </a>
-          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Tin tức
-          </a>
-          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Liên hệ
-          </a>
+          <a href="#about">Về chúng tôi</a>
+          <a href="#product">Sản phẩm</a>
+          <a href="#news">Tin tức</a>
+          <a href="#contact">Liên hệ</a>
         </nav>
 
         <div className="flex items-center gap-4 text-sm">
-          {loading ? (
-            <>
-              <div className="text-[#6B7280]">Đăng nhập</div>
-              <div className="px-5 py-2.5 rounded-full bg-gray-200" />
-            </>
-          ) : session ? (
-            <UserMenu
-              userEmail={session.user.email || ''}
-              displayName={displayName}
-              role={profile?.role || null}
-            />
+          {loading ? null : session ? (
+            <UserMenu userEmail={session.user.email || ''} />
           ) : (
             <>
-              <Link
-                to="/login"
-                className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
-              >
-                Đăng nhập
-              </Link>
+              <Link to="/login">Đăng nhập</Link>
               <Link
                 to="/signup"
-                className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+                className="px-5 py-2.5 rounded-full text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
               >
                 Đăng ký
               </Link>
@@ -384,7 +502,7 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
     await signOut()
   }
 
-  const dashboardPath = '/dashboard'
+  const dashboardPath = '/app?next=projects'
 
   const nameToShow = displayName || userEmail.split('@')[0]
 
@@ -418,14 +536,14 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
               Quản lý dự án
             </Link>
             <Link
-              to="/profile"
+              to="/app?next=profile"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
               Hồ sơ
             </Link>
             <Link
-              to="/settings"
+              to="/app?next=settings"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
@@ -451,17 +569,14 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
-import { getSupabase } from '../lib/supabase'
 
-interface AuthGateProps {
-  children: React.ReactNode
-}
-
-export default function AuthGate({ children }: AuthGateProps) {
-  const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id)
+export default function AuthGate({ children }: { children: React.ReactNode }) {
+  const { session, loading: authLoading, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(
+    session?.user?.id,
+    isAuthenticated
+  )
   const navigate = useNavigate()
-  const supabase = getSupabase()
 
   useEffect(() => {
     if (authLoading || profileLoading) return
@@ -471,11 +586,7 @@ export default function AuthGate({ children }: AuthGateProps) {
       return
     }
 
-    if (!profile) {
-      supabase.auth.signOut()
-      navigate('/login', { replace: true })
-      return
-    }
+    if (!profile) return
 
     if (!profile.role) {
       navigate('/role', { replace: true })
@@ -486,18 +597,14 @@ export default function AuthGate({ children }: AuthGateProps) {
       navigate('/onboarding', { replace: true })
       return
     }
-  }, [session, profile, authLoading, profileLoading, navigate, supabase])
+  }, [session, profile, authLoading, profileLoading, navigate])
 
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
+        Đang tải...
       </div>
     )
-  }
-
-  if (!session || !profile || !profile.role || !profile.onboarding_completed) {
-    return null
   }
 
   return <>{children}</>
@@ -552,6 +659,7 @@ export function useAuth() {
     user: session?.user ?? null,
     loading,
     signOut,
+    isAuthenticated: !!session,
   }
 }
 </file>
@@ -567,13 +675,16 @@ interface Profile {
   onboarding_data?: any
 }
 
-export function useProfile(userId: string | undefined) {
+export function useProfile(
+  userId: string | undefined,
+  enabled: boolean
+) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = getSupabase()
 
   useEffect(() => {
-    if (!userId) {
+    if (!enabled || !userId) {
       setProfile(null)
       setLoading(false)
       return
@@ -582,6 +693,8 @@ export function useProfile(userId: string | undefined) {
     let mounted = true
 
     async function fetchProfile() {
+      setLoading(true)
+
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -595,13 +708,10 @@ export function useProfile(userId: string | undefined) {
           setProfile(data)
           setLoading(false)
         }
-      } catch (error) {
-        console.error('Error fetching profile:', error)
+      } catch (err) {
         if (mounted) {
           setProfile(null)
           setLoading(false)
-          // If profile is missing, sign out user
-          await supabase.auth.signOut()
         }
       }
     }
@@ -611,7 +721,7 @@ export function useProfile(userId: string | undefined) {
     return () => {
       mounted = false
     }
-  }, [userId])
+  }, [userId, enabled])
 
   return { profile, loading }
 }
@@ -684,14 +794,35 @@ export default function CreatorDashboard() {
 </file>
 
 <file path="src/pages/LandingPage.tsx">
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
 export default function LandingPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [showMessage, setShowMessage] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('signup') === 'success') {
+      setShowMessage(true)
+      // Remove query param from URL
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
   return (
     <div className="relative overflow-x-hidden bg-white pt-16">
       <div className="min-h-screen">
         <section className="max-w-7xl mx-auto px-6 py-20">
           <div className="text-center">
+            {showMessage && (
+              <div className="mb-8 max-w-2xl mx-auto">
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700">
+                  <p className="font-medium">
+                    Vui lòng kiểm tra email để xác thực tài khoản.
+                  </p>
+                </div>
+              </div>
+            )}
             <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
               Quản lý hợp tác Creator–Brand
             </h1>
@@ -745,12 +876,17 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError(error.message || 'Đăng nhập thất bại')
+        // Map error messages to Vietnamese
+        if (error.message === 'Email not confirmed') {
+          setError('Tài khoản chưa được xác thực')
+        } else {
+          setError('Email hoặc mật khẩu không đúng')
+        }
         setLoading(false)
         return
       }
 
-      navigate('/dashboard')
+      navigate('/app')
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -761,7 +897,7 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/app`,
       },
     })
 
@@ -880,70 +1016,778 @@ export default function LoginPage() {
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
 import { getSupabase } from '../lib/supabase'
+import type { OnboardingData } from '../types/profile'
 
 export default function OnboardingPage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id)
-  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const supabase = getSupabase()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  // Form state
+  const [formData, setFormData] = useState<OnboardingData>({})
 
   useEffect(() => {
-    if (!profile?.role) {
-      navigate('/role', { replace: true })
+    if (!session) {
+      navigate('/app', { replace: true })
       return
     }
-    if (profile.onboarding_completed) {
-      navigate('/dashboard', { replace: true })
-      return
+
+    // Check if onboarding already completed
+    checkOnboardingStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session])
+
+  async function checkOnboardingStatus() {
+    if (!session) return
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, role')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+
+      if (data?.onboarding_completed) {
+        navigate('/app', { replace: true })
+        return
+      }
+
+      if (data?.role) {
+        // Load existing data
+        loadExistingData()
+      }
+    } catch (err) {
+      console.error('Error checking onboarding:', err)
     }
-  }, [profile, navigate])
+  }
 
-  const role = profile?.role || 'creator'
+  async function loadExistingData() {
+    if (!session) return
 
-  const handleComplete = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_data, role')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error) throw error
+
+      if (data?.onboarding_data && typeof data.onboarding_data === 'object') {
+        setFormData(data.onboarding_data as OnboardingData)
+      }
+
+      // Determine current step based on existing data
+      if (data?.role) {
+        if (!data.onboarding_data || Object.keys(data.onboarding_data).length === 0) {
+          setCurrentStep(2)
+        } else {
+          const od = data.onboarding_data as OnboardingData
+          if (!od.display_name && !od.brand_name) {
+            setCurrentStep(2)
+          } else if (!od.creator_platforms && !od.company_size) {
+            setCurrentStep(3)
+          } else if (!od.collaboration_expectation && !od.collaboration_goal) {
+            setCurrentStep(4)
+          } else {
+            setCurrentStep(5)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading existing data:', err)
+    }
+  }
+
+  async function saveStep(stepData: Partial<OnboardingData>, nextStep?: number) {
     if (!session) return
 
     setLoading(true)
+    setError('')
 
     try {
+      const updatedData = { ...formData, ...stepData }
+      setFormData(updatedData)
+
       const { error } = await supabase
         .from('profiles')
         .update({
-          onboarding_completed: true,
+          onboarding_data: updatedData,
         })
         .eq('id', session.user.id)
 
       if (error) throw error
 
-      navigate('/dashboard')
+      if (nextStep) {
+        setCurrentStep(nextStep)
+      }
     } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi lưu dữ liệu')
+    } finally {
       setLoading(false)
-      alert(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
     }
+  }
+
+  async function handleComplete() {
+    if (!session) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const finalData = {
+        ...formData,
+        onboarding_completed_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: true,
+          onboarding_data: finalData,
+        })
+        .eq('id', session.user.id)
+
+      if (error) throw error
+
+      navigate('/app', { replace: true })
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
+      setLoading(false)
+    }
+  }
+
+  const [role, setRole] = useState<'creator' | 'brand' | null>(null)
+
+  useEffect(() => {
+    async function getRole() {
+      if (!session) return null
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+      return data?.role || null
+    }
+    getRole().then(setRole)
+  }, [session, supabase])
+
+  if (!role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
-          <h1 className="text-3xl font-semibold tracking-tight mb-8">
-            Hoàn tất thiết lập
-          </h1>
-          <p className="text-[#6B7280] mb-8">
-            Bạn đang thiết lập tài khoản {role === 'creator' ? 'Creator' : 'Brand'}
-          </p>
-          <button
-            onClick={handleComplete}
-            disabled={loading}
-            className="px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-          >
-            {loading ? 'Đang xử lý...' : 'Hoàn tất'}
-          </button>
+          {/* Progress indicator */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-[#6B7280]">
+                Bước {currentStep} / 5
+              </span>
+              <span className="text-sm text-[#6B7280]">
+                {Math.round((currentStep / 5) * 100)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] h-2 rounded-full transition-all"
+                style={{ width: `${(currentStep / 5) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Step 2: Basic Identity */}
+          {currentStep === 2 && (
+            <Step2BasicIdentity
+              role={role}
+              formData={formData}
+              onSave={(data) => saveStep(data, 3)}
+              loading={loading}
+            />
+          )}
+
+          {/* Step 3: Business/Creator Metrics */}
+          {currentStep === 3 && (
+            <Step3Metrics
+              role={role}
+              formData={formData}
+              onSave={(data) => saveStep(data, 4)}
+              loading={loading}
+            />
+          )}
+
+          {/* Step 4: Collaboration Intent */}
+          {currentStep === 4 && (
+            <Step4Collaboration
+              role={role}
+              formData={formData}
+              onSave={(data) => saveStep(data, 5)}
+              loading={loading}
+            />
+          )}
+
+          {/* Step 5: Finalize */}
+          {currentStep === 5 && (
+            <Step5Finalize
+              role={role}
+              formData={formData}
+              onComplete={handleComplete}
+              loading={loading}
+            />
+          )}
+
+          {/* Navigation buttons */}
+          {currentStep > 2 && (
+            <div className="mt-6 flex justify-between">
+              <button
+                onClick={() => setCurrentStep(currentStep - 1)}
+                disabled={loading}
+                className="px-6 py-2.5 rounded-xl font-medium text-[#6B7280] border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Quay lại
+              </button>
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// Step 2: Basic Identity
+function Step2BasicIdentity({
+  role,
+  formData,
+  onSave,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  formData: OnboardingData
+  onSave: (data: Partial<OnboardingData>) => void
+  loading: boolean
+}) {
+  const [localData, setLocalData] = useState({
+    display_name: formData.display_name || '',
+    brand_name: formData.brand_name || '',
+    country: formData.country || '',
+    city: formData.city || '',
+    birth_year: formData.birth_year || undefined,
+    industry: formData.industry || '',
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (role === 'creator') {
+      onSave({
+        display_name: localData.display_name,
+        country: localData.country,
+        city: localData.city,
+        birth_year: localData.birth_year,
+      })
+    } else {
+      onSave({
+        brand_name: localData.brand_name,
+        industry: localData.industry,
+        country: localData.country,
+        city: localData.city,
+      })
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        Thông tin cơ bản
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        {role === 'creator' ? 'Hãy cho chúng tôi biết về bạn' : 'Hãy cho chúng tôi biết về thương hiệu của bạn'}
+      </p>
+
+      <div className="space-y-4">
+        {role === 'creator' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Tên hiển thị *
+              </label>
+              <input
+                type="text"
+                value={localData.display_name}
+                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Quốc gia *
+              </label>
+              <input
+                type="text"
+                value={localData.country}
+                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Thành phố *
+              </label>
+              <input
+                type="text"
+                value={localData.city}
+                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Năm sinh
+              </label>
+              <input
+                type="number"
+                min="1950"
+                max={new Date().getFullYear()}
+                value={localData.birth_year || ''}
+                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Tên thương hiệu *
+              </label>
+              <input
+                type="text"
+                value={localData.brand_name}
+                onChange={(e) => setLocalData({ ...localData, brand_name: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Ngành nghề *
+              </label>
+              <input
+                type="text"
+                value={localData.industry}
+                onChange={(e) => setLocalData({ ...localData, industry: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Quốc gia *
+              </label>
+              <input
+                type="text"
+                value={localData.country}
+                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Thành phố *
+              </label>
+              <input
+                type="text"
+                value={localData.city}
+                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+        >
+          {loading ? 'Đang lưu...' : 'Tiếp tục'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Step 3: Business/Creator Metrics
+function Step3Metrics({
+  role,
+  formData,
+  onSave,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  formData: OnboardingData
+  onSave: (data: Partial<OnboardingData>) => void
+  loading: boolean
+}) {
+  const platforms = ['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn']
+  
+  const [localData, setLocalData] = useState({
+    creator_platforms: formData.creator_platforms || [],
+    followers_count: formData.followers_count || undefined,
+    avg_views: formData.avg_views || undefined,
+    engagement_rate: formData.engagement_rate || undefined,
+    content_categories: formData.content_categories || [],
+    company_size: formData.company_size || '',
+    monthly_marketing_budget: formData.monthly_marketing_budget || undefined,
+    target_platforms: formData.target_platforms || [],
+  })
+
+  const togglePlatform = (platform: string, type: 'creator' | 'target') => {
+    if (type === 'creator') {
+      const current = localData.creator_platforms || []
+      const updated = current.includes(platform)
+        ? current.filter((p) => p !== platform)
+        : [...current, platform]
+      setLocalData({ ...localData, creator_platforms: updated })
+    } else {
+      const current = localData.target_platforms || []
+      const updated = current.includes(platform)
+        ? current.filter((p) => p !== platform)
+        : [...current, platform]
+      setLocalData({ ...localData, target_platforms: updated })
+    }
+  }
+
+  const toggleCategory = (category: string) => {
+    const current = localData.content_categories || []
+    const updated = current.includes(category)
+      ? current.filter((c) => c !== category)
+      : [...current, category]
+    setLocalData({ ...localData, content_categories: updated })
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (role === 'creator') {
+      onSave({
+        creator_platforms: localData.creator_platforms,
+        followers_count: localData.followers_count,
+        avg_views: localData.avg_views,
+        engagement_rate: localData.engagement_rate,
+        content_categories: localData.content_categories,
+      })
+    } else {
+      onSave({
+        company_size: localData.company_size,
+        monthly_marketing_budget: localData.monthly_marketing_budget,
+        target_platforms: localData.target_platforms,
+      })
+    }
+  }
+
+  const categories = ['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education']
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        {role === 'creator' ? 'Thông tin Creator' : 'Thông tin Brand'}
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        {role === 'creator' ? 'Chia sẻ về kênh và nội dung của bạn' : 'Chia sẻ về quy mô và ngân sách marketing'}
+      </p>
+
+      <div className="space-y-4">
+        {role === 'creator' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Nền tảng bạn sử dụng *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {platforms.map((platform) => (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => togglePlatform(platform, 'creator')}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.creator_platforms?.includes(platform)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Số lượng người theo dõi
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={localData.followers_count || ''}
+                onChange={(e) => setLocalData({ ...localData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 100000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Lượt xem trung bình
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={localData.avg_views || ''}
+                onChange={(e) => setLocalData({ ...localData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 50000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Tỷ lệ tương tác (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={localData.engagement_rate || ''}
+                onChange={(e) => setLocalData({ ...localData, engagement_rate: e.target.value ? parseFloat(e.target.value) : undefined })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 3.5"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Danh mục nội dung
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.content_categories?.includes(category)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Quy mô công ty *
+              </label>
+              <select
+                value={localData.company_size}
+                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              >
+                <option value="">Chọn quy mô</option>
+                <option value="startup">Startup (1-10 nhân viên)</option>
+                <option value="small">Nhỏ (11-50 nhân viên)</option>
+                <option value="medium">Vừa (51-200 nhân viên)</option>
+                <option value="large">Lớn (201-1000 nhân viên)</option>
+                <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Ngân sách marketing hàng tháng (USD)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={localData.monthly_marketing_budget || ''}
+                onChange={(e) => setLocalData({ ...localData, monthly_marketing_budget: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 5000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Nền tảng mục tiêu *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {platforms.map((platform) => (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => togglePlatform(platform, 'target')}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.target_platforms?.includes(platform)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+        >
+          {loading ? 'Đang lưu...' : 'Tiếp tục'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Step 4: Collaboration Intent
+function Step4Collaboration({
+  role,
+  formData,
+  onSave,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  formData: OnboardingData
+  onSave: (data: Partial<OnboardingData>) => void
+  loading: boolean
+}) {
+  const [localData, setLocalData] = useState({
+    collaboration_expectation: formData.collaboration_expectation || '',
+    collaboration_goal: formData.collaboration_goal || '',
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (role === 'creator') {
+      onSave({ collaboration_expectation: localData.collaboration_expectation })
+    } else {
+      onSave({ collaboration_goal: localData.collaboration_goal })
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        Mục tiêu hợp tác
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        {role === 'creator' ? 'Bạn mong đợi gì từ các hợp tác?' : 'Mục tiêu hợp tác của thương hiệu là gì?'}
+      </p>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-[#374151] mb-2">
+            {role === 'creator' ? 'Kỳ vọng hợp tác *' : 'Mục tiêu hợp tác *'}
+          </label>
+          <textarea
+            value={role === 'creator' ? localData.collaboration_expectation : localData.collaboration_goal}
+            onChange={(e) =>
+              role === 'creator'
+                ? setLocalData({ ...localData, collaboration_expectation: e.target.value })
+                : setLocalData({ ...localData, collaboration_goal: e.target.value })
+            }
+            rows={5}
+            className="w-full px-4 py-2.5 border rounded-lg"
+            placeholder={role === 'creator' ? 'Mô tả kỳ vọng của bạn về các hợp tác...' : 'Mô tả mục tiêu hợp tác của thương hiệu...'}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+        >
+          {loading ? 'Đang lưu...' : 'Tiếp tục'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Step 5: Finalize
+function Step5Finalize({
+  role,
+  formData,
+  onComplete,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  formData: OnboardingData
+  onComplete: () => void
+  loading: boolean
+}) {
+  return (
+    <div>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        Hoàn tất thiết lập
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        Bạn đã hoàn thành tất cả các bước thiết lập. Nhấn "Hoàn tất" để bắt đầu sử dụng ALINO.
+      </p>
+
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h3 className="font-medium mb-2">Tóm tắt thông tin:</h3>
+        <ul className="text-sm text-[#6B7280] space-y-1">
+          {role === 'creator' && (
+            <>
+              <li>• Tên: {formData.display_name || 'Chưa có'}</li>
+              <li>• Địa điểm: {formData.city && formData.country ? `${formData.city}, ${formData.country}` : 'Chưa có'}</li>
+              <li>• Nền tảng: {formData.creator_platforms?.length || 0} nền tảng</li>
+            </>
+          )}
+          {role === 'brand' && (
+            <>
+              <li>• Thương hiệu: {formData.brand_name || 'Chưa có'}</li>
+              <li>• Ngành: {formData.industry || 'Chưa có'}</li>
+              <li>• Quy mô: {formData.company_size || 'Chưa có'}</li>
+            </>
+          )}
+        </ul>
+      </div>
+
+      <button
+        onClick={onComplete}
+        disabled={loading}
+        className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+      >
+        {loading ? 'Đang xử lý...' : 'Hoàn tất'}
+      </button>
     </div>
   )
 }
@@ -954,23 +1798,46 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { getSupabase } from '../lib/supabase'
+import type { OnboardingData } from '../types/profile'
 
 export default function ProfilePage() {
-  const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id)
+  const { session, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(session?.user?.id, isAuthenticated)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const supabase = getSupabase()
 
-  const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' 
-    ? profile.onboarding_data 
-    : {}
-  const displayName = onboardingData.displayName || onboardingData.companyName || ''
-  const [displayNameValue, setDisplayNameValue] = useState(displayName)
+  const onboardingData: OnboardingData = (profile?.onboarding_data && typeof profile.onboarding_data === 'object'
+    ? profile.onboarding_data
+    : {}) as OnboardingData
+
+  // Form state - initialize from profile
+  const [formData, setFormData] = useState<OnboardingData>({})
 
   useEffect(() => {
-    setDisplayNameValue(displayName)
-  }, [displayName])
+    if (profile?.onboarding_data) {
+      setFormData(onboardingData)
+    }
+  }, [profile])
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-24">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-24">
+        <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
+      </div>
+    )
+  }
+
+  const role = profile.role || 'creator'
 
   const handleSave = async () => {
     if (!session || !profile) return
@@ -980,15 +1847,17 @@ export default function ProfilePage() {
     setSuccess(false)
 
     try {
-      const supabase = getSupabase()
+      // Update both structured fields and onboarding_data
+      const updatedOnboardingData = {
+        ...onboardingData,
+        ...formData,
+        updated_at: new Date().toISOString(),
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
-          onboarding_data: {
-            ...onboardingData,
-            displayName: profile.role === 'creator' ? displayNameValue : undefined,
-            companyName: profile.role === 'brand' ? displayNameValue : undefined,
-          },
+          onboarding_data: updatedOnboardingData,
         })
         .eq('id', session.user.id)
 
@@ -1001,14 +1870,6 @@ export default function ProfilePage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
   }
 
   return (
@@ -1029,21 +1890,318 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                {profile.role === 'creator' ? 'Tên hiển thị' : 'Tên công ty'}
-              </label>
-              <input
-                type="text"
-                value={displayNameValue}
-                onChange={(e) => setDisplayNameValue(e.target.value)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder={profile.role === 'creator' ? 'Nhập tên hiển thị' : 'Nhập tên công ty'}
-              />
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
+            {/* Basic Identity Section */}
+            <div className="border-b pb-6">
+              <h2 className="text-xl font-semibold mb-4">Thông tin cơ bản</h2>
+              
+              {role === 'creator' ? (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Tên hiển thị
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.display_name || ''}
+                      onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                      placeholder="Nhập tên hiển thị"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Avatar URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.avatar_url || ''}
+                      onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Quốc gia
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.country || ''}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thành phố
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Năm sinh
+                    </label>
+                    <input
+                      type="number"
+                      min="1950"
+                      max={new Date().getFullYear()}
+                      value={formData.birth_year || ''}
+                      onChange={(e) => setFormData({ ...formData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Tên thương hiệu
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.brand_name || ''}
+                      onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                      placeholder="Nhập tên thương hiệu"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngành nghề
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.industry || ''}
+                      onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Quốc gia
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.country || ''}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thành phố
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div>
+            {/* Business/Creator Metrics Section */}
+            <div className="border-b pb-6">
+              <h2 className="text-xl font-semibold mb-4">
+                {role === 'creator' ? 'Thông tin Creator' : 'Thông tin Brand'}
+              </h2>
+
+              {role === 'creator' ? (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Nền tảng
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+                        <button
+                          key={platform}
+                          type="button"
+                          onClick={() => {
+                            const current = formData.creator_platforms || []
+                            const updated = current.includes(platform)
+                              ? current.filter((p) => p !== platform)
+                              : [...current, platform]
+                            setFormData({ ...formData, creator_platforms: updated })
+                          }}
+                          className={`px-4 py-2 rounded-lg border text-sm ${
+                            formData.creator_platforms?.includes(platform)
+                              ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {platform}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Số lượng người theo dõi
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.followers_count || ''}
+                        onChange={(e) => setFormData({ ...formData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Lượt xem trung bình
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.avg_views || ''}
+                        onChange={(e) => setFormData({ ...formData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Tỷ lệ tương tác (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={formData.engagement_rate || ''}
+                        onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Danh mục nội dung
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education'].map((category) => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => {
+                              const current = formData.content_categories || []
+                              const updated = current.includes(category)
+                                ? current.filter((c) => c !== category)
+                                : [...current, category]
+                              setFormData({ ...formData, content_categories: updated })
+                            }}
+                            className={`px-3 py-1 rounded-lg border text-xs ${
+                              formData.content_categories?.includes(category)
+                                ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                                : 'border-gray-300 hover:border-gray-400'
+                            }`}
+                          >
+                            {category}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Quy mô công ty
+                    </label>
+                    <select
+                      value={formData.company_size || ''}
+                      onChange={(e) => setFormData({ ...formData, company_size: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    >
+                      <option value="">Chọn quy mô</option>
+                      <option value="startup">Startup (1-10 nhân viên)</option>
+                      <option value="small">Nhỏ (11-50 nhân viên)</option>
+                      <option value="medium">Vừa (51-200 nhân viên)</option>
+                      <option value="large">Lớn (201-1000 nhân viên)</option>
+                      <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngân sách marketing hàng tháng (USD)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.monthly_marketing_budget || ''}
+                      onChange={(e) => setFormData({ ...formData, monthly_marketing_budget: e.target.value ? parseInt(e.target.value) : undefined })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Nền tảng mục tiêu
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+                        <button
+                          key={platform}
+                          type="button"
+                          onClick={() => {
+                            const current = formData.target_platforms || []
+                            const updated = current.includes(platform)
+                              ? current.filter((p) => p !== platform)
+                              : [...current, platform]
+                            setFormData({ ...formData, target_platforms: updated })
+                          }}
+                          className={`px-4 py-2 rounded-lg border text-sm ${
+                            formData.target_platforms?.includes(platform)
+                              ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {platform}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Collaboration Intent Section */}
+            <div className="pb-6">
+              <h2 className="text-xl font-semibold mb-4">Mục tiêu hợp tác</h2>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-2">
+                  {role === 'creator' ? 'Kỳ vọng hợp tác' : 'Mục tiêu hợp tác'}
+                </label>
+                <textarea
+                  value={role === 'creator' ? (formData.collaboration_expectation || '') : (formData.collaboration_goal || '')}
+                  onChange={(e) =>
+                    role === 'creator'
+                      ? setFormData({ ...formData, collaboration_expectation: e.target.value })
+                      : setFormData({ ...formData, collaboration_goal: e.target.value })
+                  }
+                  rows={5}
+                  className="w-full px-4 py-2.5 border rounded-lg"
+                  placeholder={role === 'creator' ? 'Mô tả kỳ vọng của bạn về các hợp tác...' : 'Mô tả mục tiêu hợp tác của thương hiệu...'}
+                />
+              </div>
+            </div>
+
+            {/* Email (read-only) */}
+            <div className="border-t pt-6">
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 Email
               </label>
@@ -1056,13 +2214,13 @@ export default function ProfilePage() {
             </div>
 
             <button
-              onClick={handleSave}
+              type="submit"
               disabled={loading}
-              className="px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
             >
               {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -1071,41 +2229,48 @@ export default function ProfilePage() {
 </file>
 
 <file path="src/pages/RolePage.tsx">
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
 import { getSupabase } from '../lib/supabase'
 
 export default function RolePage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id)
-  const [selectedRole, setSelectedRole] = useState<'creator' | 'brand' | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const supabase = getSupabase()
 
-  useEffect(() => {
-    if (profile?.role) {
-      navigate('/onboarding', { replace: true })
-    }
-  }, [profile, navigate])
-
   const handleSelectRole = async (role: 'creator' | 'brand') => {
     if (!session) return
 
-    setSelectedRole(role)
     setLoading(true)
 
     try {
+      // Get existing onboarding_data
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('onboarding_data')
+        .eq('id', session.user.id)
+        .single()
+
+      const existingData = (existingProfile?.onboarding_data as any) || {}
+
+      // Update role and save role_selected_at timestamp in onboarding_data
       const { error } = await supabase
         .from('profiles')
-        .update({ role })
+        .update({
+          role,
+          onboarding_data: {
+            ...existingData,
+            role_selected_at: new Date().toISOString(),
+          },
+        })
         .eq('id', session.user.id)
 
       if (error) throw error
 
-      navigate('/onboarding')
+      // After success → navigate('/app')
+      navigate('/app', { replace: true })
     } catch (err: any) {
       setLoading(false)
       alert(err.message || 'Có lỗi xảy ra khi chọn vai trò')
@@ -1281,7 +2446,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/verify-email`,
         },
       })
 
@@ -1291,8 +2456,7 @@ export default function SignupPage() {
         return
       }
 
-      localStorage.setItem('signupEmail', email)
-      navigate('/verify-email')
+      navigate('/?signup=success', { replace: true })
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -1303,7 +2467,7 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/app`,
       },
     })
 
@@ -1428,52 +2592,17 @@ export default function SignupPage() {
 </file>
 
 <file path="src/pages/VerifyEmailPage.tsx">
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getSupabase } from '../lib/supabase'
 
 export default function VerifyEmailPage() {
-  const [email, setEmail] = useState<string | null>(null)
-  const [resendLoading, setResendLoading] = useState(false)
-  const [resendSuccess, setResendSuccess] = useState(false)
-  const [resendError, setResendError] = useState<string | null>(null)
   const supabase = getSupabase()
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem('signupEmail')
-    if (storedEmail) {
-      setEmail(storedEmail)
-    }
+    // Sign out any existing session to prevent auto-login
+    supabase.auth.signOut()
   }, [])
-
-  const handleResendEmail = async () => {
-    if (!email) {
-      setResendError('Không tìm thấy email để gửi lại.')
-      return
-    }
-
-    setResendLoading(true)
-    setResendSuccess(false)
-    setResendError(null)
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-      })
-
-      if (error) {
-        throw new Error(error.message || 'Không thể gửi lại email xác thực')
-      }
-
-      setResendSuccess(true)
-    } catch (err: any) {
-      console.error('Resend verification email error:', err)
-      setResendError(err.message || 'Có lỗi xảy ra khi gửi lại email xác thực')
-    } finally {
-      setResendLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
@@ -1481,50 +2610,23 @@ export default function VerifyEmailPage() {
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-black/5 text-center">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight mb-4">
-            Kiểm tra email của bạn
+            Xác thực thành công
           </h1>
 
           <p className="text-[#6B7280] mb-8 leading-relaxed">
-            Chúng tôi đã gửi link xác thực đến địa chỉ email của bạn.
-            Vui lòng kiểm tra hộp thư và nhấp vào link để xác thực tài khoản.
+            Tài khoản đã được xác thực. Vui lòng đăng nhập để tiếp tục.
           </p>
-
-          <div className="bg-[#EEF2FF] rounded-xl p-4 mb-8">
-            <p className="text-sm text-[#6B7280]">
-              <strong>Lưu ý:</strong> Link xác thực có hiệu lực trong 24 giờ.
-              Nếu bạn không thấy email, vui lòng kiểm tra thư mục spam.
-            </p>
-          </div>
-
-          {resendSuccess && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              Đã gửi lại email xác thực thành công!
-            </div>
-          )}
-          {resendError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {resendError}
-            </div>
-          )}
-
-          <button
-            onClick={handleResendEmail}
-            disabled={resendLoading}
-            className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {resendLoading ? 'Đang gửi...' : 'Gửi lại email xác thực'}
-          </button>
 
           <Link
             to="/login"
             className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
           >
-            Quay lại đăng nhập
+            Đăng nhập
           </Link>
         </div>
       </div>
@@ -1537,11 +2639,11 @@ export default function VerifyEmailPage() {
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { useProfile } from './hooks/useProfile'
-import AuthGate from './components/AuthGate'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
+import AppGate from './pages/AppGate'
 import RolePage from './pages/RolePage'
 import OnboardingPage from './pages/OnboardingPage'
 import CreatorDashboard from './pages/CreatorDashboard'
@@ -1579,7 +2681,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (session) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/app" replace />
   }
 
   return <>{children}</>
@@ -1610,6 +2712,8 @@ export function Router() {
       
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
+      <Route path="/app" element={<AppGate />} />
+
       <Route
         path="/role"
         element={
@@ -1630,46 +2734,29 @@ export function Router() {
 
       <Route
         path="/dashboard"
-        element={
-          <AuthGate>
-            <DashboardRouter />
-          </AuthGate>
-        }
+        element={<DashboardEntry />}
       />
 
       <Route
-        path="/creator"
-        element={
-          <AuthGate>
-            <CreatorDashboard />
-          </AuthGate>
-        }
-      />
-
-      <Route
-        path="/brand"
-        element={
-          <AuthGate>
-            <BrandDashboard />
-          </AuthGate>
-        }
+        path="/projects"
+        element={<DashboardEntry />}
       />
 
       <Route
         path="/profile"
         element={
-          <AuthGate>
+          <ProtectedRoute>
             <ProfilePage />
-          </AuthGate>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/settings"
         element={
-          <AuthGate>
+          <ProtectedRoute>
             <SettingsPage />
-          </AuthGate>
+          </ProtectedRoute>
         }
       />
 
@@ -1678,11 +2765,30 @@ export function Router() {
   )
 }
 
-function DashboardRouter() {
-  const { user } = useAuth()
-  const { profile } = useProfile(user?.id)
+function DashboardEntry() {
+  const { session, loading, user, isAuthenticated } = useAuth()
+  const { profile } = useProfile(user?.id, isAuthenticated)
 
-  if (!profile) return null
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // Minimal session guard
+  if (!session) {
+    return <Navigate to="/" replace />
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
 
   if (profile.role === 'creator') {
     return <CreatorDashboard />
@@ -1690,6 +2796,93 @@ function DashboardRouter() {
 
   return <BrandDashboard />
 }
+</file>
+
+<file path="supabase/migrations/001_create_profiles.sql">
+-- Create profiles table
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('creator', 'brand')),
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  onboarding_data JSONB DEFAULT '{}'::jsonb,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policy: Users can read their own profile
+CREATE POLICY "Users can read their own profile"
+  ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = id);
+
+-- RLS Policy: Users can update their own profile
+CREATE POLICY "Users can update their own profile"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- RLS Policy: Users can insert their own profile
+CREATE POLICY "Users can insert their own profile"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- RLS Policy: Admin users (email ends with @alino.net) can read all profiles
+CREATE POLICY "Admin users can read all profiles"
+  ON public.profiles
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE auth.users.id = auth.uid()
+      AND auth.users.email LIKE '%@alino.net'
+    )
+  );
+
+-- RLS Policy: Admin users can update all profiles
+CREATE POLICY "Admin users can update all profiles"
+  ON public.profiles
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE auth.users.id = auth.uid()
+      AND auth.users.email LIKE '%@alino.net'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE auth.users.id = auth.uid()
+      AND auth.users.email LIKE '%@alino.net'
+    )
+  );
+
+-- Function to automatically update updated_at timestamp
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update updated_at on profile updates
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- Create index on role for faster queries
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+
+-- Create index on onboarding_completed for faster queries
+CREATE INDEX IF NOT EXISTS idx_profiles_onboarding_completed ON public.profiles(onboarding_completed);
 </file>
 
 <file path="MIGRATION_GUIDE.md">
@@ -1791,6 +2984,56 @@ module.exports = {
 }
 </file>
 
+<file path="PROFILES_IMPLEMENTATION.md">
+# Profiles Implementation Guide
+
+## Overview
+This implementation creates `public.profiles` as the single source of truth for user data, with proper RLS policies for admin vs user access control.
+
+## SQL Migration
+
+Run the SQL migration file to create the profiles table and RLS policies:
+
+**File:** `supabase/migrations/001_create_profiles.sql`
+
+Execute this SQL in your Supabase SQL Editor or via Supabase CLI.
+
+## Key Features
+
+1. **Profiles Table**: Stores all user data including role, onboarding completion status, and all onboarding survey data
+2. **RLS Policies**:
+   - Users can read/update their own profile
+   - Admin users (email ends with `@alino.net`) can read/update all profiles
+3. **Data Flow**:
+   - Role selection → Creates/updates profile in `profiles` table
+   - Onboarding completion → Updates profile with survey data
+   - Dashboards → Read from `profiles` table (via `/api/profile`)
+
+## API Endpoints
+
+### POST `/api/auth/role`
+- Creates/updates profile with role
+- Sets `onboarding_completed = false`
+
+### POST `/api/auth/onboarding`
+- Updates profile with onboarding survey data
+- Sets `onboarding_completed = true`
+
+### GET `/api/profile`
+- Users: Returns their own profile
+- Admins: Returns all profiles
+
+## Admin Detection
+
+Admin users are identified by email ending with `@alino.net` (checked in `lib/supabase-helpers.ts`).
+
+## Notes
+
+- `user_metadata` is still updated for AuthGate compatibility (role, onboardingCompleted flags)
+- `profiles` table is the source of truth for all user data
+- RLS policies enforce data access restrictions automatically
+</file>
+
 <file path="README_VITE.md">
 # Vite + React Migration Complete
 
@@ -1874,143 +3117,6 @@ src/
 3. Move `index.html` to root
 4. Update environment variables
 5. Run `npm install` and `npm run dev`
-</file>
-
-<file path="supabase/migrations/001_create_profiles.sql">
--- Create profiles table
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT CHECK (role IN ('creator', 'brand')),
-  onboarding_completed BOOLEAN DEFAULT FALSE,
-  onboarding_data JSONB DEFAULT '{}'::jsonb,
-  
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- RLS Policy: Users can read their own profile
-CREATE POLICY "Users can read their own profile"
-  ON public.profiles
-  FOR SELECT
-  USING (auth.uid() = id);
-
--- RLS Policy: Users can update their own profile
-CREATE POLICY "Users can update their own profile"
-  ON public.profiles
-  FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
-
--- RLS Policy: Users can insert their own profile
-CREATE POLICY "Users can insert their own profile"
-  ON public.profiles
-  FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- RLS Policy: Admin users (email ends with @alino.net) can read all profiles
-CREATE POLICY "Admin users can read all profiles"
-  ON public.profiles
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  );
-
--- RLS Policy: Admin users can update all profiles
-CREATE POLICY "Admin users can update all profiles"
-  ON public.profiles
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  );
-
--- Function to automatically update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to update updated_at on profile updates
-CREATE TRIGGER set_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
-
--- Create index on role for faster queries
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
-
--- Create index on onboarding_completed for faster queries
-CREATE INDEX IF NOT EXISTS idx_profiles_onboarding_completed ON public.profiles(onboarding_completed);
-</file>
-
-<file path="PROFILES_IMPLEMENTATION.md">
-# Profiles Implementation Guide
-
-## Overview
-This implementation creates `public.profiles` as the single source of truth for user data, with proper RLS policies for admin vs user access control.
-
-## SQL Migration
-
-Run the SQL migration file to create the profiles table and RLS policies:
-
-**File:** `supabase/migrations/001_create_profiles.sql`
-
-Execute this SQL in your Supabase SQL Editor or via Supabase CLI.
-
-## Key Features
-
-1. **Profiles Table**: Stores all user data including role, onboarding completion status, and all onboarding survey data
-2. **RLS Policies**:
-   - Users can read/update their own profile
-   - Admin users (email ends with `@alino.net`) can read/update all profiles
-3. **Data Flow**:
-   - Role selection → Creates/updates profile in `profiles` table
-   - Onboarding completion → Updates profile with survey data
-   - Dashboards → Read from `profiles` table (via `/api/profile`)
-
-## API Endpoints
-
-### POST `/api/auth/role`
-- Creates/updates profile with role
-- Sets `onboarding_completed = false`
-
-### POST `/api/auth/onboarding`
-- Updates profile with onboarding survey data
-- Sets `onboarding_completed = true`
-
-### GET `/api/profile`
-- Users: Returns their own profile
-- Admins: Returns all profiles
-
-## Admin Detection
-
-Admin users are identified by email ending with `@alino.net` (checked in `lib/supabase-helpers.ts`).
-
-## Notes
-
-- `user_metadata` is still updated for AuthGate compatibility (role, onboardingCompleted flags)
-- `profiles` table is the source of truth for all user data
-- RLS policies enforce data access restrictions automatically
 </file>
 
 <file path="TECHNICAL_SUMMARY.md">
@@ -2386,26 +3492,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 </html>
 </file>
 
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      colors: {
-        background: '#FFFFFF',
-        foreground: '#0A0A0A',
-        border: '#E5E7EB',
-      },
-    },
-  },
-  plugins: [],
-}
-</file>
-
 <file path="README.md">
 # MVP Codebase
 
@@ -2480,6 +3566,26 @@ The project uses TypeScript in strict mode with absolute imports:
 - `@/lib` - Shared utilities
 </file>
 
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#0A0A0A',
+        border: '#E5E7EB',
+      },
+    },
+  },
+  plugins: [],
+}
+</file>
+
 <file path="vite.config.ts">
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -2493,6 +3599,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: 3000,
   },
 })
@@ -2653,7 +3760,8 @@ export default App
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backup": "git add -A && git commit -m \"backup\" || echo \"No changes to commit\" && git push"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",

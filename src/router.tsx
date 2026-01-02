@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { useProfile } from './hooks/useProfile'
-import AuthGate from './components/AuthGate'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
+import AppGate from './pages/AppGate'
 import RolePage from './pages/RolePage'
 import OnboardingPage from './pages/OnboardingPage'
 import CreatorDashboard from './pages/CreatorDashboard'
@@ -43,7 +43,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (session) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/app" replace />
   }
 
   return <>{children}</>
@@ -74,6 +74,8 @@ export function Router() {
       
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
+      <Route path="/app" element={<AppGate />} />
+
       <Route
         path="/role"
         element={
@@ -94,46 +96,29 @@ export function Router() {
 
       <Route
         path="/dashboard"
-        element={
-          <AuthGate>
-            <DashboardRouter />
-          </AuthGate>
-        }
+        element={<DashboardEntry />}
       />
 
       <Route
-        path="/creator"
-        element={
-          <AuthGate>
-            <CreatorDashboard />
-          </AuthGate>
-        }
-      />
-
-      <Route
-        path="/brand"
-        element={
-          <AuthGate>
-            <BrandDashboard />
-          </AuthGate>
-        }
+        path="/projects"
+        element={<DashboardEntry />}
       />
 
       <Route
         path="/profile"
         element={
-          <AuthGate>
+          <ProtectedRoute>
             <ProfilePage />
-          </AuthGate>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/settings"
         element={
-          <AuthGate>
+          <ProtectedRoute>
             <SettingsPage />
-          </AuthGate>
+          </ProtectedRoute>
         }
       />
 
@@ -142,11 +127,30 @@ export function Router() {
   )
 }
 
-function DashboardRouter() {
-  const { user } = useAuth()
-  const { profile } = useProfile(user?.id)
+function DashboardEntry() {
+  const { session, loading, user, isAuthenticated } = useAuth()
+  const { profile } = useProfile(user?.id, isAuthenticated)
 
-  if (!profile) return null
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // Minimal session guard
+  if (!session) {
+    return <Navigate to="/" replace />
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
 
   if (profile.role === 'creator') {
     return <CreatorDashboard />

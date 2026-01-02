@@ -35,7 +35,7 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
     await signOut()
   }
 
-  const dashboardPath = '/dashboard'
+  const dashboardPath = '/app?next=projects'
 
   const nameToShow = displayName || userEmail.split('@')[0]
 
@@ -69,14 +69,14 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
               Quản lý dự án
             </Link>
             <Link
-              to="/profile"
+              to="/app?next=profile"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
               Hồ sơ
             </Link>
             <Link
-              to="/settings"
+              to="/app?next=settings"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >

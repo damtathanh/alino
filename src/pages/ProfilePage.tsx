@@ -2,23 +2,46 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { getSupabase } from '../lib/supabase'
+import type { OnboardingData } from '../types/profile'
 
 export default function ProfilePage() {
-  const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id)
+  const { session, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(session?.user?.id, isAuthenticated)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const supabase = getSupabase()
 
-  const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' 
-    ? profile.onboarding_data 
-    : {}
-  const displayName = onboardingData.displayName || onboardingData.companyName || ''
-  const [displayNameValue, setDisplayNameValue] = useState(displayName)
+  const onboardingData: OnboardingData = (profile?.onboarding_data && typeof profile.onboarding_data === 'object'
+    ? profile.onboarding_data
+    : {}) as OnboardingData
+
+  // Form state - initialize from profile
+  const [formData, setFormData] = useState<OnboardingData>({})
 
   useEffect(() => {
-    setDisplayNameValue(displayName)
-  }, [displayName])
+    if (profile?.onboarding_data) {
+      setFormData(onboardingData)
+    }
+  }, [profile])
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-24">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-24">
+        <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
+      </div>
+    )
+  }
+
+  const role = profile.role || 'creator'
 
   const handleSave = async () => {
     if (!session || !profile) return
@@ -28,15 +51,17 @@ export default function ProfilePage() {
     setSuccess(false)
 
     try {
-      const supabase = getSupabase()
+      // Update both structured fields and onboarding_data
+      const updatedOnboardingData = {
+        ...onboardingData,
+        ...formData,
+        updated_at: new Date().toISOString(),
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
-          onboarding_data: {
-            ...onboardingData,
-            displayName: profile.role === 'creator' ? displayNameValue : undefined,
-            companyName: profile.role === 'brand' ? displayNameValue : undefined,
-          },
+          onboarding_data: updatedOnboardingData,
         })
         .eq('id', session.user.id)
 
@@ -49,14 +74,6 @@ export default function ProfilePage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
   }
 
   return (
@@ -77,21 +94,318 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                {profile.role === 'creator' ? 'Tên hiển thị' : 'Tên công ty'}
-              </label>
-              <input
-                type="text"
-                value={displayNameValue}
-                onChange={(e) => setDisplayNameValue(e.target.value)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder={profile.role === 'creator' ? 'Nhập tên hiển thị' : 'Nhập tên công ty'}
-              />
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
+            {/* Basic Identity Section */}
+            <div className="border-b pb-6">
+              <h2 className="text-xl font-semibold mb-4">Thông tin cơ bản</h2>
+              
+              {role === 'creator' ? (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Tên hiển thị
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.display_name || ''}
+                      onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                      placeholder="Nhập tên hiển thị"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Avatar URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.avatar_url || ''}
+                      onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Quốc gia
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.country || ''}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thành phố
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Năm sinh
+                    </label>
+                    <input
+                      type="number"
+                      min="1950"
+                      max={new Date().getFullYear()}
+                      value={formData.birth_year || ''}
+                      onChange={(e) => setFormData({ ...formData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Tên thương hiệu
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.brand_name || ''}
+                      onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                      placeholder="Nhập tên thương hiệu"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngành nghề
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.industry || ''}
+                      onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Quốc gia
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.country || ''}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thành phố
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div>
+            {/* Business/Creator Metrics Section */}
+            <div className="border-b pb-6">
+              <h2 className="text-xl font-semibold mb-4">
+                {role === 'creator' ? 'Thông tin Creator' : 'Thông tin Brand'}
+              </h2>
+
+              {role === 'creator' ? (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Nền tảng
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+                        <button
+                          key={platform}
+                          type="button"
+                          onClick={() => {
+                            const current = formData.creator_platforms || []
+                            const updated = current.includes(platform)
+                              ? current.filter((p) => p !== platform)
+                              : [...current, platform]
+                            setFormData({ ...formData, creator_platforms: updated })
+                          }}
+                          className={`px-4 py-2 rounded-lg border text-sm ${
+                            formData.creator_platforms?.includes(platform)
+                              ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {platform}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Số lượng người theo dõi
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.followers_count || ''}
+                        onChange={(e) => setFormData({ ...formData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Lượt xem trung bình
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.avg_views || ''}
+                        onChange={(e) => setFormData({ ...formData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Tỷ lệ tương tác (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={formData.engagement_rate || ''}
+                        onChange={(e) => setFormData({ ...formData, engagement_rate: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        className="w-full px-4 py-2.5 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Danh mục nội dung
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education'].map((category) => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => {
+                              const current = formData.content_categories || []
+                              const updated = current.includes(category)
+                                ? current.filter((c) => c !== category)
+                                : [...current, category]
+                              setFormData({ ...formData, content_categories: updated })
+                            }}
+                            className={`px-3 py-1 rounded-lg border text-xs ${
+                              formData.content_categories?.includes(category)
+                                ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                                : 'border-gray-300 hover:border-gray-400'
+                            }`}
+                          >
+                            {category}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Quy mô công ty
+                    </label>
+                    <select
+                      value={formData.company_size || ''}
+                      onChange={(e) => setFormData({ ...formData, company_size: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    >
+                      <option value="">Chọn quy mô</option>
+                      <option value="startup">Startup (1-10 nhân viên)</option>
+                      <option value="small">Nhỏ (11-50 nhân viên)</option>
+                      <option value="medium">Vừa (51-200 nhân viên)</option>
+                      <option value="large">Lớn (201-1000 nhân viên)</option>
+                      <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngân sách marketing hàng tháng (USD)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.monthly_marketing_budget || ''}
+                      onChange={(e) => setFormData({ ...formData, monthly_marketing_budget: e.target.value ? parseInt(e.target.value) : undefined })}
+                      className="w-full px-4 py-2.5 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Nền tảng mục tiêu
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+                        <button
+                          key={platform}
+                          type="button"
+                          onClick={() => {
+                            const current = formData.target_platforms || []
+                            const updated = current.includes(platform)
+                              ? current.filter((p) => p !== platform)
+                              : [...current, platform]
+                            setFormData({ ...formData, target_platforms: updated })
+                          }}
+                          className={`px-4 py-2 rounded-lg border text-sm ${
+                            formData.target_platforms?.includes(platform)
+                              ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {platform}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Collaboration Intent Section */}
+            <div className="pb-6">
+              <h2 className="text-xl font-semibold mb-4">Mục tiêu hợp tác</h2>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-2">
+                  {role === 'creator' ? 'Kỳ vọng hợp tác' : 'Mục tiêu hợp tác'}
+                </label>
+                <textarea
+                  value={role === 'creator' ? (formData.collaboration_expectation || '') : (formData.collaboration_goal || '')}
+                  onChange={(e) =>
+                    role === 'creator'
+                      ? setFormData({ ...formData, collaboration_expectation: e.target.value })
+                      : setFormData({ ...formData, collaboration_goal: e.target.value })
+                  }
+                  rows={5}
+                  className="w-full px-4 py-2.5 border rounded-lg"
+                  placeholder={role === 'creator' ? 'Mô tả kỳ vọng của bạn về các hợp tác...' : 'Mô tả mục tiêu hợp tác của thương hiệu...'}
+                />
+              </div>
+            </div>
+
+            {/* Email (read-only) */}
+            <div className="border-t pt-6">
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 Email
               </label>
@@ -104,16 +418,15 @@ export default function ProfilePage() {
             </div>
 
             <button
-              onClick={handleSave}
+              type="submit"
               disabled={loading}
-              className="px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
             >
               {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
   )
 }
-

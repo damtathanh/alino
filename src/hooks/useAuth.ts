@@ -45,6 +45,7 @@ export function useAuth() {
     user: session?.user ?? null,
     loading,
     signOut,
+    isAuthenticated: !!session,
   }
 }
 
