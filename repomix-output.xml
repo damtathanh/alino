@@ -40,548 +40,353 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
-app/
-  api/
-    auth/
-      login/
-        route.ts
-      logout/
-        route.ts
-      oauth/
-        route.ts
-      onboarding/
-        route.ts
-      profile-check/
-        route.ts
-      resend-verification/
-        route.ts
-      role/
-        route.ts
-      session/
-        route.ts
-      signup/
-        route.ts
-    profile/
-      route.ts
-  auth/
-    callback/
-      route.ts
-  brand/
-    BrandDashboard.tsx
-    page.tsx
+public/
+  logo/
+    logo.png
+src/
   components/
-    home/
-      Compare.tsx
-      CTA.tsx
-      ForWho.tsx
-      Hero.tsx
-      HomePageClient.tsx
-      HowItWorks.tsx
-      index.tsx
-      Problems.tsx
-      Solutions.tsx
-      TrustedBy.tsx
-      WhyAlino.tsx
     layout/
       Footer.tsx
       Header.tsx
       UserMenu.tsx
-  creator/
-    CreatorDashboard.tsx
-    page.tsx
-  login/
-    page.tsx
-  onboarding/
-    OnboardingPageClient.tsx
-    page.tsx
-  profile/
-    page.tsx
-    ProfilePageClient.tsx
-  role/
-    page.tsx
-    RolePageClient.tsx
-  settings/
-    page.tsx
-    SettingsPageClient.tsx
-  signup/
-    page.tsx
-  verify-email/
-    page.tsx
-  AuthGate.tsx
-  globals.css
-  layout.tsx
-  page.tsx
-core/
-  contracts/
-    auth-repository.ts
-    brand-request-repository.ts
-    creator-repository.ts
-  domain/
-    auth.ts
-    brand-request.ts
-    creator.ts
-  .gitkeep
-infra/
-  supabase/
-    auth/
-      SupabaseAuthRepository.ts
-    client.ts
-lib/
+    AuthGate.tsx
   hooks/
     useAuth.ts
-  api-response.ts
-  auth-guards.ts
-  container.ts
-  supabase-client.ts
-  supabase-helpers.ts
-  supabase-server.ts
-public/
-  logo/
-    logo.png
+    useProfile.ts
+  lib/
+    supabase.ts
+  pages/
+    BrandDashboard.tsx
+    CreatorDashboard.tsx
+    LandingPage.tsx
+    LoginPage.tsx
+    OnboardingPage.tsx
+    ProfilePage.tsx
+    RolePage.tsx
+    SettingsPage.tsx
+    SignupPage.tsx
+    VerifyEmailPage.tsx
+  App.tsx
+  index.css
+  main.tsx
+  router.tsx
+  vite-env.d.ts
 supabase/
   migrations/
     001_create_profiles.sql
 .env.example
 .gitignore
-next.config.js
+index.html
+MIGRATION_GUIDE.md
 package.json
-postcss.config.js
+postcss.config.cjs
 PROFILES_IMPLEMENTATION.md
+README_VITE.md
 README.md
 tailwind.config.js
 TECHNICAL_SUMMARY.md
 tsconfig.json
+vite.config.ts
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
 
-<file path="app/api/auth/oauth/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientWithCookies } from '@/lib/supabase-server'
-;
+<file path="src/components/layout/Footer.tsx">
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa'
 
-export async function POST(request: NextRequest) {
-  try {
-    const { provider } = await request.json();
+export default function Footer() {
+  return (
+    <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-5 gap-12 mb-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo/logo.png"
+                alt="ALINO"
+                className="w-7 h-7"
+              />
+              <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+                ALINO
+              </span>
+            </div>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              Nền tảng hợp tác cho Creator và Brand chuyên nghiệp.
+            </p>
+            <div className="flex items-center gap-4 pt-2">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#1877F2] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaFacebook size={20} />
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#DD2A7B] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaInstagram size={20} />
+              </a>
+              <a
+                href="https://tiktok.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#000000] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaTiktok size={20} />
+              </a>
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#FF0000] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaYoutube size={20} />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaLinkedin size={20} />
+              </a>
+            </div>
+          </div>
 
-    if (!provider || (provider !== 'google' && provider !== 'apple')) {
-      return NextResponse.json(
-        { error: 'Provider không hợp lệ' },
-        { status: 400 }
-      );
-    }
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Sản phẩm</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#product" className="hover:text-[#6366F1] transition-colors">
+                  Tính năng
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" className="hover:text-[#6366F1] transition-colors">
+                  Bảng giá
+                </a>
+              </li>
+              <li>
+                <a href="#how-it-works" className="hover:text-[#6366F1] transition-colors">
+                  Cách hoạt động
+                </a>
+              </li>
+            </ul>
+          </div>
 
-    const supabase = createServerClientWithCookies()
-;
-    const origin = request.nextUrl.origin;
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Công ty</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#about" className="hover:text-[#6366F1] transition-colors">
+                  Về chúng tôi
+                </a>
+              </li>
+              <li>
+                <a href="#news" className="hover:text-[#6366F1] transition-colors">
+                  Tin tức
+                </a>
+              </li>
+              <li>
+                <a href="#contact" className="hover:text-[#6366F1] transition-colors">
+                  Liên hệ
+                </a>
+              </li>
+            </ul>
+          </div>
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: provider as 'google' | 'apple',
-      options: {
-        redirectTo: `${origin}/auth/callback`,
-      },
-    });
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Pháp lý</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#terms" className="hover:text-[#6366F1] transition-colors">
+                  Điều khoản sử dụng
+                </a>
+              </li>
+              <li>
+                <a href="#privacy" className="hover:text-[#6366F1] transition-colors">
+                  Chính sách bảo mật
+                </a>
+              </li>
+            </ul>
+          </div>
 
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Liên hệ</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li className="flex items-start gap-3">
+                <FaPhone className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="tel:+84707970216" className="hover:text-[#6366F1] transition-colors">
+                  +84 707 970 216
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaEnvelope className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="mailto:contact@alino.net" className="hover:text-[#6366F1] transition-colors">
+                  contact@alino.net
+                </a>
+              </li>
+              <li className="flex items-start gap-3 leading-relaxed">
+                <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={16} />
+                <span>
+                  Landmark 81
+                  <br />
+                  720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh, Việt Nam
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
 
-    return NextResponse.json({ url: data.url });
-  } catch (error) {
-    console.error('OAuth error:', error);
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi đăng nhập' },
-      { status: 500 }
-    );
-  }
-}
-</file>
-
-<file path="app/api/auth/onboarding/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientWithCookies } from '@/lib/supabase-server';
-
-export async function POST(request: NextRequest) {
-  try {
-    const { onboardingData } = await request.json();
-
-    const supabase = createServerClientWithCookies();
-
-    // Validate session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Phiên đăng nhập không hợp lệ' },
-        { status: 401 }
-      );
-    }
-
-    const userId = session.user.id;
-
-    // Get current profile to preserve role
-    const { data: currentProfile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError || !currentProfile) {
-      console.error('Error fetching profile:', fetchError);
-      return NextResponse.json(
-        { error: 'Profile không tồn tại. Vui lòng chọn vai trò trước.' },
-        { status: 400 }
-      );
-    }
-
-    // Update profile with onboarding_completed = true and onboarding_data as JSON
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        onboarding_completed: true,
-        onboarding_data: onboardingData || {},
-      })
-      .eq('id', userId);
-
-    if (profileError) {
-      console.error('Error updating profile onboarding:', profileError);
-      return NextResponse.json(
-        { error: profileError.message || 'Không thể hoàn tất onboarding' },
-        { status: 400 }
-      );
-    }
-
-    // Also update user_metadata for AuthGate compatibility
-    const { error: metadataError } = await supabase.auth.updateUser({
-      data: {
-        role: currentProfile.role,
-        onboardingCompleted: true,
-      },
-    });
-
-    if (metadataError) {
-      // Log but don't fail - profiles is source of truth
-      console.error('Failed to update user_metadata:', metadataError);
-    }
-
-    return NextResponse.json({
-      message: 'Onboarding đã được hoàn tất thành công',
-    });
-  } catch (error) {
-    console.error('Onboarding completion error:', error);
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi hoàn tất onboarding' },
-      { status: 500 }
-    );
-  }
-}
-</file>
-
-<file path="app/api/auth/resend-verification/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientWithCookies } from '@/lib/supabase-server';
-
-export async function POST(request: NextRequest) {
-  try {
-    const { email } = await request.json();
-
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Email là bắt buộc' },
-        { status: 400 }
-      );
-    }
-
-    const supabase = createServerClientWithCookies();
-
-    // Resend verification email (type: signup)
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-    });
-
-    if (error) {
-      console.error('Resend verification error:', error);
-      return NextResponse.json(
-        { error: error.message || 'Không thể gửi lại email xác thực' },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({
-      message: 'Email xác thực đã được gửi lại',
-    });
-  } catch (error) {
-    console.error('Resend verification error:', error);
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi gửi lại email' },
-      { status: 500 }
-    );
-  }
-}
-</file>
-
-<file path="app/api/auth/role/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientWithCookies } from '@/lib/supabase-server';
-
-export async function POST(request: NextRequest) {
-  try {
-    const { role } = await request.json();
-
-    if (!role || (role !== 'creator' && role !== 'brand')) {
-      return NextResponse.json(
-        { error: 'Vai trò không hợp lệ' },
-        { status: 400 }
-      );
-    }
-
-    const supabase = createServerClientWithCookies();
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Chưa đăng nhập' },
-        { status: 401 }
-      );
-    }
-
-    const userId = session.user.id;
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        role,
-        onboarding_completed: false,
-        onboarding_data: {},
-      });
-
-    if (error) {
-      console.error(error);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { error: 'Server error' },
-      { status: 500 }
-    );
-  }
-}
-</file>
-
-<file path="app/auth/callback/route.ts">
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientWithCookies } from '@/lib/supabase-server'
-
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url)
-  const supabase = createServerClientWithCookies()
-
-  const code = url.searchParams.get('code')
-
-  // ✅ OAuth login (Google) or Email verification
-  if (code) {
-    const { data: authData, error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error) {
-      return NextResponse.redirect(
-        new URL('/verify-email?error=expired', url.origin)
-      )
-    }
-
-    // 🔥 SESSION ĐÃ ĐƯỢC SET COOKIE
-    // After email verification/OAuth, check profile and redirect accordingly
-    if (authData?.user?.id) {
-      const userId = authData.user.id;
-
-      await supabase
-  .from('profiles')
-  .upsert({
-    id: userId,
-    onboarding_completed: false,
-    onboarding_data: {},
-  });
-      
-      // Check profile from database (source of truth)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, onboarding_completed')
-        .eq('id', userId)
-        .single();
-
-      if (!profile) {
-        // No profile yet - redirect to role selection
-        return NextResponse.redirect(new URL('/role', url.origin));
-      }
-
-      if (!profile.role) {
-        // Profile exists but no role - redirect to role selection
-        return NextResponse.redirect(new URL('/role', url.origin));
-      }
-
-      if (!profile.onboarding_completed) {
-        // Has role but not completed onboarding - redirect to onboarding
-        return NextResponse.redirect(new URL('/onboarding', url.origin));
-      }
-
-      // Complete profile - redirect to dashboard
-      return NextResponse.redirect(new URL(`/${profile.role}`, url.origin));
-    }
-
-    // Fallback: redirect to home
-    return NextResponse.redirect(new URL('/', url.origin))
-  }
-
-  // ✅ Email confirm (KHÔNG login)
-  return NextResponse.redirect(
-    new URL('/login?verified=1', url.origin)
+        <div className="pt-8 border-t border-black/5 text-center text-sm text-[#9CA3AF]">
+          © 2025 ALINO. All rights reserved.
+        </div>
+      </div>
+    </footer>
   )
 }
 </file>
 
-<file path="app/brand/BrandDashboard.tsx">
-'use client';
+<file path="src/components/layout/Header.tsx">
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { useProfile } from '../../hooks/useProfile'
+import UserMenu from './UserMenu'
 
-export default function BrandDashboard() {
+export default function Header() {
+  const { session, loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(session?.user?.id)
+  const loading = authLoading || profileLoading
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (location.pathname !== '/') {
+      navigate('/')
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' 
+    ? profile.onboarding_data 
+    : {}
+  const displayName = onboardingData.displayName || onboardingData.companyName
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight mb-4">
-            Brand Dashboard
-          </h1>
-          <p className="text-lg text-[#6B7280]">
-            Trang này đang được phát triển
-          </p>
+    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <Link
+          to="/"
+          onClick={handleLogoClick}
+          className="flex items-center gap-3 cursor-pointer"
+        >
+          <img
+            src="/logo/logo.png"
+            alt="ALINO"
+            className="w-8 h-8"
+          />
+          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+            ALINO
+          </span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
+          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Về chúng tôi
+          </a>
+          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Sản phẩm
+          </a>
+          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Tin tức
+          </a>
+          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
+            Liên hệ
+          </a>
+        </nav>
+
+        <div className="flex items-center gap-4 text-sm">
+          {loading ? (
+            <>
+              <div className="text-[#6B7280]">Đăng nhập</div>
+              <div className="px-5 py-2.5 rounded-full bg-gray-200" />
+            </>
+          ) : session ? (
+            <UserMenu
+              userEmail={session.user.email || ''}
+              displayName={displayName}
+              role={profile?.role || null}
+            />
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/signup"
+                className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       </div>
-    </div>
-  );
+    </header>
+  )
 }
 </file>
 
-<file path="app/brand/page.tsx">
-import { requireCompleteProfile } from '@/lib/auth-guards';
-import BrandDashboard from './BrandDashboard';
-
-export default async function BrandPage() {
-  // Server-side guard: requires complete profile with brand role
-  await requireCompleteProfile('brand');
-
-  return <BrandDashboard />;
-}
-</file>
-
-<file path="app/components/home/HomePageClient.tsx">
-'use client';
-
-import Header from '@/app/components/layout/Header';
-import Footer from '@/app/components/layout/Footer';
-import HomeBody from '@/app/components/home';
-
-export default function HomePageClient() {
-  return (
-    <div className="relative overflow-x-hidden bg-white">
-      <Header />
-      <HomeBody />
-      <Footer />
-    </div>
-  );
-}
-</file>
-
-<file path="app/components/home/index.tsx">
-'use client';
-
-import Hero from './Hero';
-import Problems from './Problems';
-import Solutions from './Solutions';
-import HowItWorks from './HowItWorks';
-import ForWho from './ForWho';
-import Compare from './Compare';
-import WhyAlino from './WhyAlino';
-import CTA from './CTA';
-
-export default function HomeBody() {
-  return (
-    <main className="pt-16">
-      <Hero />
-      <Problems />
-      <Solutions />
-      <HowItWorks />
-      <ForWho />
-      <Compare />
-      <WhyAlino />
-      <CTA />
-    </main>
-  );
-}
-</file>
-
-<file path="app/components/layout/UserMenu.tsx">
-'use client';
-
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+<file path="src/components/layout/UserMenu.tsx">
+import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 
 interface UserMenuProps {
-  userEmail: string;
-  displayName?: string;
-  role?: string | null;
+  userEmail: string
+  displayName?: string
+  role?: string | null
 }
 
 export default function UserMenu({ userEmail, displayName, role }: UserMenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        setIsOpen(false)
       }
-    };
+    }
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include',});
-      router.push('/');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+    setIsOpen(false)
+    await signOut()
+  }
 
+  const dashboardPath = '/dashboard'
 
-  const dashboardPath = role ? `/${role}` : '/role';
-
-  const nameToShow = displayName || userEmail.split('@')[0];
+  const nameToShow = displayName || userEmail.split('@')[0]
 
   return (
     <div
@@ -606,21 +411,21 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
         <div className="absolute right-0 top-full pt-2 w-56 z-50">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
             <Link
-              href={dashboardPath}
+              to={dashboardPath}
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
               Quản lý dự án
             </Link>
             <Link
-              href="/profile"
+              to="/profile"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
               Hồ sơ
             </Link>
             <Link
-              href="/settings"
+              to="/settings"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
@@ -637,16 +442,232 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
         </div>
       )}
     </div>
-  );
+  )
 }
 </file>
 
-<file path="app/creator/CreatorDashboard.tsx">
-'use client';
+<file path="src/components/AuthGate.tsx">
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import { getSupabase } from '../lib/supabase'
 
+interface AuthGateProps {
+  children: React.ReactNode
+}
+
+export default function AuthGate({ children }: AuthGateProps) {
+  const { session, loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(session?.user?.id)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
+
+  useEffect(() => {
+    if (authLoading || profileLoading) return
+
+    if (!session) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    if (!profile) {
+      supabase.auth.signOut()
+      navigate('/login', { replace: true })
+      return
+    }
+
+    if (!profile.role) {
+      navigate('/role', { replace: true })
+      return
+    }
+
+    if (!profile.onboarding_completed) {
+      navigate('/onboarding', { replace: true })
+      return
+    }
+  }, [session, profile, authLoading, profileLoading, navigate, supabase])
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session || !profile || !profile.role || !profile.onboarding_completed) {
+    return null
+  }
+
+  return <>{children}</>
+}
+</file>
+
+<file path="src/hooks/useAuth.ts">
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import type { Session } from '@supabase/supabase-js'
+import { getSupabase } from '../lib/supabase'
+
+export function useAuth() {
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
+
+  useEffect(() => {
+    let mounted = true
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      setSession(session)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+      setSession(session)
+      setLoading(false)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    setSession(null)
+    navigate('/')
+  }
+
+  return {
+    session,
+    user: session?.user ?? null,
+    loading,
+    signOut,
+  }
+}
+</file>
+
+<file path="src/hooks/useProfile.ts">
+import { useEffect, useState } from 'react'
+import { getSupabase } from '../lib/supabase'
+
+interface Profile {
+  id: string
+  role: 'creator' | 'brand' | null
+  onboarding_completed: boolean
+  onboarding_data?: any
+}
+
+export function useProfile(userId: string | undefined) {
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = getSupabase()
+
+  useEffect(() => {
+    if (!userId) {
+      setProfile(null)
+      setLoading(false)
+      return
+    }
+
+    let mounted = true
+
+    async function fetchProfile() {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, role, onboarding_completed, onboarding_data')
+          .eq('id', userId)
+          .single()
+
+        if (error) throw error
+
+        if (mounted) {
+          setProfile(data)
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+        if (mounted) {
+          setProfile(null)
+          setLoading(false)
+          // If profile is missing, sign out user
+          await supabase.auth.signOut()
+        }
+      }
+    }
+
+    fetchProfile()
+
+    return () => {
+      mounted = false
+    }
+  }, [userId])
+
+  return { profile, loading }
+}
+</file>
+
+<file path="src/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
+
+let supabaseClient: SupabaseClient | null = null
+
+export function getSupabase() {
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  }
+
+  return supabaseClient
+}
+</file>
+
+<file path="src/pages/BrandDashboard.tsx">
+export default function BrandDashboard() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
+          <h1 className="text-4xl font-semibold tracking-tight mb-4">
+            Brand Dashboard
+          </h1>
+          <p className="text-lg text-[#6B7280]">
+            Trang này đang được phát triển
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/CreatorDashboard.tsx">
 export default function CreatorDashboard() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
           <h1 className="text-4xl font-semibold tracking-tight mb-4">
@@ -658,592 +679,357 @@ export default function CreatorDashboard() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 </file>
 
-<file path="app/creator/page.tsx">
-import { requireCompleteProfile } from '@/lib/auth-guards';
-import CreatorDashboard from './CreatorDashboard';
+<file path="src/pages/LandingPage.tsx">
+import { Link } from 'react-router-dom'
 
-export default async function CreatorPage() {
-  // Server-side guard: requires complete profile with creator role
-  await requireCompleteProfile('creator');
-
-  return <CreatorDashboard />;
+export default function LandingPage() {
+  return (
+    <div className="relative overflow-x-hidden bg-white pt-16">
+      <div className="min-h-screen">
+        <section className="max-w-7xl mx-auto px-6 py-20">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+              Quản lý hợp tác Creator–Brand
+            </h1>
+            <p className="text-xl text-[#6B7280] mb-8 max-w-2xl mx-auto">
+              Nền tảng quản lý hợp tác chuyên nghiệp giữa Creator và Brand
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link
+                to="/signup"
+                className="px-8 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+              >
+                Bắt đầu ngay
+              </Link>
+              <Link
+                to="/login"
+                className="px-8 py-3 rounded-full font-semibold text-[#6366F1] border-2 border-[#6366F1] hover:bg-[#6366F1] hover:text-white transition-colors"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
 }
 </file>
 
-<file path="app/onboarding/OnboardingPageClient.tsx">
-'use client';
+<file path="src/pages/LoginPage.tsx">
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { getSupabase } from '../lib/supabase'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
 
-type OnboardingData = {
-  displayName?: string;
-  companyName?: string;
-  primaryPlatform?: string;
-  followerRange?: string;
-  industry?: string;
-  teamSize?: string;
-  niche?: string[];
-  experienceLevel?: string;
-  mainGoal?: string[];
-  workedWithCreatorsBefore?: string;
-  primaryGoal?: string[];
-  howDidYouHear?: string;
-  monthlyBudget?: string;
-};
-
-export default function OnboardingPageClient({ role }: { role: 'creator' | 'brand' }) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<OnboardingData>({});
-  const router = useRouter();
-  const totalSteps = 3;
-
-  const handleInputChange = (field: keyof OnboardingData, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleMultiSelect = (field: keyof OnboardingData, value: string) => {
-    const current = (formData[field] as string[]) || [];
-    const updated = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
-    handleInputChange(field, updated);
-  };
-
-  const validateStep = (step: number): boolean => {
-    if (step === 1) {
-      if (role === 'creator') {
-        return !!(formData.displayName && formData.primaryPlatform && formData.followerRange);
-      } else {
-        return !!(formData.companyName && formData.industry && formData.teamSize);
-      }
-    }
-    if (step === 2) {
-      if (role === 'creator') {
-        return !!(formData.niche && formData.niche.length > 0 && formData.experienceLevel && formData.mainGoal && formData.mainGoal.length > 0);
-      } else {
-        return !!(formData.workedWithCreatorsBefore && formData.primaryGoal && formData.primaryGoal.length > 0);
-      }
-    }
-    return true;
-  };
-
-  const handleNext = () => {
-    if (currentStep < totalSteps && validateStep(currentStep)) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    if (currentStep === totalSteps) {
-      handleComplete();
-    } else {
-      handleNext();
-    }
-  };
-
-  const handleComplete = async () => {
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ onboardingData: formData }),
-      });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Có lỗi xảy ra khi hoàn tất onboarding');
+      if (error) {
+        setError(error.message || 'Đăng nhập thất bại')
+        setLoading(false)
+        return
       }
 
-      router.push(`/${role}`);
+      navigate('/dashboard')
     } catch (err) {
-      setLoading(false);
-      const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi hoàn tất onboarding';
-      alert(errorMessage);
+      setError('Có lỗi xảy ra')
+      setLoading(false)
     }
-  };
+  }
 
-  const progressPercentage = (currentStep / totalSteps) * 100;
+  const handleGoogleLogin = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (data.url) {
+      window.location.href = data.url
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
-      <div className="max-w-2xl mx-auto">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-[#6B7280]">
-              Bước {currentStep} / {totalSteps}
-            </span>
-            <span className="text-sm text-[#9CA3AF]">
-              {Math.round(progressPercentage)}%
-            </span>
-          </div>
-          <div className="w-full h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
+    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] px-6 lg:px-6 pt-16">
+      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl overflow-hidden flex">
+        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-[#6366F1]/20 via-[#7C3AED]/15 to-[#EC4899]/20">
+          <div className="flex flex-col px-12 pt-12 items-center">
+            <img
+              src="/logo/logo.png"
+              alt="ALINO"
+              className="w-40 h-40 mb-6"
             />
+            <h1 className="text-3xl font-semibold text-[#1F2937] mb-3">
+              Chào mừng tới với Alino
+            </h1>
+            <p className="text-[#6B7280] leading-relaxed">
+              Nền tảng quản lý các dự án hợp tác chuyên nghiệp
+            </p>
           </div>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
-          {/* Step 1: Basic Information */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-3xl font-semibold tracking-tight mb-2">
-                  Thông tin cơ bản
-                </h2>
-                <p className="text-[#6B7280]">
-                  Hãy cho chúng tôi biết một chút về bạn
-                </p>
+        <div className="w-full lg:w-[55%] px-10 py-8 flex items-center justify-center">
+          <div className="w-full max-w-sm">
+            <h2 className="text-2xl font-semibold mb-2">Đăng nhập</h2>
+            <p className="text-sm text-[#6B7280] mb-6">
+              Nhập thông tin để tiếp tục
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
               </div>
+            )}
 
-              {role === 'creator' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Tên hiển thị <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.displayName || ''}
-                      onChange={(e) => handleInputChange('displayName', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                      placeholder="Nhập tên hiển thị của bạn"
-                    />
-                  </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 border rounded-lg"
+                required
+              />
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Nền tảng chính <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={formData.primaryPlatform || ''}
-                      onChange={(e) => handleInputChange('primaryPlatform', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                    >
-                      <option value="">Chọn nền tảng</option>
-                      <option value="tiktok">TikTok</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="youtube">YouTube</option>
-                    </select>
-                  </div>
+              <input
+                type="password"
+                placeholder="Mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2.5 border rounded-lg"
+                required
+              />
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Số lượng người theo dõi <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={formData.followerRange || ''}
-                      onChange={(e) => handleInputChange('followerRange', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                    >
-                      <option value="">Chọn khoảng</option>
-                      <option value="<10k">Dưới 10k</option>
-                      <option value="10k-50k">10k - 50k</option>
-                      <option value="50k-100k">50k - 100k</option>
-                      <option value="100k-500k">100k - 500k</option>
-                      <option value="500k+">500k+</option>
-                    </select>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Tên công ty <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.companyName || ''}
-                      onChange={(e) => handleInputChange('companyName', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                      placeholder="Nhập tên công ty"
-                    />
-                  </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+              >
+                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              </button>
+            </form>
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Ngành nghề <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.industry || ''}
-                      onChange={(e) => handleInputChange('industry', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                      placeholder="Ví dụ: Thời trang, Mỹ phẩm, F&B..."
-                    />
-                  </div>
+            <div className="my-5 text-center text-xs text-[#9CA3AF]">HOẶC</div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Quy mô team <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={formData.teamSize || ''}
-                      onChange={(e) => handleInputChange('teamSize', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                    >
-                      <option value="">Chọn quy mô</option>
-                      <option value="1-5">1 - 5 người</option>
-                      <option value="6-20">6 - 20 người</option>
-                      <option value="21-50">21 - 50 người</option>
-                      <option value="50+">50+ người</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Step 2: Insight & Intent */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-3xl font-semibold tracking-tight mb-2">
-                  Mục tiêu & Kinh nghiệm
-                </h2>
-                <p className="text-[#6B7280]">
-                  Giúp chúng tôi hiểu rõ hơn về bạn
-                </p>
-              </div>
-
-              {role === 'creator' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-3">
-                      Lĩnh vực (có thể chọn nhiều) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="space-y-2">
-                      {['Beauty', 'Fashion', 'Lifestyle', 'Education', 'Finance', 'Tech', 'Other'].map((niche) => (
-                        <label key={niche} className="flex items-center gap-3 p-3 rounded-xl border border-[#E4E7EC] hover:border-[#6366F1] cursor-pointer transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={(formData.niche || []).includes(niche)}
-                            onChange={() => handleMultiSelect('niche', niche)}
-                            className="w-4 h-4 rounded border-[#E4E7EC] text-[#6366F1] focus:ring-[#6366F1]"
-                          />
-                          <span className="text-[#374151]">{niche === 'Beauty' ? 'Làm đẹp' : niche === 'Fashion' ? 'Thời trang' : niche === 'Lifestyle' ? 'Lối sống' : niche === 'Education' ? 'Giáo dục' : niche === 'Finance' ? 'Tài chính' : niche === 'Tech' ? 'Công nghệ' : 'Khác'}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Mức độ kinh nghiệm <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={formData.experienceLevel || ''}
-                      onChange={(e) => handleInputChange('experienceLevel', e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                    >
-                      <option value="">Chọn mức độ</option>
-                      <option value="new">Mới bắt đầu (0-1 năm)</option>
-                      <option value="intermediate">Trung bình (1-3 năm)</option>
-                      <option value="professional">Chuyên nghiệp (3+ năm)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-3">
-                      Mục tiêu chính (có thể chọn nhiều) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="space-y-2">
-                      {[
-                        { value: 'receive-bookings', label: 'Nhận booking từ Brand' },
-                        { value: 'send-proposals', label: 'Chủ động gửi proposal' },
-                        { value: 'manage-deals', label: 'Quản lý hợp tác chuyên nghiệp' },
-                      ].map((goal) => (
-                        <label key={goal.value} className="flex items-center gap-3 p-3 rounded-xl border border-[#E4E7EC] hover:border-[#6366F1] cursor-pointer transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={(formData.mainGoal || []).includes(goal.value)}
-                            onChange={() => handleMultiSelect('mainGoal', goal.value)}
-                            className="w-4 h-4 rounded border-[#E4E7EC] text-[#6366F1] focus:ring-[#6366F1]"
-                          />
-                          <span className="text-[#374151]">{goal.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-3">
-                      Bạn đã từng hợp tác với Creator chưa? <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      {['yes', 'no'].map((option) => (
-                        <label key={option} className="flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-[#E4E7EC] hover:border-[#6366F1] cursor-pointer transition-colors">
-                          <input
-                            type="radio"
-                            name="workedWithCreatorsBefore"
-                            value={option}
-                            checked={formData.workedWithCreatorsBefore === option}
-                            onChange={(e) => handleInputChange('workedWithCreatorsBefore', e.target.value)}
-                            className="w-4 h-4 border-[#E4E7EC] text-[#6366F1] focus:ring-[#6366F1]"
-                          />
-                          <span className="text-[#374151] font-medium">{option === 'yes' ? 'Đã từng' : 'Chưa từng'}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-3">
-                      Mục tiêu chính (có thể chọn nhiều) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="space-y-2">
-                      {[
-                        { value: 'quick-booking', label: 'Booking nhanh chóng' },
-                        { value: 'long-term', label: 'Hợp tác lâu dài' },
-                        { value: 'scale-campaigns', label: 'Scale campaign với nhiều Creator' },
-                      ].map((goal) => (
-                        <label key={goal.value} className="flex items-center gap-3 p-3 rounded-xl border border-[#E4E7EC] hover:border-[#6366F1] cursor-pointer transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={(formData.primaryGoal || []).includes(goal.value)}
-                            onChange={() => handleMultiSelect('primaryGoal', goal.value)}
-                            className="w-4 h-4 rounded border-[#E4E7EC] text-[#6366F1] focus:ring-[#6366F1]"
-                          />
-                          <span className="text-[#374151]">{goal.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Step 3: Optional */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-3xl font-semibold tracking-tight mb-2">
-                  Thông tin bổ sung (tùy chọn)
-                </h2>
-                <p className="text-[#6B7280]">
-                  Giúp chúng tôi cải thiện dịch vụ
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  Bạn biết đến ALINO qua đâu?
-                </label>
-                <select
-                  value={formData.howDidYouHear || ''}
-                  onChange={(e) => handleInputChange('howDidYouHear', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                >
-                  <option value="">Chọn phương thức</option>
-                  <option value="social-media">Mạng xã hội</option>
-                  <option value="friend">Bạn bè giới thiệu</option>
-                  <option value="search">Tìm kiếm Google</option>
-                  <option value="ad">Quảng cáo</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  Ngân sách hợp tác hàng tháng
-                </label>
-                <select
-                  value={formData.monthlyBudget || ''}
-                  onChange={(e) => handleInputChange('monthlyBudget', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
-                >
-                  <option value="">Chọn khoảng</option>
-                  <option value="<5m">Dưới 5 triệu</option>
-                  <option value="5m-10m">5 - 10 triệu</option>
-                  <option value="10m-50m">10 - 50 triệu</option>
-                  <option value="50m+">50+ triệu</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#E4E7EC]">
             <button
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className="px-6 py-3 rounded-xl font-medium text-[#6B7280] border border-[#E4E7EC] hover:border-[#6366F1] hover:text-[#6366F1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleGoogleLogin}
+              className="w-full py-2.5 border rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
             >
-              Quay lại
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Đăng nhập với Google
             </button>
 
-            <div className="flex gap-3">
-              {currentStep === totalSteps && (
-                <button
-                  onClick={handleSkip}
-                  disabled={loading}
-                  className="px-6 py-3 rounded-xl font-medium text-[#6B7280] hover:text-[#6366F1] transition-colors"
-                >
-                  Bỏ qua
-                </button>
-              )}
-
-              {currentStep < totalSteps ? (
-                <button
-                  onClick={handleNext}
-                  disabled={!validateStep(currentStep)}
-                  className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Tiếp tục
-                </button>
-              ) : (
-                <button
-                  onClick={handleComplete}
-                  disabled={loading}
-                  className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Đang xử lý...' : 'Hoàn tất'}
-                </button>
-              )}
-            </div>
+            <p className="mt-6 text-center text-sm text-[#6B7280]">
+              Chưa có tài khoản?{' '}
+              <Link to="/signup" className="text-[#6366F1] font-medium">
+                Đăng ký
+              </Link>
+            </p>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 </file>
 
-<file path="app/onboarding/page.tsx">
-import { requireRoleButNoOnboarding } from '@/lib/auth-guards';
-import OnboardingPageClient from './OnboardingPageClient';
+<file path="src/pages/OnboardingPage.tsx">
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import { getSupabase } from '../lib/supabase'
 
-export default async function OnboardingPage() {
-  // Server-side guard: redirects if not authenticated, no role, or already completed
-  const { profile } = await requireRoleButNoOnboarding();
-
-  if (!profile?.role) {
-    // Guard should have redirected, but just in case
-    return null;
-  }
-
-  const role = profile.role as 'creator' | 'brand';
-
-  return <OnboardingPageClient role={role} />;
-}
-</file>
-
-<file path="app/profile/page.tsx">
-import { requireAuth } from '@/lib/auth-guards';
-import ProfilePageClient from './ProfilePageClient';
-
-export default async function ProfilePage() {
-  // Server-side guard: requires authentication
-  const { profile } = await requireAuth();
-
-  return <ProfilePageClient profile={profile!} />;
-}
-</file>
-
-<file path="app/profile/ProfilePageClient.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-
-interface ProfilePageClientProps {
-  profile: {
-    id: string;
-    role: string | null;
-    onboarding_completed: boolean;
-    onboarding_data?: any;
-  };
-}
-
-export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-
-  const onboardingData = typeof profile.onboarding_data === 'object' ? profile.onboarding_data : {};
-  const displayName = onboardingData.displayName || onboardingData.companyName || '';
-  const [displayNameValue, setDisplayNameValue] = useState(displayName);
+export default function OnboardingPage() {
+  const { session } = useAuth()
+  const { profile } = useProfile(session?.user?.id)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
 
   useEffect(() => {
-    setDisplayNameValue(displayName);
-  }, [displayName]);
+    if (!profile?.role) {
+      navigate('/role', { replace: true })
+      return
+    }
+    if (profile.onboarding_completed) {
+      navigate('/dashboard', { replace: true })
+      return
+    }
+  }, [profile, navigate])
 
-  const handleSave = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess(false);
+  const role = profile?.role || 'creator'
+
+  const handleComplete = async () => {
+    if (!session) return
+
+    setLoading(true)
 
     try {
-      // Update profile with new display name
-      const res = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: true,
+        })
+        .eq('id', session.user.id)
+
+      if (error) throw error
+
+      navigate('/dashboard')
+    } catch (err: any) {
+      setLoading(false)
+      alert(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
+          <h1 className="text-3xl font-semibold tracking-tight mb-8">
+            Hoàn tất thiết lập
+          </h1>
+          <p className="text-[#6B7280] mb-8">
+            Bạn đang thiết lập tài khoản {role === 'creator' ? 'Creator' : 'Brand'}
+          </p>
+          <button
+            onClick={handleComplete}
+            disabled={loading}
+            className="px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+          >
+            {loading ? 'Đang xử lý...' : 'Hoàn tất'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/ProfilePage.tsx">
+import { useState, useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import { getSupabase } from '../lib/supabase'
+
+export default function ProfilePage() {
+  const { session } = useAuth()
+  const { profile } = useProfile(session?.user?.id)
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
+
+  const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' 
+    ? profile.onboarding_data 
+    : {}
+  const displayName = onboardingData.displayName || onboardingData.companyName || ''
+  const [displayNameValue, setDisplayNameValue] = useState(displayName)
+
+  useEffect(() => {
+    setDisplayNameValue(displayName)
+  }, [displayName])
+
+  const handleSave = async () => {
+    if (!session || !profile) return
+
+    setLoading(true)
+    setError('')
+    setSuccess(false)
+
+    try {
+      const supabase = getSupabase()
+      const { error } = await supabase
+        .from('profiles')
+        .update({
           onboarding_data: {
             ...onboardingData,
             displayName: profile.role === 'creator' ? displayNameValue : undefined,
             companyName: profile.role === 'brand' ? displayNameValue : undefined,
           },
-        }),
-      });
+        })
+        .eq('id', session.user.id)
 
-      const data = await res.json();
+      if (error) throw error
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Không thể cập nhật hồ sơ');
-      }
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      window.location.reload(); // Refresh to get updated data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật hồ sơ')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-24">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
           <h1 className="text-3xl font-semibold tracking-tight mb-8">Hồ sơ</h1>
 
-          <div className="space-y-6">
-            {/* Avatar */}
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-3">
-                Avatar
-              </label>
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white text-3xl font-semibold">
-                {displayNameValue.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <p className="text-sm text-[#6B7280] mt-2">
-                Avatar sẽ được cập nhật trong phiên bản tương lai
-              </p>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
             </div>
+          )}
 
-            {/* Display Name */}
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              Đã cập nhật hồ sơ thành công!
+            </div>
+          )}
+
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 {profile.role === 'creator' ? 'Tên hiển thị' : 'Tên công ty'}
@@ -1252,47 +1038,27 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
                 type="text"
                 value={displayNameValue}
                 onChange={(e) => setDisplayNameValue(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-[#E4E7EC] focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-2.5 border rounded-lg"
                 placeholder={profile.role === 'creator' ? 'Nhập tên hiển thị' : 'Nhập tên công ty'}
               />
             </div>
 
-            {/* Onboarding Info (Read-only for now) */}
-            {Object.keys(onboardingData).length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-[#374151] mb-3">
-                  Thông tin bổ sung
-                </label>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm text-[#6B7280]">
-                  {Object.entries(onboardingData).map(([key, value]) => {
-                    if (key === 'displayName' || key === 'companyName') return null;
-                    return (
-                      <div key={key} className="flex justify-between">
-                        <span className="font-medium">{key}:</span>
-                        <span>{Array.isArray(value) ? value.join(', ') : String(value)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                Đã cập nhật thành công!
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={session?.user?.email || ''}
+                disabled
+                className="w-full px-4 py-2.5 border rounded-lg bg-gray-50 text-gray-500"
+              />
+            </div>
 
             <button
               onClick={handleSave}
-              disabled={loading || displayNameValue === displayName}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              className="px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
             >
               {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
@@ -1300,60 +1066,54 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }
 </file>
 
-<file path="app/role/page.tsx">
-import { requireNoRole } from '@/lib/auth-guards';
-import RolePageClient from './RolePageClient';
+<file path="src/pages/RolePage.tsx">
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import { getSupabase } from '../lib/supabase'
 
-export default async function RolePage() {
-  // Server-side guard: redirects if not authenticated or already has role
-  await requireNoRole();
+export default function RolePage() {
+  const { session } = useAuth()
+  const { profile } = useProfile(session?.user?.id)
+  const [selectedRole, setSelectedRole] = useState<'creator' | 'brand' | null>(null)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
 
-  return <RolePageClient />;
-}
-</file>
-
-<file path="app/role/RolePageClient.tsx">
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-
-export default function RolePageClient() {
-  const [selectedRole, setSelectedRole] = useState<'creator' | 'brand' | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  useEffect(() => {
+    if (profile?.role) {
+      navigate('/onboarding', { replace: true })
+    }
+  }, [profile, navigate])
 
   const handleSelectRole = async (role: 'creator' | 'brand') => {
-    setSelectedRole(role);
-    setLoading(true);
+    if (!session) return
+
+    setSelectedRole(role)
+    setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', session.user.id)
 
-      const data = await res.json();
+      if (error) throw error
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Có lỗi xảy ra khi chọn vai trò');
-      }
-
-      router.push('/onboarding');
-    } catch (err) {
-      setLoading(false);
-      const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi chọn vai trò';
-      alert(errorMessage);
+      navigate('/onboarding')
+    } catch (err: any) {
+      setLoading(false)
+      alert(err.message || 'Có lỗi xảy ra khi chọn vai trò')
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
@@ -1368,152 +1128,61 @@ export default function RolePageClient() {
           <button
             onClick={() => handleSelectRole('creator')}
             disabled={loading}
-            className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border-2 border-transparent hover:border-[#6366F1] transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
           >
-            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-semibold mb-4 tracking-tight">Tôi là Creator</h2>
-            <p className="text-[#6B7280] mb-6 leading-relaxed">
-              Xây dựng hồ sơ chuyên nghiệp, quản lý dịch vụ và kết nối với các Brand để phát triển sự nghiệp.
+            <h3 className="text-2xl font-semibold mb-2">Creator</h3>
+            <p className="text-[#6B7280]">
+              Tôi là Creator muốn hợp tác với các Brand
             </p>
-            <div className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] group-hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25">
-              Tiếp tục với Creator
-            </div>
           </button>
 
           <button
             onClick={() => handleSelectRole('brand')}
             disabled={loading}
-            className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border-2 border-transparent hover:border-[#6366F1] transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
           >
-            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-semibold mb-4 tracking-tight">Tôi là Brand</h2>
-            <p className="text-[#6B7280] mb-6 leading-relaxed">
-              Khám phá và hợp tác với các Creator có ảnh hưởng, khởi chạy campaign và theo dõi hiệu quả dễ dàng.
+            <h3 className="text-2xl font-semibold mb-2">Brand</h3>
+            <p className="text-[#6B7280]">
+              Tôi là Brand muốn hợp tác với các Creator
             </p>
-            <div className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] group-hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25">
-              Tiếp tục với Brand
-            </div>
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }
 </file>
 
-<file path="app/settings/page.tsx">
-import { requireAuth } from '@/lib/auth-guards';
-import SettingsPageClient from './SettingsPageClient';
+<file path="src/pages/SettingsPage.tsx">
+import { useAuth } from '../hooks/useAuth'
 
-export default async function SettingsPage() {
-  // Server-side guard: requires authentication
-  await requireAuth();
-
-  return <SettingsPageClient />;
-}
-</file>
-
-<file path="app/settings/SettingsPageClient.tsx">
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-
-export default function SettingsPageClient() {
-  const router = useRouter();
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+export default function SettingsPage() {
+  const { signOut } = useAuth()
 
   const handleChangePassword = async () => {
-    setLoading('password');
-    setError('');
-    setSuccess('');
-    
-    // TODO: Implement change password
-    setTimeout(() => {
-      setLoading(null);
-      setSuccess('Tính năng đổi mật khẩu sẽ sớm có sẵn');
-      setTimeout(() => setSuccess(''), 3000);
-    }, 500);
-  };
+    // Coming soon
+  }
 
   const handleChangeEmail = async () => {
-    setLoading('email');
-    setError('');
-    setSuccess('');
-    
-    // TODO: Implement change email
-    setTimeout(() => {
-      setLoading(null);
-      setSuccess('Tính năng đổi email sẽ sớm có sẵn');
-      setTimeout(() => setSuccess(''), 3000);
-    }, 500);
-  };
+    // Coming soon
+  }
 
   const handleLogoutAll = async () => {
-    setLoading('logoutAll');
-    setError('');
-    setSuccess('');
-    
-    try {
-      // TODO: Implement logout all devices
-      setSuccess('Tính năng đăng xuất tất cả thiết bị sẽ sớm có sẵn');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
-    } finally {
-      setLoading(null);
-    }
-  };
+    // Coming soon
+  }
 
   const handleDeleteAccount = async () => {
-    if (!confirm('Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.')) {
-      return;
-    }
-
-    setLoading('delete');
-    setError('');
-    setSuccess('');
-    
-    try {
-      // TODO: Implement delete account
-      setError('Tính năng xóa tài khoản sẽ sớm có sẵn');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
-    } finally {
-      setLoading(null);
-    }
-  };
+    // Coming soon
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
           <h1 className="text-3xl font-semibold tracking-tight mb-8">Cài đặt</h1>
 
           <div className="space-y-6">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
 
-            {success && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                {success}
-              </div>
-            )}
-
-            {/* Change Password */}
             <div className="border-b border-gray-200 pb-6">
               <h2 className="text-lg font-semibold text-[#374151] mb-2">Đổi mật khẩu</h2>
               <p className="text-sm text-[#6B7280] mb-4">
@@ -1521,14 +1190,13 @@ export default function SettingsPageClient() {
               </p>
               <button
                 onClick={handleChangePassword}
-                disabled={loading === 'password'}
-                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] hover:bg-[#6366F1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] opacity-50 cursor-not-allowed"
               >
-                {loading === 'password' ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                Coming soon
               </button>
             </div>
 
-            {/* Change Email */}
             <div className="border-b border-gray-200 pb-6">
               <h2 className="text-lg font-semibold text-[#374151] mb-2">Đổi email</h2>
               <p className="text-sm text-[#6B7280] mb-4">
@@ -1536,14 +1204,13 @@ export default function SettingsPageClient() {
               </p>
               <button
                 onClick={handleChangeEmail}
-                disabled={loading === 'email'}
-                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] hover:bg-[#6366F1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] opacity-50 cursor-not-allowed"
               >
-                {loading === 'email' ? 'Đang xử lý...' : 'Đổi email'}
+                Coming soon
               </button>
             </div>
 
-            {/* Logout All Devices */}
             <div className="border-b border-gray-200 pb-6">
               <h2 className="text-lg font-semibold text-[#374151] mb-2">Đăng xuất tất cả thiết bị</h2>
               <p className="text-sm text-[#6B7280] mb-4">
@@ -1551,14 +1218,13 @@ export default function SettingsPageClient() {
               </p>
               <button
                 onClick={handleLogoutAll}
-                disabled={loading === 'logoutAll'}
-                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] hover:bg-[#6366F1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] opacity-50 cursor-not-allowed"
               >
-                {loading === 'logoutAll' ? 'Đang xử lý...' : 'Đăng xuất tất cả'}
+                Coming soon
               </button>
             </div>
 
-            {/* Delete Account */}
             <div className="pb-6">
               <h2 className="text-lg font-semibold text-red-600 mb-2">Xóa tài khoản</h2>
               <p className="text-sm text-[#6B7280] mb-4">
@@ -1566,544 +1232,648 @@ export default function SettingsPageClient() {
               </p>
               <button
                 onClick={handleDeleteAccount}
-                disabled={loading === 'delete'}
-                className="px-6 py-2.5 rounded-xl font-medium text-red-600 border border-red-600 hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                className="px-6 py-2.5 rounded-xl font-medium text-red-600 border border-red-600 opacity-50 cursor-not-allowed"
               >
-                {loading === 'delete' ? 'Đang xử lý...' : 'Xóa tài khoản'}
+                Coming soon
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 </file>
 
-<file path="app/AuthGate.tsx">
-'use client';
+<file path="src/pages/SignupPage.tsx">
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { getSupabase } from '../lib/supabase'
 
-import { useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/useAuth';
+export default function SignupPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
 
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/verify-email', '/auth/callback'];
-const AUTH_ROUTES = ['/login', '/signup', '/verify-email'];
-// Routes that only require authentication (not full profile completion)
-const AUTH_ONLY_ROUTES = ['/profile', '/settings'];
-// Routes that require complete profile (role + onboarding)
-const COMPLETE_PROFILE_ROUTES = ['/creator', '/brand'];
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
 
-export default function AuthGate({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
-  const pathname = usePathname();
-  const router = useRouter();
-  const profileCheckDone = useRef(false);
-  const profileDataRef = useRef<{ role: string; onboarding_completed: boolean } | null>(null);
-  const checkingRef = useRef(false);
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      })
+
+      if (error) {
+        setError(error.message || 'Đăng ký thất bại')
+        setLoading(false)
+        return
+      }
+
+      localStorage.setItem('signupEmail', email)
+      navigate('/verify-email')
+    } catch (err) {
+      setError('Có lỗi xảy ra')
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleSignup = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (data.url) {
+      window.location.href = data.url
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] px-6 pt-16">
+      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl overflow-hidden flex">
+        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-[#6366F1]/20 via-[#7C3AED]/15 to-[#EC4899]/20">
+          <div className="flex flex-col px-12 pt-12 items-center">
+            <img
+              src="/logo/logo.png"
+              alt="ALINO"
+              className="w-40 h-40 mb-6"
+            />
+            <h1 className="text-3xl font-semibold text-[#1F2937] mb-3">
+              Tạo tài khoản mới
+            </h1>
+            <p className="text-[#6B7280] leading-relaxed">
+              Bắt đầu hành trình hợp tác với Alino
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full lg:w-[55%] px-10 py-8 flex items-center justify-center">
+          <div className="w-full max-w-sm">
+            <h2 className="text-2xl font-semibold mb-2">Đăng ký</h2>
+            <p className="text-sm text-[#6B7280] mb-6">
+              Tạo tài khoản mới để bắt đầu
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 border rounded-lg"
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="Mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2.5 border rounded-lg"
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="Xác nhận mật khẩu"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2.5 border rounded-lg"
+                required
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+              >
+                {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
+              </button>
+            </form>
+
+            <div className="my-5 text-center text-xs text-[#9CA3AF]">HOẶC</div>
+
+            <button
+              onClick={handleGoogleSignup}
+              className="w-full py-2.5 border rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Đăng ký với Google
+            </button>
+
+            <p className="mt-6 text-center text-sm text-[#6B7280]">
+              Đã có tài khoản?{' '}
+              <Link to="/login" className="text-[#6366F1] font-medium">
+                Đăng nhập
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/VerifyEmailPage.tsx">
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { getSupabase } from '../lib/supabase'
+
+export default function VerifyEmailPage() {
+  const [email, setEmail] = useState<string | null>(null)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const supabase = getSupabase()
 
   useEffect(() => {
-    if (loading) return;
+    const storedEmail = localStorage.getItem('signupEmail')
+    if (storedEmail) {
+      setEmail(storedEmail)
+    }
+  }, [])
 
-    // Handle unauthenticated users
-    if (!session) {
-      profileCheckDone.current = false;
-      profileDataRef.current = null;
-      if (!PUBLIC_ROUTES.includes(pathname)) {
-        router.replace('/login');
-      }
-      return;
+  const handleResendEmail = async () => {
+    if (!email) {
+      setResendError('Không tìm thấy email để gửi lại.')
+      return
     }
 
-    // For auth-only routes (profile, settings), allow access if authenticated
-    if (AUTH_ONLY_ROUTES.includes(pathname)) {
-      return;
-    }
+    setResendLoading(true)
+    setResendSuccess(false)
+    setResendError(null)
 
-    // If profile check already done, handle redirects based on cached profile
-    if (profileCheckDone.current && profileDataRef.current) {
-      const profile = profileDataRef.current;
-      const currentPath = pathname;
-      
-      // Allow access to role/onboarding pages if user is in those states
-      if (!profile.role && currentPath === '/role') {
-        return;
-      }
-      if (!profile.onboarding_completed && currentPath === '/onboarding') {
-        return;
-      }
-      
-      // Redirect if user doesn't have role but trying to access other pages
-      if (!profile.role && currentPath !== '/role' && !AUTH_ONLY_ROUTES.includes(currentPath)) {
-        router.replace('/role');
-        return;
-      }
-      
-      // Redirect if user hasn't completed onboarding but trying to access dashboard
-      if (!profile.onboarding_completed && COMPLETE_PROFILE_ROUTES.includes(currentPath)) {
-        router.replace('/onboarding');
-        return;
-      }
-      
-      // Redirect landing/auth pages to dashboard if profile is complete
-      if (currentPath === '/' || AUTH_ROUTES.includes(currentPath)) {
-        router.replace(`/${profile.role}`);
-        return;
-      }
-      
-      // Allow navigation to other routes
-      return;
-    }
-
-    // Perform initial profile check (only once per session)
-    if (checkingRef.current) return;
-
-    checkingRef.current = true;
-    let cancelled = false;
-
-    fetch('/api/auth/profile-check', {
-      credentials: 'include',
-      cache: 'no-store',
-    })
-      .then(res => res.json())
-      .then(({ hasSession, hasProfile, profile }) => {
-        if (cancelled) return;
-        checkingRef.current = false;
-
-        if (!hasSession || !hasProfile) {
-          profileCheckDone.current = false;
-          profileDataRef.current = null;
-          router.replace('/login');
-          return;
-        }
-
-        profileCheckDone.current = true;
-        profileDataRef.current = {
-          role: profile.role,
-          onboarding_completed: profile.onboarding_completed,
-        };
-
-        const currentPath = pathname;
-
-        // Don't redirect from auth-only routes
-        if (AUTH_ONLY_ROUTES.includes(currentPath)) {
-          return;
-        }
-
-        if (!profile.role) {
-          if (currentPath !== '/role') {
-            router.replace('/role');
-          }
-          return;
-        }
-
-        if (!profile.onboarding_completed) {
-          // Allow access to onboarding page, redirect from dashboard pages
-          if (currentPath !== '/onboarding' && COMPLETE_PROFILE_ROUTES.includes(currentPath)) {
-            router.replace('/onboarding');
-          }
-          return;
-        }
-
-        // Redirect landing/auth pages to dashboard
-        if (currentPath === '/' || AUTH_ROUTES.includes(currentPath)) {
-          router.replace(`/${profile.role}`);
-        }
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
       })
-      .catch(() => {
-        if (!cancelled) {
-          checkingRef.current = false;
-          profileCheckDone.current = false;
-          profileDataRef.current = null;
-          router.replace('/login');
-        }
-      });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [session, loading, pathname, router]);
+      if (error) {
+        throw new Error(error.message || 'Không thể gửi lại email xác thực')
+      }
 
-  if (loading) return null;
-
-  return <>{children}</>;
-}
-</file>
-
-<file path="core/contracts/auth-repository.ts">
-import type { Session } from '@/core/domain/auth';
-
-export interface AuthRepository {
-  /**
-   * Get the current session
-   * @returns The current session or null if not authenticated
-   */
-  getSession(): Promise<Session | null>;
-
-  /**
-   * Sign out the current user
-   */
-  signOut(): Promise<void>;
-}
-</file>
-
-<file path="core/contracts/brand-request-repository.ts">
-import type { BrandRequest } from '@/core/domain/brand-request';
-
-export interface BrandRequestRepository {
-  /**
-   * List all brand requests for a creator
-   * @param creatorId The creator ID
-   * @returns Array of brand requests
-   */
-  listByCreatorId(creatorId: string): Promise<BrandRequest[]>;
-
-  /**
-   * Get a brand request by ID
-   * @param id The brand request ID
-   * @returns Brand request or null if not found
-   */
-  getById(id: string): Promise<BrandRequest | null>;
-}
-</file>
-
-<file path="core/contracts/creator-repository.ts">
-import type { Creator } from '@/core/domain/creator';
-
-export interface CreatorRepository {
-  /**
-   * Get creator by user ID
-   * @param userId The user ID
-   * @returns Creator or null if not found
-   */
-  getByUserId(userId: string): Promise<Creator | null>;
-
-  /**
-   * Create or update creator profile by user ID
-   * @param userId The user ID
-   * @param input Creator profile data
-   * @returns Updated creator
-   */
-  upsertByUserId(
-    userId: string,
-    input: { displayName: string; bio?: string | null; niche?: string | null }
-  ): Promise<Creator>;
-}
-</file>
-
-<file path="core/domain/auth.ts">
-export type UserId = string;
-
-export type User = {
-  id: UserId;
-  email?: string | null;
-  name?: string | null;
-};
-
-export type Session = {
-  user: User;
-  accessToken?: string;
-  expiresAt?: string;
-};
-</file>
-
-<file path="core/domain/brand-request.ts">
-export type BrandRequestId = string;
-
-export type BrandRequestStatus =
-  | 'moi'
-  | 'dang_thao_luan'
-  | 'da_ky'
-  | 'dang_duyet_noi_dung'
-  | 'hoan_thanh'
-  | 'huy';
-
-export type BrandRequest = {
-  id: BrandRequestId;
-  creatorId: string;
-  brandName: string;
-  campaignName: string;
-  budget?: number | null;
-  status: BrandRequestStatus;
-  createdAt?: string;
-  updatedAt?: string;
-};
-</file>
-
-<file path="core/domain/creator.ts">
-export type CreatorId = string;
-
-export type Creator = {
-  id: CreatorId;
-  userId: string;
-  displayName: string;
-  bio?: string | null;
-  niche?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-};
-</file>
-
-<file path="infra/supabase/auth/SupabaseAuthRepository.ts">
-import type { AuthRepository } from '@/core/contracts/auth-repository';
-import type { Session } from '@/core/domain/auth';
-import { supabase } from '../client';
-
-export class SupabaseAuthRepository implements AuthRepository {
-  async getSession(): Promise<Session | null> {
-    const { data, error } = await supabase.auth.getSession();
-
-    if (error || !data.session) {
-      return null;
+      setResendSuccess(true)
+    } catch (err: any) {
+      console.error('Resend verification email error:', err)
+      setResendError(err.message || 'Có lỗi xảy ra khi gửi lại email xác thực')
+    } finally {
+      setResendLoading(false)
     }
-
-    const { session } = data;
-
-    return {
-      user: {
-        id: session.user.id,
-        email: session.user.email ?? null,
-        name: session.user.user_metadata?.name ?? session.user.user_metadata?.full_name ?? null,
-      },
-      accessToken: session.access_token,
-      expiresAt: new Date(session.expires_at! * 1000).toISOString(),
-    };
   }
 
-  async signOut(): Promise<void> {
-    await supabase.auth.signOut();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="w-full max-w-md">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-black/5 text-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+
+          <h1 className="text-3xl font-semibold tracking-tight mb-4">
+            Kiểm tra email của bạn
+          </h1>
+
+          <p className="text-[#6B7280] mb-8 leading-relaxed">
+            Chúng tôi đã gửi link xác thực đến địa chỉ email của bạn.
+            Vui lòng kiểm tra hộp thư và nhấp vào link để xác thực tài khoản.
+          </p>
+
+          <div className="bg-[#EEF2FF] rounded-xl p-4 mb-8">
+            <p className="text-sm text-[#6B7280]">
+              <strong>Lưu ý:</strong> Link xác thực có hiệu lực trong 24 giờ.
+              Nếu bạn không thấy email, vui lòng kiểm tra thư mục spam.
+            </p>
+          </div>
+
+          {resendSuccess && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              Đã gửi lại email xác thực thành công!
+            </div>
+          )}
+          {resendError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {resendError}
+            </div>
+          )}
+
+          <button
+            onClick={handleResendEmail}
+            disabled={resendLoading}
+            className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resendLoading ? 'Đang gửi...' : 'Gửi lại email xác thực'}
+          </button>
+
+          <Link
+            to="/login"
+            className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
+          >
+            Quay lại đăng nhập
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/router.tsx">
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './hooks/useAuth'
+import { useProfile } from './hooks/useProfile'
+import AuthGate from './components/AuthGate'
+import LandingPage from './pages/LandingPage'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import RolePage from './pages/RolePage'
+import OnboardingPage from './pages/OnboardingPage'
+import CreatorDashboard from './pages/CreatorDashboard'
+import BrandDashboard from './pages/BrandDashboard'
+import ProfilePage from './pages/ProfilePage'
+import SettingsPage from './pages/SettingsPage'
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
   }
-}
-</file>
-
-<file path="infra/supabase/client.ts">
-import { createClient } from '@supabase/supabase-js';
-
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
-}
-
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
-}
-
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-</file>
-
-<file path="lib/api-response.ts">
-import { NextResponse } from 'next/server';
-
-/**
- * Standard API response helper
- * Ensures consistent response format with Vietnamese messages
- */
-
-export interface ApiSuccessResponse<T> {
-  ok: true;
-  data: T;
-  message: string;
-}
-
-export interface ApiErrorResponse {
-  ok: false;
-  message: string;
-  details?: unknown;
-}
-
-/**
- * Create a successful API response
- * @param data Response data
- * @param message Vietnamese message
- * @param status HTTP status code (default: 200)
- */
-export function ok<T>(
-  data: T,
-  message: string,
-  status: number = 200
-): NextResponse<ApiSuccessResponse<T>> {
-  return NextResponse.json(
-    {
-      ok: true as const,
-      data,
-      message,
-    },
-    { status }
-  );
-}
-
-/**
- * Create an error API response
- * @param message Vietnamese error message
- * @param status HTTP status code (default: 400)
- * @param details Optional error details
- */
-export function fail(
-  message: string,
-  status: number = 400,
-  details?: unknown
-): NextResponse<ApiErrorResponse> {
-  return NextResponse.json(
-    {
-      ok: false as const,
-      message,
-      ...(details !== undefined && { details }),
-    },
-    { status }
-  );
-}
-</file>
-
-<file path="lib/auth-guards.ts">
-// Auth guard utilities for route-level protection
-import { createServerClientWithCookies } from './supabase-server';
-import { redirect } from 'next/navigation';
-
-export interface ProfileCheckResult {
-  hasSession: boolean;
-  hasProfile: boolean;
-  profile?: {
-    id: string;
-    role: string | null;
-    onboarding_completed: boolean;
-  } | null;
-}
-
-/**
- * Check if user has valid session and profile from database
- * This is the source of truth - checks database, not just cookies
- */
-export async function checkAuthAndProfile(): Promise<ProfileCheckResult> {
-  const supabase = createServerClientWithCookies();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
   if (!session) {
-    return {
-      hasSession: false,
-      hasProfile: false,
-    };
+    return <Navigate to="/login" replace />
   }
 
-  // Check profile from database (source of truth)
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('id, role, onboarding_completed')
-    .eq('id', session.user.id)
-    .single();
-
-  if (error || !profile) {
-    // Session exists but no profile - invalid state
-    // Sign out and clear auth state
-    await supabase.auth.signOut();
-    return {
-      hasSession: false,
-      hasProfile: false,
-    };
-  }
-
-  return {
-    hasSession: true,
-    hasProfile: true,
-    profile,
-  };
+  return <>{children}</>
 }
 
-/**
- * Guard for protected routes - redirects to landing if not authenticated
- * Use this in protected page components
- */
-export async function requireAuth(): Promise<ProfileCheckResult> {
-  const result = await checkAuthAndProfile();
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth()
 
-  if (!result.hasSession || !result.hasProfile) {
-    redirect('/');
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
   }
 
-  return result;
+  if (session) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
 }
 
-/**
- * Guard for role selection page - redirects if already has role
- */
-export async function requireNoRole(): Promise<ProfileCheckResult> {
-  const result = await checkAuthAndProfile();
+export function Router() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignupPage />
+          </PublicRoute>
+        }
+      />
+      
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-  if (!result.hasSession || !result.hasProfile) {
-    redirect('/');
-  }
+      <Route
+        path="/role"
+        element={
+          <ProtectedRoute>
+            <RolePage />
+          </ProtectedRoute>
+        }
+      />
 
-  if (result.profile?.role) {
-    // Already has role, redirect to next step
-    if (!result.profile.onboarding_completed) {
-      redirect('/onboarding');
-    } else {
-      redirect(`/${result.profile.role}`);
-    }
-  }
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
 
-  return result;
+      <Route
+        path="/dashboard"
+        element={
+          <AuthGate>
+            <DashboardRouter />
+          </AuthGate>
+        }
+      />
+
+      <Route
+        path="/creator"
+        element={
+          <AuthGate>
+            <CreatorDashboard />
+          </AuthGate>
+        }
+      />
+
+      <Route
+        path="/brand"
+        element={
+          <AuthGate>
+            <BrandDashboard />
+          </AuthGate>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <AuthGate>
+            <ProfilePage />
+          </AuthGate>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <AuthGate>
+            <SettingsPage />
+          </AuthGate>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
 
-/**
- * Guard for onboarding page - redirects if not ready for onboarding
- */
-export async function requireRoleButNoOnboarding(): Promise<ProfileCheckResult> {
-  const result = await checkAuthAndProfile();
+function DashboardRouter() {
+  const { user } = useAuth()
+  const { profile } = useProfile(user?.id)
 
-  if (!result.hasSession || !result.hasProfile) {
-    redirect('/');
+  if (!profile) return null
+
+  if (profile.role === 'creator') {
+    return <CreatorDashboard />
   }
 
-  if (!result.profile?.role) {
-    // No role yet, redirect to role selection
-    redirect('/role');
-  }
-
-  if (result.profile.onboarding_completed) {
-    // Already completed onboarding, redirect to dashboard
-    redirect(`/${result.profile.role}`);
-  }
-
-  return result;
-}
-
-/**
- * Guard for dashboard pages - requires complete profile
- */
-export async function requireCompleteProfile(expectedRole?: string): Promise<ProfileCheckResult> {
-  const result = await checkAuthAndProfile();
-
-  if (!result.hasSession || !result.hasProfile) {
-    redirect('/');
-  }
-
-  if (!result.profile?.role) {
-    redirect('/role');
-  }
-
-  if (!result.profile.onboarding_completed) {
-    redirect('/onboarding');
-  }
-
-  if (expectedRole && result.profile.role !== expectedRole) {
-    redirect(`/${result.profile.role}`);
-  }
-
-  return result;
+  return <BrandDashboard />
 }
 </file>
 
-<file path="lib/supabase-helpers.ts">
-// Helper function to check if user is admin
-export function isAdmin(email: string | null | undefined): boolean {
-  if (!email) return false;
-  return email.toLowerCase().endsWith('@alino.net');
+<file path="MIGRATION_GUIDE.md">
+# Migration Guide: Next.js to Vite + React
+
+## Overview
+This project has been migrated from Next.js App Router to Vite + React for simplicity and predictability.
+
+## Key Changes
+
+### 1. Project Structure
+- **Old**: `app/` directory with Next.js App Router
+- **New**: `src/` directory with standard React structure
+
+### 2. Routing
+- **Old**: Next.js file-based routing (`app/page.tsx`, `app/login/page.tsx`)
+- **New**: React Router with `src/router.tsx`
+
+### 3. Authentication
+- **Old**: Server-side auth with cookies, API routes
+- **New**: Client-side only with Supabase client, localStorage persistence
+
+### 4. No More Server Components
+- All components are now client-side React components
+- No SSR, no hydration issues
+
+## Setup Instructions
+
+1. **Install dependencies:**
+```bash
+npm install
+```
+
+2. **Create `.env` file:**
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+3. **Start development server:**
+```bash
+npm run dev
+```
+
+## File Mapping
+
+| Next.js | Vite + React |
+|---------|--------------|
+| `app/page.tsx` | `src/pages/LandingPage.tsx` |
+| `app/login/page.tsx` | `src/pages/LoginPage.tsx` |
+| `app/signup/page.tsx` | `src/pages/SignupPage.tsx` |
+| `app/creator/page.tsx` | `src/pages/CreatorDashboard.tsx` |
+| `app/brand/page.tsx` | `src/pages/BrandDashboard.tsx` |
+| `app/profile/page.tsx` | `src/pages/ProfilePage.tsx` |
+| `app/settings/page.tsx` | `src/pages/SettingsPage.tsx` |
+| `app/components/layout/Header.tsx` | `src/components/layout/Header.tsx` |
+| `lib/hooks/useAuth.ts` | `src/hooks/useAuth.ts` |
+| `lib/supabase-client.ts` | `src/lib/supabase.ts` |
+
+## Removed Concepts
+
+- ❌ Server Components
+- ❌ Route Handlers (`app/api/`)
+- ❌ Server-side auth guards
+- ❌ AuthGate component
+- ❌ Middleware
+- ❌ `layout.tsx`
+- ❌ `next/image` (use `<img>`)
+- ❌ `next/link` (use React Router `Link`)
+
+## What Works Now
+
+✅ Simple client-side routing
+✅ Supabase auth with localStorage
+✅ No navigation blocking
+✅ Predictable behavior
+✅ Easy to understand and modify
+
+## Next Steps
+
+1. Copy `vite-package.json` to `package.json`
+2. Copy `vite.config.ts` to root
+3. Copy `vite-tailwind.config.js` to `tailwind.config.js`
+4. Copy `vite-postcss.config.js` to `postcss.config.js`
+5. Copy `vite-tsconfig.json` to `tsconfig.json`
+6. Copy `vite-tsconfig.node.json` to `tsconfig.node.json`
+7. Move `src/` directory to root
+8. Move `index.html` to root
+9. Update environment variables to use `VITE_` prefix
+10. Run `npm install` and `npm run dev`
+</file>
+
+<file path="postcss.config.cjs">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
 }
+</file>
+
+<file path="README_VITE.md">
+# Vite + React Migration Complete
+
+## Quick Start
+
+1. **Install dependencies:**
+```bash
+npm install
+```
+
+2. **Set up environment variables:**
+Create `.env` file:
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+3. **Start development:**
+```bash
+npm run dev
+```
+
+## Project Structure
+
+```
+src/
+  ├── main.tsx              # Entry point
+  ├── App.tsx               # Root component with Router
+  ├── router.tsx            # React Router configuration
+  ├── index.css             # Global styles (Tailwind)
+  ├── components/
+  │   └── layout/
+  │       ├── Header.tsx    # Navigation header
+  │       ├── UserMenu.tsx  # User dropdown menu
+  │       └── Footer.tsx    # Footer component
+  ├── pages/
+  │   ├── LandingPage.tsx
+  │   ├── LoginPage.tsx
+  │   ├── SignupPage.tsx
+  │   ├── VerifyEmailPage.tsx
+  │   ├── RolePage.tsx
+  │   ├── OnboardingPage.tsx
+  │   ├── CreatorDashboard.tsx
+  │   ├── BrandDashboard.tsx
+  │   ├── ProfilePage.tsx
+  │   └── SettingsPage.tsx
+  ├── hooks/
+  │   └── useAuth.ts        # Auth hook (client-side only)
+  └── lib/
+      └── supabase.ts       # Supabase client setup
+```
+
+## Key Features
+
+✅ **Simple Client-Side Auth**
+- Supabase client with localStorage persistence
+- No server-side auth checks
+- Session persists across page refreshes
+
+✅ **React Router**
+- Clean, predictable routing
+- Protected routes with simple guards
+- No navigation blocking
+
+✅ **No SSR Complexity**
+- All components are client-side
+- No hydration issues
+- Easy to understand and modify
+
+## Migration Notes
+
+- All Next.js concepts removed (App Router, Server Components, Route Handlers)
+- Auth is now 100% client-side
+- Navigation always works - no redirect loops
+- Profile/role checks happen in router, not on every navigation
+
+## Next Steps
+
+1. Copy all `vite-*` files to root (remove `vite-` prefix)
+2. Move `src/` directory to root
+3. Move `index.html` to root
+4. Update environment variables
+5. Run `npm install` and `npm run dev`
 </file>
 
 <file path="supabase/migrations/001_create_profiles.sql">
@@ -2191,16 +1961,6 @@ CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 
 -- Create index on onboarding_completed for faster queries
 CREATE INDEX IF NOT EXISTS idx_profiles_onboarding_completed ON public.profiles(onboarding_completed);
-</file>
-
-<file path="next.config.js">
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Next.js configuration
-  // Add any custom config here if needed
-}
-
-module.exports = nextConfig
 </file>
 
 <file path="PROFILES_IMPLEMENTATION.md">
@@ -2593,1576 +2353,47 @@ if (profile.role === Role.CREATOR) { ... }
 **END OF DOCUMENT**
 </file>
 
-<file path="app/api/auth/profile-check/route.ts">
-// API endpoint to check profile from database (for client-side checks)
-import { NextResponse } from 'next/server';
-import { createServerClientWithCookies } from '@/lib/supabase-server';
-
-export async function GET() {
-  try {
-    const supabase = createServerClientWithCookies();
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json({
-        hasSession: false,
-        hasProfile: false,
-      });
-    }
-
-    // Check profile from database (source of truth)
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('id, role, onboarding_completed, onboarding_data')
-      .eq('id', session.user.id)
-      .single();
-
-    if (error || !profile) {
-      // Session exists but no profile - invalid state
-      await supabase.auth.signOut();
-      return NextResponse.json({
-        hasSession: false,
-        hasProfile: false,
-      });
-    }
-
-    return NextResponse.json({
-      hasSession: true,
-      hasProfile: true,
-      profile,
-    });
-  } catch (error) {
-    console.error('Profile check error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
 </file>
 
-<file path="app/api/auth/signup/route.ts">
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientWithCookies } from '@/lib/supabase-server'
+<file path="src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
 
-export async function POST(request: NextRequest) {
-  const { email, password } = await request.json()
-
-  const supabase = createServerClientWithCookies()
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${request.nextUrl.origin}/auth/callback`,
-    },
-  })
-
-  if (error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 400 }
-    )
-  }
-
-  return NextResponse.json({
-    message: 'Check email để verify',
-    user: data.user,
-  })
-}
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
 </file>
 
-<file path="app/api/profile/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientWithCookies } from '@/lib/supabase-server';
-import { isAdmin } from '@/lib/supabase-helpers';
-
-// GET: Get profile(s) - user can get their own, admin can get all
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = createServerClientWithCookies();
-
-    // Validate session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Phiên đăng nhập không hợp lệ' },
-        { status: 401 }
-      );
-    }
-
-    const userId = session.user.id;
-    const userEmail = session.user.email;
-    const admin = isAdmin(userEmail);
-
-    // Admin can get all profiles, users can only get their own (enforced by RLS)
-    if (admin) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching all profiles (admin):', error);
-        return NextResponse.json(
-          { error: error.message || 'Không thể lấy danh sách profiles' },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({ profiles: data });
-    } else {
-      // Regular users - RLS will enforce they can only read their own profile
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return NextResponse.json(
-          { error: error.message || 'Không thể lấy profile' },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({ profile: data });
-    }
-  } catch (error) {
-    console.error('Get profile error:', error);
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi lấy profile' },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT: Update user's own profile
-export async function PUT(request: NextRequest) {
-  try {
-    const supabase = createServerClientWithCookies();
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Phiên đăng nhập không hợp lệ' },
-        { status: 401 }
-      );
-    }
-
-    const userId = session.user.id;
-    const { onboarding_data } = await request.json();
-
-    // Update profile (RLS will enforce user can only update their own)
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        onboarding_data: onboarding_data || {},
-      })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error updating profile:', error);
-      return NextResponse.json(
-        { error: error.message || 'Không thể cập nhật profile' },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({
-      message: 'Profile đã được cập nhật thành công',
-    });
-  } catch (error) {
-    console.error('Update profile error:', error);
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi cập nhật profile' },
-      { status: 500 }
-    );
-  }
-}
-</file>
-
-<file path="app/components/home/Compare.tsx">
-'use client';
-
-export default function Compare() {
-  return (
-    <section className="relative pt-12 md:pt-14 pb-14 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full blur-[110px] opacity-20"
-        style={{ background: '#DDD6FE' }}
-      />
-
-      <div className="relative max-w-6xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
-          Trước và sau khi dùng ALINO
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-10 border-2 border-[#E5E7EB] shadow-lg">
-            <h3 className="text-2xl font-semibold mb-8 tracking-tight">
-              Trước khi có ALINO
-            </h3>
-            <ul className="space-y-4">
-              {[
-                'Tin nhắn Zalo/Messenger bị trôi, mất context',
-                'File Google Drive lộn xộn, không đồng bộ',
-                'Theo dõi deadline bằng Excel, dễ sai sót',
-                'Không có lịch sử trao đổi rõ ràng',
-                'Thanh toán và hợp đồng rải rác nhiều nơi',
-                'Không đo lường được hiệu quả hợp tác',
-              ].map((item, idx) => (
-                <li key={idx} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#9CA3AF]" />
-                  <span className="text-[#6B7280]">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="relative rounded-3xl p-[2px] bg-gradient-to-r from-[#6366F1] to-[#EC4899] shadow-xl">
-            <div className="bg-gradient-to-br from-white to-[#FAFBFF] rounded-3xl p-10 h-full">
-              <h3 className="text-2xl font-semibold mb-8 tracking-tight">
-                Với ALINO
-              </h3>
-              <ul className="space-y-4">
-                {[
-                  'Nền tảng chung minh bạch cho cả hai phía',
-                  'File và phiên bản được quản lý rõ ràng, đồng bộ',
-                  'Timeline tự động, deadline được nhắc nhở',
-                  'Lịch sử trao đổi đầy đủ, dễ tìm lại',
-                  'Thanh toán và hợp đồng tập trung, minh bạch',
-                  'Báo cáo hiệu quả hợp tác tự động, cả hai phía đều thấy',
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899]" />
-                    <span className="text-[#6B7280]">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/CTA.tsx">
-'use client';
-
-export default function CTA() {
-  return (
-    <section className="relative py-20 bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white overflow-hidden">
-      <div
-        className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-40"
-        style={{ background: '#C7D2FE' }}
-      />
-      <div
-        className="absolute bottom-0 right-1/4 w-[480px] h-[480px] rounded-full blur-[115px] opacity-35"
-        style={{ background: '#F6C1D1' }}
-      />
-
-      <div className="relative max-w-4xl mx-auto px-6 text-center space-y-6">
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-tight">
-          Bắt đầu hợp tác{' '}
-          <br className="hidden md:block" />
-          một cách chuyên nghiệp hơn
-        </h2>
-        <p className="text-xl text-[#6B7280] max-w-2xl mx-auto">
-          ALINO giúp bạn làm việc cùng đối tác một cách minh bạch, rõ ràng và hiệu quả hơn.
-        </p>
-        <div className="flex flex-col items-center gap-4">
-          <a
-            href="/register"
-            className="px-10 py-5 rounded-full font-semibold text-lg text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-2xl shadow-[#6366F1]/40"
-          >
-            Bắt đầu miễn phí
-          </a>
-          <p className="text-sm text-[#9CA3AF]">
-            Không cần thẻ tín dụng • Thiết lập trong 5 phút
-          </p>
-          <p className="text-xs text-[#9CA3AF] mt-2">
-            Đăng ký → chọn Creator hoặc Brand → tạo workspace đầu tiên
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/ForWho.tsx">
-'use client';
-
-export default function ForWho() {
-  return (
-    <section className="relative py-14 md:py-16 bg-gradient-to-b from-[#FAFBFF] via-white to-[#F5F7FF]">
-      <div
-        className="absolute top-20 left-20 w-[380px] h-[380px] rounded-full blur-[100px] opacity-25"
-        style={{ background: '#C7D2FE' }}
-      />
-      <div
-        className="absolute bottom-20 right-20 w-[350px] h-[350px] rounded-full blur-[90px] opacity-20"
-        style={{ background: '#F6C1D1' }}
-      />
-
-      <div className="relative max-w-6xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
-          ALINO dành cho ai?
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-10 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all border border-black/5">
-            <h3 className="text-2xl font-semibold mb-6 tracking-tight">
-              Creator
-            </h3>
-            <p className="text-[#6B7280] mb-8 leading-relaxed">
-              Dành cho nhà sáng tạo nội dung muốn làm việc chuyên nghiệp với nhiều Brand trong workspace chung, minh bạch và hiệu quả.
-            </p>
-            <ul className="space-y-4 mb-10">
-              {[
-                'Khám phá và nhận lời mời hợp tác từ nhiều Brand',
-                'Làm việc trong nền tảng chung, minh bạch với Brand',
-                'Giao nội dung và nhận feedback có lịch sử đầy đủ',
-                'Theo dõi deadline và tiến độ của từng dự án hợp tác',
-                'Xem thống kê hiệu quả và kết quả công việc',
-              ].map((benefit, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex-shrink-0 mt-0.5 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  </div>
-                  <span className="text-[#6B7280]">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href="/register"
-              className="inline-block px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
-            >
-              Dùng thử miễn phí
-            </a>
-          </div>
-
-          <div className="bg-gradient-to-br from-[#FAFBFF] to-white rounded-3xl p-10 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all border border-black/5">
-            <h3 className="text-2xl font-semibold mb-6 tracking-tight">
-              Brand / Agency
-            </h3>
-            <p className="text-[#6B7280] mb-8 leading-relaxed">
-              Dành cho nhãn hàng và các công ty cần hợp tác với nhiều Creator trong workspace chung, cùng theo dõi tiến độ và hiệu quả.
-            </p>
-            <ul className="space-y-4 mb-10">
-              {[
-                'Khám phá và kết nối với Creator phù hợp',
-                'Làm việc trong nền tảng chung với từng Creator',
-                'Theo dõi tiến độ và deadline của từng dự án hợp tác',
-                'Xem và phản hồi nội dung có lịch sử đầy đủ',
-                'Xem báo cáo tổng hợp hiệu quả của tất cả dự án',
-              ].map((benefit, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex-shrink-0 mt-0.5 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  </div>
-                  <span className="text-[#6B7280]">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href="/register"
-              className="inline-block px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
-            >
-              Dùng thử miễn phí
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/Hero.tsx">
-'use client';
-
-import TrustedBy from './TrustedBy';
-
-export default function Hero() {
-  return (
-    <section className="relative h-[calc(100vh-64px)] overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#EEF1FF] via-[#F5F7FF] to-white" />
-
-      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full blur-[120px] opacity-50 bg-[#C7D2FE]" />
-      <div className="absolute top-1/4 right-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-40 bg-[#F6C1D1]" />
-      <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] rounded-full blur-[90px] opacity-35 bg-[#DDD6FE]" />
-
-      <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col pt-16 pb-20">
-        <div className="flex-1 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight">
-              Workspace chung cho
-              <br />
-              <span className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">Creator & Brand</span> hợp tác hiệu quả
-            </h1>
-
-            <p className="text-lg md:text-xl text-[#6B7280] leading-relaxed max-w-xl">
-              Không còn Zalo – Excel – Drive rời rạc.<br />
-              ALINO gom toàn bộ dự án, nội dung và tiến độ vào một nơi duy nhất.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <a
-                href="/register"
-                className="px-7 py-3.5 rounded-full font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/30"
-              >
-                Bắt đầu miễn phí
-              </a>
-              <span className="text-sm text-[#9CA3AF]">
-                Không cần thẻ • 5 phút thiết lập
-              </span>
-            </div>
-          </div>
-
-          <div className="relative">
-  <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-black/5">
-    <div className="space-y-5">
-
-      {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-3 w-24 bg-[#E5E7EB] rounded-full" />
-          <div className="h-3 w-16 bg-[#EEF2FF] rounded-full" />
-        </div>
-        <span className="text-xs text-[#10B981] bg-[#ECFDF5] px-2 py-0.5 rounded-full">
-          Active
-        </span>
-      </div>
-
-      {/* Content */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Creator column */}
-        <div className="space-y-3">
-          <p className="text-xs font-medium text-[#6366F1]">Creator</p>
-          <div className="bg-[#EEF2FF] rounded-xl p-3">
-            <p className="text-xs font-medium">Video TikTok</p>
-            <p className="text-[11px] text-[#6B7280]">Draft đang chờ duyệt</p>
-          </div>
-          <div className="bg-[#E0E7FF] rounded-xl p-3">
-            <p className="text-xs font-medium">Instagram Reel</p>
-            <p className="text-[11px] text-[#6B7280]">Đã gửi</p>
-          </div>
-        </div>
-
-        {/* Brand column */}
-        <div className="space-y-3">
-          <p className="text-xs font-medium text-[#EC4899]">Brand</p>
-          <div className="bg-[#FCE7F3] rounded-xl p-3">
-            <p className="text-xs font-medium">Feedback</p>
-            <p className="text-[11px] text-[#6B7280]">
-              “Sửa caption đoạn đầu”
-            </p>
-          </div>
-          <div className="bg-[#FBCFE8] rounded-xl p-3">
-            <p className="text-xs font-medium">Approved</p>
-            <p className="text-[11px] text-[#6B7280]">
-              OK đăng ngày 25/12
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Timeline */}
-      <div className="flex items-center gap-2 pt-2">
-        <div className="h-2 w-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] rounded-full" />
-        <span className="text-[10px] text-[#6B7280]">75%</span>
-      </div>
-    </div>
-  </div>
-</div>
-        </div>
-        <div className="mt-10">
-          <TrustedBy />
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/HowItWorks.tsx">
-'use client';
-
-export default function HowItWorks() {
-  return (
-    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white to-[#FAFBFF]">
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-18"
-        style={{ background: '#F6C1D1' }}
-      />
-
-      <div className="relative max-w-6xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
-          ALINO hoạt động như thế nào?
-        </h2>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-          {[
-            {
-              step: '1',
-              title: 'Tạo tài khoản',
-              desc: 'Đăng ký nhanh chóng, chọn vai trò Creator hoặc Brand.',
-            },
-            {
-              step: '2',
-              title: 'Khám phá & kết nối',
-              desc: 'Brand tìm Creator phù hợp, Creator nhận lời mời hợp tác.',
-            },
-            {
-              step: '3',
-              title: 'Làm việc cùng nhau',
-              desc: 'Creator tạo nội dung, Brand xem và phản hồi trực tiếp trên nền tảng chung.',
-            },
-            {
-              step: '4',
-              title: 'Theo dõi & đánh giá',
-              desc: 'Cả hai phía xem tiến độ, thống kê và kết quả hợp tác minh bạch.',
-            },
-          ].map((item, idx) => (
-            <div key={idx} className="relative">
-              <div className="bg-gradient-to-br from-white to-[#FAFBFF] rounded-3xl p-8 border border-black/5 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-xl font-bold text-white mb-6">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold text-lg mb-3 tracking-tight">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-[#6B7280] leading-relaxed">
-                  {item.desc}
-                </p>
-              </div>
-              {idx < 3 && (
-                <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#6366F1] to-[#EC4899]" />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/Problems.tsx">
-'use client';
-
-export default function Problems() {
-  return (
-    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-[#F5F7FF]">
-      <div
-        className="absolute top-20 right-20 w-[350px] h-[350px] rounded-full blur-[90px] opacity-25"
-        style={{ background: '#F6C1D1' }}
-      />
-
-      <div className="relative max-w-6xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
-          Hợp tác nhiều hơn{' '}
-          <br className="md:hidden" />
-          nhưng quy trình ngày càng rối
-        </h2>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            'Tin nhắn Zalo/Messenger bị trôi, mất context cuộc hội thoại',
-            'File Google Drive lộn xộn, không biết phiên bản nào là mới nhất',
-            'Theo dõi deadline bằng Excel, dễ bị quên hoặc trùng lịch',
-            'Không có lịch sử phản hồi, không nhớ đã trao đổi gì',
-            'Thanh toán và hợp đồng nằm rải rác nhiều nơi',
-            'Không đo lường được hiệu quả của từng dự án hợp tác',
-          ].map((point, idx) => (
-            <div
-              key={idx}
-              className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-black/5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-[#9CA3AF] mt-2 flex-shrink-0" />
-                <p className="text-[#6B7280] leading-relaxed">{point}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/Solutions.tsx">
-'use client';
-
-export default function Solutions() {
-  return (
-    <section className="relative pt-12 md:pt-14 pb-14 md:pb-16 bg-gradient-to-b from-[#F5F7FF] via-[#FAFBFF] to-white">
-      <div
-        className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] opacity-35"
-        style={{ background: '#C7D2FE' }}
-      />
-      <div
-        className="absolute bottom-0 right-0 w-[380px] h-[380px] rounded-full blur-[95px] opacity-30"
-        style={{ background: '#DDD6FE' }}
-      />
-
-      <div className="relative max-w-6xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
-          ALINO tạo nền tảng hợp tác rõ ràng
-        </h2>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              title: 'Nền tảng chung',
-              desc: 'Creator và Brand làm việc cùng nhau trong một nơi duy nhất, minh bạch và đồng bộ.',
-            },
-            {
-              title: 'Quy trình rõ ràng',
-              desc: 'Timeline tự động: Yêu cầu → Draft → Feedback → Duyệt → Hoàn thành.',
-            },
-            {
-              title: 'Lịch sử đầy đủ',
-              desc: 'Mọi trao đổi, comment và thay đổi đều được lưu lại, không bao giờ mất context.',
-            },
-            {
-              title: 'Báo cáo minh bạch',
-              desc: 'Thống kê tiến độ và kết quả hợp tác được cập nhật tự động, cả hai phía đều thấy.',
-            },
-          ].map((feature, idx) => (
-            <div
-              key={idx}
-              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all border border-black/5"
-            >
-              <h3 className="font-semibold text-lg mb-3 tracking-tight">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-[#6B7280] leading-relaxed">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/components/home/TrustedBy.tsx">
-'use client';
-
-export default function TrustedBy() {
-  return (
-    <div className="pb-4 pt-6">
-      <p className="text-center text-[11px] uppercase tracking-widest text-[#9CA3AF] mb-3">
-        Được tin dùng trên các nền tảng
-      </p>
-      <div className="flex justify-center gap-10 text-sm text-[#6B7280] font-medium">
-        <span>Tiktok</span>
-        <span>Instagram</span>
-        <span>Facebook</span>
-        <span>Youtube</span>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="app/components/home/WhyAlino.tsx">
-'use client';
-
-export default function WhyAlino() {
-  return (
-    <section className="relative py-14 md:py-16 bg-gradient-to-b from-white via-[#FAFBFF] to-white">
-      <div
-        className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-25"
-        style={{ background: '#C7D2FE' }}
-      />
-      <div
-        className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-[95px] opacity-20"
-        style={{ background: '#F6C1D1' }}
-      />
-
-      <div className="relative max-w-5xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-semibold tracking-tight text-center mb-10 md:mb-12">
-          Tại sao chọn ALINO?
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            {
-              title: 'Thiết kế cho thị trường Việt Nam',
-              desc: 'Hiểu rõ cách làm việc của Creator và Brand tại Việt Nam, ALINO được xây dựng phù hợp với thực tế hợp tác.',
-            },
-            {
-              title: 'Đơn giản, tập trung',
-              desc: 'Không phức tạp, không thừa tính năng. ALINO tập trung vào những gì thực sự cần thiết cho hợp tác hiệu quả.',
-            },
-            {
-              title: 'Xây dựng cho hợp tác lâu dài',
-              desc: 'Không chỉ một lần hợp tác, ALINO giúp bạn xây dựng mối quan hệ làm việc bền vững với đối tác.',
-            },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-black/5"
-            >
-              <h3 className="font-semibold text-lg mb-4 tracking-tight">
-                {item.title}
-              </h3>
-              <p className="text-sm text-[#6B7280] leading-relaxed">
-                {item.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-</file>
-
-<file path="app/verify-email/page.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-
-export default function VerifyEmailPage() {
-  const [email, setEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    // Get email from localStorage
-    if (typeof window !== 'undefined') {
-      const storedEmail = localStorage.getItem('pendingVerificationEmail');
-      setEmail(storedEmail);
-    }
-  }, []);
-
-  const handleResend = async () => {
-    if (!email) {
-      setError('Không tìm thấy email');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess(false);
-
-    try {
-      const res = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Không thể gửi lại email');
-      }
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 5000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6">
-      <div className="w-full max-w-md">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-black/5 text-center">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-
-          <h1 className="text-3xl font-semibold tracking-tight mb-4">
-            Kiểm tra email của bạn
-          </h1>
-
-          <p className="text-[#6B7280] mb-8 leading-relaxed">
-            Chúng tôi đã gửi link xác thực đến địa chỉ email của bạn. 
-            Vui lòng kiểm tra hộp thư và nhấp vào link để xác thực tài khoản.
-          </p>
-
-          {email && (
-            <p className="text-sm text-[#6366F1] mb-6 font-medium">
-              {email}
-            </p>
-          )}
-
-          <div className="bg-[#EEF2FF] rounded-xl p-4 mb-6">
-            <p className="text-sm text-[#6B7280]">
-              <strong>Lưu ý:</strong> Link xác thực có hiệu lực trong 24 giờ. 
-              Nếu bạn không thấy email, vui lòng kiểm tra thư mục spam.
-            </p>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              Email đã được gửi lại thành công!
-            </div>
-          )}
-
-          {email && (
-            <button
-              onClick={handleResend}
-              disabled={loading}
-              className="w-full mb-4 px-6 py-3 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] hover:bg-[#6366F1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Đang gửi...' : 'Gửi lại email xác thực'}
-            </button>
-          )}
-
-          <Link
-            href="/login"
-            className="inline-block px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
-          >
-            Quay lại đăng nhập
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="lib/hooks/useAuth.ts">
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import type { Session } from '@supabase/supabase-js'
-import { getBrowserSupabase } from '@/lib/supabase-client'
-
-export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const router = useRouter()
-  const supabase = getBrowserSupabase()
-
-  useEffect(() => {
-    let mounted = true
-
-    // ✅ 1. LẤY SESSION TỪ SUPABASE CLIENT (SYNC)
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return
-      setSession(data.session ?? null)
-      setLoading(false)
-    })
-
-    // ✅ 2. LISTEN AUTH CHANGE
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setSession(null)
-    router.push('/login')
-  }
-
-  return {
-    session,
-    user: session?.user ?? null,
-    loading,
-    signOut,
-  }
-}
-</file>
-
-<file path="lib/container.ts">
-import type { AuthRepository } from '@/core/contracts/auth-repository';
-import type { CreatorRepository } from '@/core/contracts/creator-repository';
-import type { BrandRequestRepository } from '@/core/contracts/brand-request-repository';
-import { SupabaseAuthRepository } from '@/infra/supabase/auth/SupabaseAuthRepository';
-
-export function getServices(): {
-  authRepository: AuthRepository;
-  creatorRepository: CreatorRepository;
-  brandRequestRepository: BrandRequestRepository;
-} {
-  return {
-    authRepository: new SupabaseAuthRepository(),
-    creatorRepository: null as any,
-    brandRequestRepository: null as any,
-  };
-}
-</file>
-
-<file path="lib/supabase-client.ts">
-// lib/supabase-client.ts
-'use client'
-
-import { createBrowserClient } from '@supabase/ssr'
-import type { SupabaseClient } from '@supabase/supabase-js'
-
-let supabaseClient: SupabaseClient | null = null
-
-export function getBrowserSupabase() {
-  if (!supabaseClient) {
-    supabaseClient = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  }
-
-  return supabaseClient
-}
-</file>
-
-<file path="lib/supabase-server.ts">
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-
-export function createServerClientWithCookies() {
-  const cookieStore = cookies()
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch {
-            // Cookies can only be set in Server Components/Route Handlers
-          }
-        },
-      },
-    }
-  )
-}
-</file>
-
-<file path="postcss.config.js">
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-</file>
-
-<file path="app/api/auth/login/route.ts">
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientWithCookies } from '@/lib/supabase-server'
-
-export async function POST(req: NextRequest) {
-  try {
-    const { email, password } = await req.json()
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email và mật khẩu là bắt buộc' },
-        { status: 400 }
-      )
-    }
-
-    const supabase = createServerClientWithCookies()
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 })
-    }
-
-    return NextResponse.json({ success: true, user: data.user })
-  } catch (error) {
-    console.error('Login error:', error)
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi đăng nhập' },
-      { status: 500 }
-    )
-  }
-}
-</file>
-
-<file path="app/api/auth/logout/route.ts">
-import { NextResponse } from 'next/server'
-import { createServerClientWithCookies } from '@/lib/supabase-server'
-
-export async function POST() {
-  try {
-    const supabase = createServerClientWithCookies()
-    await supabase.auth.signOut()
-
-    return NextResponse.json({ message: 'Đã đăng xuất' })
-  } catch (error) {
-    console.error('Logout error:', error)
-    return NextResponse.json(
-      { error: 'Có lỗi xảy ra khi đăng xuất' },
-      { status: 500 }
-    )
-  }
-}
-</file>
-
-<file path="app/components/layout/Footer.tsx">
-'use client';
-
-import Image from 'next/image';
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
-
-export default function Footer() {
-  return (
-    <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-5 gap-12 mb-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/logo/logo.png"
-                alt="ALINO"
-                width={28}
-                height={28}
-                className="w-7 h-7"
-              />
-              <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-                ALINO
-              </span>
-            </div>
-            <p className="text-sm text-[#6B7280] leading-relaxed">
-              Nền tảng hợp tác cho Creator và Brand chuyên nghiệp.
-            </p>
-            <div className="flex items-center gap-4 pt-2">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#1877F2] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaFacebook size={20} />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#DD2A7B] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaInstagram size={20} />
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#000000] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaTiktok size={20} />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#FF0000] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaYoutube size={20} />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaLinkedin size={20} />
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Sản phẩm</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li>
-                <a href="#product" className="hover:text-[#6366F1] transition-colors">
-                  Tính năng
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" className="hover:text-[#6366F1] transition-colors">
-                  Bảng giá
-                </a>
-              </li>
-              <li>
-                <a href="#how-it-works" className="hover:text-[#6366F1] transition-colors">
-                  Cách hoạt động
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Công ty</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li>
-                <a href="#about" className="hover:text-[#6366F1] transition-colors">
-                  Về chúng tôi
-                </a>
-              </li>
-              <li>
-                <a href="#news" className="hover:text-[#6366F1] transition-colors">
-                  Tin tức
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="hover:text-[#6366F1] transition-colors">
-                  Liên hệ
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Pháp lý</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li>
-                <a href="#terms" className="hover:text-[#6366F1] transition-colors">
-                  Điều khoản sử dụng
-                </a>
-              </li>
-              <li>
-                <a href="#privacy" className="hover:text-[#6366F1] transition-colors">
-                  Chính sách bảo mật
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Liên hệ</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li className="flex items-start gap-3">
-                <FaPhone className="mt-0.5 flex-shrink-0" size={16} />
-                <a href="tel:+84707970216" className="hover:text-[#6366F1] transition-colors">
-                  +84 707 970 216
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaEnvelope className="mt-0.5 flex-shrink-0" size={16} />
-                <a href="mailto:contact@alino.net" className="hover:text-[#6366F1] transition-colors">
-                  contact@alino.net
-                </a>
-              </li>
-              <li className="flex items-start gap-3 leading-relaxed">
-                <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={16} />
-                <span>
-                  Landmark 81
-                  <br />
-                  720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh, Việt Nam
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="pt-8 border-t border-black/5 text-center text-sm text-[#9CA3AF]">
-          © 2025 ALINO. All rights reserved.
-        </div>
-      </div>
-    </footer>
-  );
-}
-</file>
-
-<file path="app/login/page.tsx">
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-  
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-  
-      const data = await res.json();
-  
-      if (!res.ok) {
-        setError(data.error || 'Đăng nhập thất bại');
-        setLoading(false);
-        return;
-      }
-  
-      window.location.href = '/';
-    } catch {
-      setError('Có lỗi xảy ra');
-      setLoading(false);
-    }
-  };  
-
-  const handleGoogleLogin = async () => {
-    const res = await fetch('/api/auth/oauth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: 'google' }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] px-6 lg:px-6">
-      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl overflow-hidden flex">
-
-        {/* LEFT */}
-        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-[#6366F1]/20 via-[#7C3AED]/15 to-[#EC4899]/20">
-          <div className="flex flex-col px-12 pt-12 items-center">
-            <Image
-              src="/logo/logo.png"
-              alt="ALINO"
-              width={400}
-              height={400}
-              priority
-              className="w-40 h-40 mb-6"
-            />
-            <h1 className="text-3xl font-semibold text-[#1F2937] mb-3">
-              Chào mừng tới với Alino
-            </h1>
-            <p className="text-[#6B7280] leading-relaxed">
-              Nền tảng quản lý các dự án hợp tác chuyên nghiệp
-            </p>
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="w-full lg:w-[55%] px-10 py-8 flex items-center justify-center">
-          <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold mb-2">Đăng nhập</h2>
-            <p className="text-sm text-[#6B7280] mb-6">
-              Nhập thông tin để tiếp tục
-            </p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <button
-                disabled={loading}
-                className="w-full py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
-              >
-                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-              </button>
-            </form>
-
-            <div className="my-5 text-center text-xs text-[#9CA3AF]">HOẶC</div>
-
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full py-2.5 border rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Đăng nhập với Google
-            </button>
-
-            <p className="mt-6 text-center text-sm text-[#6B7280]">
-              Chưa có tài khoản?{' '}
-              <Link href="/signup" className="text-[#6366F1] font-medium">
-                Đăng ký
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="app/signup/page.tsx">
-'use client';
-
-import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-
-export default function SignupPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Đăng ký thất bại');
-        setLoading(false);
-        return;
-      }
-
-      // Store email in localStorage for resend functionality
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('pendingVerificationEmail', email);
-      }
-      window.location.href = '/verify-email';
-    } catch {
-      setError('Có lỗi xảy ra');
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignup = async () => {
-    const res = await fetch('/api/auth/oauth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: 'google' }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] px-6">
-      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl overflow-hidden flex">
-
-        {/* LEFT */}
-        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-[#6366F1]/20 via-[#7C3AED]/15 to-[#EC4899]/20">
-          <div className="flex flex-col px-12 pt-12 items-center">
-            <Image
-              src="/logo/logo.png"
-              alt="ALINO"
-              width={400}
-              height={400}
-              priority
-              className="w-40 h-40 mb-6"
-            />
-            <h1 className="text-3xl font-semibold text-[#1F2937] mb-3 text-center">
-              Chào mừng tới với Alino
-            </h1>
-            <p className="text-[#6B7280] leading-relaxed text-center max-w-sm">
-              Nền tảng quản lý các dự án hợp tác chuyên nghiệp
-            </p>
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="w-full lg:w-[55%] px-10 py-8 flex items-center justify-center">
-          <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold mb-2">Đăng ký</h2>
-            <p className="text-sm text-[#6B7280] mb-6">
-              Tạo tài khoản mới để bắt đầu
-            </p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <button
-                disabled={loading}
-                className="w-full py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
-              >
-                {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
-              </button>
-            </form>
-
-            <div className="my-5 text-center text-xs text-[#9CA3AF]">HOẶC</div>
-
-            <button
-              onClick={handleGoogleSignup}
-              className="w-full py-2.5 border rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Đăng ký với Google
-            </button>
-
-            <p className="mt-6 text-center text-sm text-[#6B7280]">
-              Đã có tài khoản?{' '}
-              <Link href="/login" className="text-[#6366F1] font-medium">
-                Đăng nhập
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="core/.gitkeep">
-
+<file path="index.html">
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALINO - Quản lý hợp tác Creator–Brand</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
 </file>
 
 <file path="tailwind.config.js">
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./app/**/*.{js,ts,jsx,tsx}"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         background: '#FFFFFF',
@@ -4172,196 +2403,6 @@ module.exports = {
     },
   },
   plugins: [],
-}
-</file>
-
-<file path="app/api/auth/session/route.ts">
-import { NextResponse } from 'next/server'
-import { createServerClientWithCookies } from '@/lib/supabase-server'
-
-export async function GET() {
-  const supabase = createServerClientWithCookies()
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  return NextResponse.json({ session })
-}
-</file>
-
-<file path="app/components/layout/Header.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import UserMenu from './UserMenu';
-
-export default function Header() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [userData, setUserData] = useState<{
-    email: string;
-    displayName?: string;
-    role?: string | null;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const res = await fetch('/api/auth/session', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-
-        const { session } = await res.json()
-
-        if (session?.user?.email) {
-          const profileRes = await fetch('/api/auth/profile-check', {
-            credentials: 'include',
-            cache: 'no-store',
-          })
-          const profileData = await profileRes.json()
-
-          const profile = profileData.profile
-          const onboardingData = profile?.onboarding_data && typeof profile.onboarding_data === 'object' ? profile.onboarding_data : {}
-          const displayName = onboardingData.displayName || onboardingData.companyName
-
-          setUserData({
-            email: session.user.email,
-            displayName,
-            role: profile?.role || null,
-          })
-        } else {
-          setUserData(null)
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-        setUserData(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUserData()
-  }, [])
-
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (pathname !== '/') {
-      router.push('/');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  return (
-    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-        <Link
-          href="/"
-          onClick={handleLogoClick}
-          className="flex items-center gap-3 cursor-pointer"
-        >
-          <Image
-            src="/logo/logo.png"
-            alt="ALINO"
-            width={32}
-            height={32}
-            className="w-8 h-8"
-          />
-          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-            ALINO
-          </span>
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
-          <a href="#about" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Về chúng tôi
-          </a>
-          <a href="#product" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Sản phẩm
-          </a>
-          <a href="#news" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Tin tức
-          </a>
-          <a href="#contact" className="underline-gradient hover:text-[#6366F1] transition-colors">
-            Liên hệ
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-4 text-sm">
-          {loading ? (
-            <>
-              <div className="text-[#6B7280]">Đăng nhập</div>
-              <div className="px-5 py-2.5 rounded-full bg-gray-200" />
-            </>
-          ) : userData ? (
-            <>
-              <UserMenu
-                userEmail={userData.email}
-                displayName={userData.displayName}
-                role={userData.role}
-              />
-            </>
-          ) : (
-            <>
-              <a
-                href="/login"
-                className="text-[#6B7280] hover:text-[#6366F1] transition-colors"
-              >
-                Đăng nhập
-              </a>
-              <Link
-                href="/signup"
-                className="px-5 py-2.5 rounded-full font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:scale-105 transition-transform shadow-lg shadow-[#6366F1]/25"
-              >
-                Đăng ký
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
-</file>
-
-<file path="app/globals.css">
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-inter), system-ui, sans-serif;
-  }
-}
-
-.underline-gradient {
-  position: relative;
-}
-
-.underline-gradient::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #6366F1, #EC4899);
-  transition: width 0.3s ease;
-}
-
-.underline-gradient:hover::after {
-  width: 100%;
 }
 </file>
 
@@ -4439,22 +2480,59 @@ The project uses TypeScript in strict mode with absolute imports:
 - `@/lib` - Shared utilities
 </file>
 
-<file path="app/page.tsx">
-import { redirect } from 'next/navigation';
-import HomePageClient from './components/home/HomePageClient';
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
-export default function HomePage({
-  searchParams,
-}: {
-  searchParams: { code?: string };
-}) {
-  // 🔥 Intercept email verification code from Supabase
-  // Supabase always redirects to Site URL (/) with ?code=...
-  if (searchParams?.code) {
-    redirect(`/auth/callback?code=${searchParams.code}`);
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    port: 3000,
+  },
+})
+</file>
+
+<file path="src/index.css">
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
   }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
 
-  return <HomePageClient />;
+.underline-gradient {
+  position: relative;
+}
+
+.underline-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366F1, #EC4899);
+  transition: width 0.3s ease;
+}
+
+.underline-gradient:hover::after {
+  width: 100%;
 }
 </file>
 
@@ -4472,56 +2550,21 @@ export default function HomePage({
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "types": ["vite/client"],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["src"],
   "exclude": ["node_modules"]
 }
 </file>
 
-<file path="app/layout.tsx">
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-
-const inter = Inter({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-export const metadata: Metadata = {
-  title: 'ALINO - Quản lý hợp tác Creator–Brand',
-  description: 'Nền tảng quản lý hợp tác giữa Creator và Brand chuyên nghiệp',
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="vi" className={inter.variable}>
-      <body className="font-sans antialiased">
-        {children}
-      </body>
-    </html>
-  );
-}
-</file>
-
 <file path=".env.example">
-NEXT_PUBLIC_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
+VITE_SUPABASE_URL=https://iralrlsuxoqbgcjzdpbb.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyYWxybHN1eG9xYmdjanpkcGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1ODA5ODUsImV4cCI6MjA4MjE1Njk4NX0.e0x5keoaE0GlXehvTA05LlzGhZWh63FHROkAz9kPqZU
 </file>
 
 <file path=".gitignore">
@@ -4578,35 +2621,56 @@ repomix-output.*
 ~$*.pptx
 </file>
 
+<file path="src/App.tsx">
+import { BrowserRouter } from 'react-router-dom'
+import { Router } from './router'
+import Header from './components/layout/Header'
+import Footer from './components/layout/Footer'
+
+function App() {
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <Router />
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
+  )
+}
+
+export default App
+</file>
+
 <file path="package.json">
 {
-  "name": "code-mvp",
+  "name": "alino-vite",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "repomix": "repomix",
-    "backup": "git add -A && git commit -m \"chore: backup\" || echo \"No changes to commit\"; git push"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
-    "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
     "react-icons": "^5.5.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",
-    "repomix": "^1.7.3",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0"
   }
 }
 </file>
