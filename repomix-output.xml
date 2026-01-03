@@ -207,25 +207,6 @@ CREATE TRIGGER update_profiles_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 </file>
 
-<file path="src/components/ScrollToTop.tsx">
-import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
-
-/**
- * ScrollToTop component that scrolls to top on every route change.
- * This ensures that navigating between pages always starts at the top.
- */
-export default function ScrollToTop() {
-  const { pathname } = useLocation()
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
-
-  return null
-}
-</file>
-
 <file path="src/components/layout/Footer.tsx">
 import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa'
 
@@ -386,249 +367,22 @@ export default function Footer() {
 }
 </file>
 
-<file path="src/components/AvatarUpload.tsx">
-import { useState, useRef } from 'react'
-import Cropper, { Area } from 'react-easy-crop'
-import { getSupabase } from '../lib/supabase'
-import { getCroppedImg } from '../utils/cropImage'
+<file path="src/components/ScrollToTop.tsx">
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 
-interface AvatarUploadProps {
-  currentAvatarUrl?: string
-  onAvatarChange: (url: string) => void
-  userId: string
-}
+/**
+ * ScrollToTop component that scrolls to top on every route change.
+ * This ensures that navigating between pages always starts at the top.
+ */
+export default function ScrollToTop() {
+  const { pathname } = useLocation()
 
-const CROP_SIZE = 300 // Fixed crop circle size
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
 
-export default function AvatarUpload({
-  currentAvatarUrl,
-  onAvatarChange,
-  userId,
-}: AvatarUploadProps) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [showCropModal, setShowCropModal] = useState(false)
-  const [crop, setCrop] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
-  const [uploading, setUploading] = useState(false)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  /* ================= FILE SELECT ================= */
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      alert('Chỉ hỗ trợ JPG, PNG, WEBP')
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ảnh tối đa 5MB')
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      setImageSrc(reader.result as string)
-      setShowCropModal(true)
-      setCrop({ x: 0, y: 0 })
-      setZoom(1)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  /* ================= CROP + UPLOAD ================= */
-
-  const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels)
-  }
-
-  const handleCrop = async () => {
-    if (!imageSrc || !croppedAreaPixels) return
-
-    setUploading(true)
-
-    try {
-      // Get cropped image blob
-      const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels)
-      
-      if (!croppedImage) {
-        throw new Error('Không thể crop ảnh')
-      }
-
-      // Upload to Supabase Storage
-      const supabase = getSupabase()
-      const timestamp = Date.now()
-      const fileExt = 'jpg'
-      const path = `${userId}/${timestamp}.${fileExt}`
-
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, croppedImage, {
-          upsert: true,
-          contentType: 'image/jpeg',
-        })
-
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`)
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(path)
-
-      if (!urlData?.publicUrl) {
-        throw new Error('Failed to get public URL')
-      }
-
-      // Pass public URL to parent component
-      onAvatarChange(urlData.publicUrl)
-
-      // Close modal and reset
-      setShowCropModal(false)
-      setImageSrc(null)
-      setCrop({ x: 0, y: 0 })
-      setZoom(1)
-      setCroppedAreaPixels(null)
-    } catch (error: any) {
-      console.error('Avatar upload error:', error)
-      alert(error.message || 'Upload thất bại')
-      // Reset state on error
-      setShowCropModal(false)
-      setImageSrc(null)
-      setCrop({ x: 0, y: 0 })
-      setZoom(1)
-      setCroppedAreaPixels(null)
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleCancel = () => {
-    setShowCropModal(false)
-    setImageSrc(null)
-    setCrop({ x: 0, y: 0 })
-    setZoom(1)
-    setCroppedAreaPixels(null)
-  }
-
-  /* ================= RENDER ================= */
-
-  return (
-    <>
-      {/* AVATAR */}
-      <div className="flex flex-col items-center gap-2">
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 cursor-pointer group"
-        >
-          {currentAvatarUrl ? (
-            <img src={currentAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl">
-              👤
-            </div>
-          )}
-
-          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-            <span className="text-white text-xs font-medium">Đổi avatar</span>
-          </div>
-        </div>
-      </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={handleFileSelect}
-      />
-
-      {/* MODAL */}
-      {showCropModal && imageSrc && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex justify-center p-4">
-          <div 
-            className="bg-white rounded-xl p-5 w-full"
-            style={{ 
-              maxWidth: '400px',
-              maxHeight: '80vh',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <h3 className="font-semibold mb-4 flex-shrink-0">Chỉnh sửa avatar</h3>
-
-            {/* Crop Area - Compact, centered */}
-            <div
-              className="relative mx-auto flex-shrink-0"
-              style={{
-                width: `${CROP_SIZE}px`,
-                height: `${CROP_SIZE}px`,
-                backgroundColor: '#000',
-              }}
-            >
-              <Cropper
-                image={imageSrc}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                cropShape="round"
-                showGrid={true}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-                style={{
-                  containerStyle: {
-                    width: '100%',
-                    height: '100%',
-                  },
-                }}
-              />
-            </div>
-
-            {/* Zoom Control - Directly below crop */}
-            <div className="mt-4 mb-4 flex-shrink-0" style={{ width: `${CROP_SIZE}px`, marginLeft: 'auto', marginRight: 'auto' }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Zoom
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.1"
-                value={zoom}
-                onChange={(e) => setZoom(parseFloat(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Buttons - Always visible */}
-            <div className="flex justify-end gap-2 mt-3 flex-shrink-0">
-            <button
-                onClick={handleCancel}
-                disabled={uploading}
-                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium disabled:opacity-50"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleCrop}
-                disabled={uploading}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium disabled:opacity-50"
-              >
-                {uploading ? 'Đang lưu…' : 'Lưu'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  )
+  return null
 }
 </file>
 
@@ -701,157 +455,6 @@ export function getSupabase() {
   }
 
   return supabaseClient
-}
-</file>
-
-<file path="src/pages/AppGate.tsx">
-import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { getSupabase } from '../lib/supabase'
-
-const GATE_TIMEOUT = 3000 // 3 seconds
-
-export default function AppGate() {
-  const { session, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const supabase = getSupabase()
-  const [loading, setLoading] = useState(true)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasRedirected = useRef(false)
-
-  useEffect(() => {
-    // a) If not authenticated → do nothing (let other routes handle it)
-    if (authLoading) return
-    if (!session) return
-
-    // b) If already redirected → do nothing
-    if (hasRedirected.current) return
-
-    // c) Email NOT verified → sign out → redirect to /
-    if (!session.user.email_confirmed_at) {
-      hasRedirected.current = true
-      supabase.auth.signOut().finally(() => {
-        navigate('/', { replace: true })
-      })
-      return
-    }
-
-    // d) Fetch profile DIRECTLY from Supabase (no cached hook)
-    runGate()
-  }, [authLoading, session, navigate, supabase])
-
-  async function runGate() {
-    if (!session) return
-
-    // b) If already redirected → do nothing
-    if (hasRedirected.current) return
-
-    setLoading(true)
-
-    // Set timeout fallback
-    timeoutRef.current = setTimeout(() => {
-      if (hasRedirected.current) return
-      console.error('AppGate timeout')
-      hasRedirected.current = true
-      navigate('/', { replace: true })
-    }, GATE_TIMEOUT)
-
-    try {
-      // Fetch existing profile
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('id, role, onboarding_completed')
-        .eq('id', session.user.id)
-        .single()
-
-      // b) If already redirected → do nothing
-      if (hasRedirected.current) return
-
-      if (fetchError && fetchError.code === 'PGRST116') {
-        // Profile doesn't exist, create it
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            role: null,
-            onboarding_completed: false,
-          })
-
-        if (insertError) {
-          throw insertError
-        }
-
-        // After creating, redirect to role selection
-        if (!hasRedirected.current) {
-          hasRedirected.current = true
-          navigate('/role', { replace: true })
-        }
-        return
-      }
-
-      if (fetchError) throw fetchError
-
-      // b) If already redirected → do nothing
-      if (hasRedirected.current) return
-
-      // Profile exists, handle redirect based on state
-      if (profile) {
-        handleProfileRedirect(profile)
-      }
-    } catch (error) {
-      // b) If already redirected → do nothing
-      if (hasRedirected.current) return
-      console.error('AppGate error:', error)
-      hasRedirected.current = true
-      navigate('/', { replace: true })
-    } finally {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-      setLoading(false)
-    }
-  }
-
-  function handleProfileRedirect(profile: { role: string | null; onboarding_completed: boolean }) {
-    // b) If already redirected → do nothing
-    if (hasRedirected.current) return
-
-    // d) If no role → redirect to /role
-    if (!profile.role) {
-      hasRedirected.current = true
-      navigate('/role', { replace: true })
-      return
-    }
-
-    // e) If onboarding_completed = false → redirect to /onboarding
-    if (!profile.onboarding_completed) {
-      hasRedirected.current = true
-      navigate('/onboarding', { replace: true })
-      return
-    }
-
-    // f) Else → redirect to /dashboard (or next param)
-    hasRedirected.current = true
-    const next = searchParams.get('next')
-    if (next === 'projects' || next === 'profile' || next === 'settings') {
-      navigate(`/${next}`, { replace: true })
-    } else {
-      navigate('/dashboard', { replace: true })
-    }
-  }
-
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  return null
 }
 </file>
 
@@ -1713,186 +1316,6 @@ if (profile.role === Role.CREATOR) { ... }
 **END OF DOCUMENT**
 </file>
 
-<file path="src/components/layout/Header.tsx">
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
-import { useProfile } from '../../hooks/useProfile'
-import UserMenu from './UserMenu'
-
-export default function Header() {
-  const { session, loading: authLoading, isAuthenticated } = useAuth()
-  const { profile } = useProfile(session?.user?.id, isAuthenticated)
-  const location = useLocation()
-  const navigate = useNavigate()
-
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (location.pathname !== '/') {
-      navigate('/')
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  // Read display_name and avatar_url from profiles table FIRST (primary source)
-  // Fallback to auth metadata if profile not loaded or avatar_url is null
-  const displayName = profile?.display_name || session?.user?.user_metadata?.display_name || undefined
-  const avatarUrl = profile?.avatar_url || session?.user?.user_metadata?.avatar_url || undefined
-
-  return (
-    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-        <Link
-          to="/"
-          onClick={handleLogoClick}
-          className="flex items-center gap-3 cursor-pointer"
-        >
-          <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
-          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-            ALINO
-          </span>
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
-          <a href="#about">Về chúng tôi</a>
-          <a href="#product">Sản phẩm</a>
-          <a href="#news">Tin tức</a>
-          <a href="#contact">Liên hệ</a>
-        </nav>
-
-        <div className="flex items-center gap-4 text-sm">
-          {authLoading ? null : session ? (
-            <UserMenu 
-              userEmail={session.user.email || ''}
-              displayName={displayName}
-              avatarUrl={avatarUrl}
-            />
-          ) : (
-            <>
-              <Link to="/login">Đăng nhập</Link>
-              <Link
-                to="/signup"
-                className="px-5 py-2.5 rounded-full text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
-              >
-                Đăng ký
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  )
-}
-</file>
-
-<file path="src/components/layout/UserMenu.tsx">
-import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
-
-interface UserMenuProps {
-  userEmail: string
-  displayName?: string
-  avatarUrl?: string | null
-  role?: string | null
-}
-
-export default function UserMenu({ userEmail, displayName, avatarUrl, role }: UserMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
-  const { signOut } = useAuth()
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen])
-
-  const handleLogout = async () => {
-    setIsOpen(false)
-    await signOut()
-  }
-
-  const dashboardPath = '/app?next=projects'
-
-  const nameToShow = displayName || userEmail.split('@')[0]
-
-  return (
-    <div
-      className="relative"
-      ref={menuRef}
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-0 py-0 text-[#6B7280] hover:text-[#6366F1] transition-colors group"
-      >
-        {avatarUrl ? (
-          <img 
-            src={avatarUrl} 
-            alt={nameToShow}
-            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
-            {nameToShow.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <span className="text-sm whitespace-nowrap">
-          {nameToShow}
-        </span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full pt-2 w-56 z-50">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
-            <Link
-              to={dashboardPath}
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Quản lý dự án
-            </Link>
-            <Link
-              to="/app?next=profile"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Hồ sơ
-            </Link>
-            <Link
-              to="/app?next=settings"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Cài đặt
-            </Link>
-            <div className="border-t border-gray-200 my-1" />
-            <button
-              onClick={handleLogout}
-              className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition-colors"
-            >
-              Đăng xuất
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-</file>
-
 <file path="src/components/AuthGate.tsx">
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -1937,6 +1360,252 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>
+}
+</file>
+
+<file path="src/components/AvatarUpload.tsx">
+import { useState, useRef } from 'react'
+import Cropper, { Area } from 'react-easy-crop'
+import { getSupabase } from '../lib/supabase'
+import { getCroppedImg } from '../utils/cropImage'
+
+interface AvatarUploadProps {
+  currentAvatarUrl?: string
+  onAvatarChange: (url: string) => void
+  userId: string
+}
+
+const CROP_SIZE = 300 // Fixed crop circle size
+
+export default function AvatarUpload({
+  currentAvatarUrl,
+  onAvatarChange,
+  userId,
+}: AvatarUploadProps) {
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  /* ================= FILE SELECT ================= */
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Chỉ hỗ trợ JPG, PNG, WEBP')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ảnh tối đa 5MB')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setImageSrc(reader.result as string)
+      setShowCropModal(true)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  /* ================= CROP + UPLOAD ================= */
+
+  const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels)
+  }
+
+  const handleCrop = async () => {
+    if (!imageSrc || !croppedAreaPixels) return
+
+    setUploading(true)
+
+    try {
+      // Get cropped image blob
+      const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels)
+      
+      if (!croppedImage) {
+        throw new Error('Không thể crop ảnh')
+      }
+
+      // Upload to Supabase Storage
+      const supabase = getSupabase()
+      const timestamp = Date.now()
+      const fileExt = 'jpg'
+      const path = `${userId}/${timestamp}.${fileExt}`
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, croppedImage, {
+          upsert: true,
+          contentType: 'image/jpeg',
+        })
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`)
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      if (!urlData?.publicUrl) {
+        throw new Error('Failed to get public URL')
+      }
+
+      // Pass public URL to parent component
+      onAvatarChange(urlData.publicUrl)
+
+      // Close modal and reset
+      setShowCropModal(false)
+      setImageSrc(null)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+      setCroppedAreaPixels(null)
+    } catch (error: any) {
+      console.error('Avatar upload error:', error)
+      alert(error.message || 'Upload thất bại')
+      // Reset state on error
+      setShowCropModal(false)
+      setImageSrc(null)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+      setCroppedAreaPixels(null)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setShowCropModal(false)
+    setImageSrc(null)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+  }
+
+  /* ================= RENDER ================= */
+
+  return (
+    <>
+      {/* AVATAR */}
+      <div className="flex flex-col items-center gap-2">
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 cursor-pointer group"
+        >
+          {currentAvatarUrl ? (
+            <img src={currentAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl">
+              👤
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+            <span className="text-white text-xs font-medium">Đổi avatar</span>
+          </div>
+        </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleFileSelect}
+      />
+
+      {/* MODAL */}
+      {showCropModal && imageSrc && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex justify-center p-4">
+          <div 
+            className="bg-white rounded-xl p-5 w-full"
+            style={{ 
+              maxWidth: '400px',
+              maxHeight: '80vh',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <h3 className="font-semibold mb-4 flex-shrink-0">Chỉnh sửa avatar</h3>
+
+            {/* Crop Area - Compact, centered */}
+            <div
+              className="relative mx-auto flex-shrink-0"
+              style={{
+                width: `${CROP_SIZE}px`,
+                height: `${CROP_SIZE}px`,
+                backgroundColor: '#000',
+              }}
+            >
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={true}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                style={{
+                  containerStyle: {
+                    width: '100%',
+                    height: '100%',
+                  },
+                }}
+              />
+            </div>
+
+            {/* Zoom Control - Directly below crop */}
+            <div className="mt-4 mb-4 flex-shrink-0" style={{ width: `${CROP_SIZE}px`, marginLeft: 'auto', marginRight: 'auto' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Zoom
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.1"
+                value={zoom}
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Buttons - Always visible */}
+            <div className="flex justify-end gap-2 mt-3 flex-shrink-0">
+            <button
+                onClick={handleCancel}
+                disabled={uploading}
+                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium disabled:opacity-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleCrop}
+                disabled={uploading}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium disabled:opacity-50"
+              >
+                {uploading ? 'Đang lưu…' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
 </file>
 
@@ -1993,147 +1662,154 @@ export function useAuth() {
 }
 </file>
 
-<file path="src/hooks/useProfile.ts">
+<file path="src/pages/AppGate.tsx">
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { getSupabase } from '../lib/supabase'
-import type { Profile } from '../types/profile'
 
-const PROFILE_FETCH_TIMEOUT = 3000 // 3 seconds
+const GATE_TIMEOUT = 3000 // 3 seconds
 
-export function useProfile(
-  userId: string | undefined,
-  enabled: boolean
-) {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function AppGate() {
+  const { session, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const supabase = getSupabase()
+  const [loading, setLoading] = useState(true)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
-    if (!enabled || !userId) {
-      setProfile(null)
-      setLoading(false)
-      setError(null)
+    // a) If not authenticated → do nothing (let other routes handle it)
+    if (authLoading) return
+    if (!session) return
+
+    // b) If already redirected → do nothing
+    if (hasRedirected.current) return
+
+    // c) Email NOT verified → sign out → redirect to /
+    if (!session.user.email_confirmed_at) {
+      hasRedirected.current = true
+      supabase.auth.signOut().finally(() => {
+        navigate('/', { replace: true })
+      })
       return
     }
 
-    let mounted = true
-    let abortController: AbortController | null = null
+    // d) Fetch profile DIRECTLY from Supabase (no cached hook)
+    runGate()
+  }, [authLoading, session, navigate, supabase])
 
-    async function fetchProfile() {
-      setLoading(true)
-      setError(null)
+  async function runGate() {
+    if (!session) return
 
-      // Set timeout fallback
-      timeoutRef.current = setTimeout(() => {
-        if (mounted) {
-          setLoading(false)
-          setError('Timeout loading profile')
-        }
-      }, PROFILE_FETCH_TIMEOUT)
+    // b) If already redirected → do nothing
+    if (hasRedirected.current) return
 
-      try {
-        // Fetch all profile fields directly from columns (only valid columns)
-        const { data, error: fetchError } = await supabase
+    setLoading(true)
+
+    // Set timeout fallback
+    timeoutRef.current = setTimeout(() => {
+      if (hasRedirected.current) return
+      console.error('AppGate timeout')
+      hasRedirected.current = true
+      navigate('/', { replace: true })
+    }, GATE_TIMEOUT)
+
+    try {
+      // Fetch existing profile
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, role, onboarding_completed')
+        .eq('id', session.user.id)
+        .single()
+
+      // b) If already redirected → do nothing
+      if (hasRedirected.current) return
+
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { error: insertError } = await supabase
           .from('profiles')
-          .select(`
-            id,
-            role,
-            onboarding_completed,
-            avatar_url,
-            display_name,
-            bio,
-            birth_year,
-            country,
-            city,
-            followers_count,
-            avg_views,
-            creator_platforms,
-            content_categories,
-            collaboration_expectation,
-            brand_name,
-            industry,
-            company_size,
-            monthly_marketing_budget,
-            target_platforms,
-            collaboration_goal,
-            created_at,
-            updated_at
-          `)
-          .eq('id', userId)
-          .single()
+          .insert({
+            id: session.user.id,
+            role: null,
+            onboarding_completed: false,
+          })
 
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current)
-          timeoutRef.current = null
+        if (insertError) {
+          throw insertError
         }
 
-        // If profile doesn't exist, create it
-        if (fetchError && fetchError.code === 'PGRST116') {
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              role: null,
-              onboarding_completed: false,
-            })
-            .select('id, role, onboarding_completed')
-            .single()
-
-          if (insertError) {
-            if (mounted) {
-              setError(insertError.message)
-              setLoading(false)
-            }
-            return
-          }
-
-          if (mounted && newProfile) {
-            setProfile(newProfile)
-            setLoading(false)
-          }
-          return
+        // After creating, redirect to role selection
+        if (!hasRedirected.current) {
+          hasRedirected.current = true
+          navigate('/role', { replace: true })
         }
-
-        if (fetchError) {
-          if (mounted) {
-            setError(fetchError.message)
-            setLoading(false)
-          }
-          return
-        }
-
-        if (mounted && data) {
-          setProfile(data)
-          setLoading(false)
-        }
-      } catch (err: any) {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current)
-          timeoutRef.current = null
-        }
-        if (mounted) {
-          setError(err.message || 'Failed to load profile')
-          setLoading(false)
-        }
+        return
       }
-    }
 
-    fetchProfile()
+      if (fetchError) throw fetchError
 
-    return () => {
-      mounted = false
+      // b) If already redirected → do nothing
+      if (hasRedirected.current) return
+
+      // Profile exists, handle redirect based on state
+      if (profile) {
+        handleProfileRedirect(profile)
+      }
+    } catch (error) {
+      // b) If already redirected → do nothing
+      if (hasRedirected.current) return
+      console.error('AppGate error:', error)
+      hasRedirected.current = true
+      navigate('/', { replace: true })
+    } finally {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
-      if (abortController) {
-        abortController.abort()
-      }
+      setLoading(false)
     }
-  }, [userId, enabled, supabase])
+  }
 
-  return { profile, loading, error }
+  function handleProfileRedirect(profile: { role: string | null; onboarding_completed: boolean }) {
+    // b) If already redirected → do nothing
+    if (hasRedirected.current) return
+
+    // d) If no role → redirect to /role
+    if (!profile.role) {
+      hasRedirected.current = true
+      navigate('/role', { replace: true })
+      return
+    }
+
+    // e) If onboarding_completed = false → redirect to /onboarding
+    if (!profile.onboarding_completed) {
+      hasRedirected.current = true
+      navigate('/onboarding', { replace: true })
+      return
+    }
+
+    // f) Else → redirect to /dashboard (or next param)
+    hasRedirected.current = true
+    const next = searchParams.get('next')
+    if (next === 'projects' || next === 'profile' || next === 'settings') {
+      navigate(`/${next}`, { replace: true })
+    } else {
+      navigate('/dashboard', { replace: true })
+    }
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  return null
 }
 </file>
 
@@ -2349,84 +2025,6 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-</file>
-
-<file path="src/pages/RolePage.tsx">
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { getSupabase } from '../lib/supabase'
-
-export default function RolePage() {
-  const { session } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const supabase = getSupabase()
-
-  const handleSelectRole = async (role: 'creator' | 'brand') => {
-    if (!session) return
-
-    setLoading(true)
-
-    try {
-      // Update role directly to profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          role,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id)
-
-      if (error) throw error
-
-      // After success → navigate('/app')
-      navigate('/app', { replace: true })
-    } catch (err: any) {
-      setLoading(false)
-      alert(err.message || 'Có lỗi xảy ra khi chọn vai trò')
-    }
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="w-full max-w-4xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
-            Chọn vai trò của bạn
-          </h1>
-          <p className="text-lg text-[#6B7280] max-w-2xl mx-auto">
-            Chọn vai trò phù hợp với cách bạn sử dụng ALINO. Bạn có thể thay đổi sau.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <button
-            onClick={() => handleSelectRole('creator')}
-            disabled={loading}
-            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
-          >
-            <h3 className="text-2xl font-semibold mb-2">Creator</h3>
-            <p className="text-[#6B7280]">
-              Tôi là Creator muốn hợp tác với các Brand
-            </p>
-          </button>
-
-          <button
-            onClick={() => handleSelectRole('brand')}
-            disabled={loading}
-            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
-          >
-            <h3 className="text-2xl font-semibold mb-2">Brand</h3>
-            <p className="text-[#6B7280]">
-              Tôi là Brand muốn hợp tác với các Creator
-            </p>
-          </button>
         </div>
       </div>
     </div>
@@ -2658,6 +2256,372 @@ export default function VerifyEmailPage() {
 }
 </file>
 
+<file path="src/components/layout/Header.tsx">
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { useProfile } from '../../hooks/useProfile'
+import UserMenu from './UserMenu'
+
+export default function Header() {
+  const { session, loading: authLoading, isAuthenticated } = useAuth()
+  const { profile } = useProfile(session?.user?.id, isAuthenticated)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (location.pathname !== '/') {
+      navigate('/')
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Read display_name and avatar_url from profiles table FIRST (primary source)
+  // Fallback to auth metadata if profile not loaded or avatar_url is null
+  const displayName = profile?.display_name || session?.user?.user_metadata?.display_name || undefined
+  const avatarUrl = profile?.avatar_url || session?.user?.user_metadata?.avatar_url || undefined
+
+  return (
+    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <Link
+          to="/"
+          onClick={handleLogoClick}
+          className="flex items-center gap-3 cursor-pointer"
+        >
+          <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
+          <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+            ALINO
+          </span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
+          <a href="#about">Về chúng tôi</a>
+          <a href="#product">Sản phẩm</a>
+          <a href="#news">Tin tức</a>
+          <a href="#contact">Liên hệ</a>
+        </nav>
+
+        <div className="flex items-center gap-4 text-sm">
+          {authLoading ? null : session ? (
+            <UserMenu 
+              userEmail={session.user.email || ''}
+              displayName={displayName}
+              avatarUrl={avatarUrl}
+            />
+          ) : (
+            <>
+              <Link to="/login">Đăng nhập</Link>
+              <Link
+                to="/signup"
+                className="px-5 py-2.5 rounded-full text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}
+</file>
+
+<file path="src/components/layout/UserMenu.tsx">
+import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+
+interface UserMenuProps {
+  userEmail: string
+  displayName?: string
+  avatarUrl?: string | null
+  role?: string | null
+}
+
+export default function UserMenu({ userEmail, displayName, avatarUrl, role }: UserMenuProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  const handleLogout = async () => {
+    setIsOpen(false)
+    await signOut()
+  }
+
+  const dashboardPath = '/app?next=projects'
+
+  const nameToShow = displayName || userEmail.split('@')[0]
+
+  return (
+    <div
+      className="relative"
+      ref={menuRef}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-0 py-0 text-[#6B7280] hover:text-[#6366F1] transition-colors group"
+      >
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt={nameToShow}
+            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
+            {nameToShow.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span className="text-sm whitespace-nowrap">
+          {nameToShow}
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full pt-2 w-56 z-50">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
+            <Link
+              to={dashboardPath}
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
+            >
+              Quản lý dự án
+            </Link>
+            <Link
+              to="/app?next=profile"
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
+            >
+              Hồ sơ
+            </Link>
+            <Link
+              to="/app?next=settings"
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
+            >
+              Cài đặt
+            </Link>
+            <div className="border-t border-gray-200 my-1" />
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+            >
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+</file>
+
+<file path="src/hooks/useProfile.ts">
+import { useEffect, useState, useRef } from 'react'
+import { getSupabase } from '../lib/supabase'
+import type { Profile } from '../types/profile'
+
+const PROFILE_FETCH_TIMEOUT = 3000 // 3 seconds
+
+export function useProfile(
+  userId: string | undefined,
+  enabled: boolean
+) {
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const supabase = getSupabase()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!enabled || !userId) {
+      setProfile(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+  
+    let mounted = true
+  
+    async function fetchProfile() {
+      setLoading(true)
+      setError(null)
+  
+      timeoutRef.current = setTimeout(() => {
+        if (mounted) {
+          setLoading(false)
+          setError('Timeout loading profile')
+        }
+      }, PROFILE_FETCH_TIMEOUT)
+  
+      try {
+        const { data, error: fetchError } = await supabase
+  .from('profiles')
+  .select(`
+    id,
+    role,
+    onboarding_completed,
+    avatar_url,
+    display_name,
+    bio,
+    birth_year,
+    country,
+    city,
+    followers_count,
+    avg_views,
+    creator_platforms,
+    content_categories,
+    collaboration_expectation,
+    brand_name,
+    industry,
+    company_size,
+    monthly_marketing_budget,
+    target_platforms,
+    collaboration_goal,
+    created_at,
+    updated_at
+  `)
+  .eq('id', userId)
+  .single()
+  
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+          timeoutRef.current = null
+        }
+  
+        if (fetchError) {
+          if (mounted) {
+            setError(fetchError.message)
+            setLoading(false)
+          }
+          return
+        }
+  
+        if (mounted && data) {
+          setProfile(data)
+          setLoading(false)
+        }
+      } catch (err: any) {
+        if (mounted) {
+          setError(err.message || 'Failed to load profile')
+          setLoading(false)
+        }
+      }
+    }
+  
+    fetchProfile()
+  
+    return () => {
+      mounted = false
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [userId, enabled, supabase])
+  
+
+  return { profile, loading, error }
+}
+</file>
+
+<file path="src/pages/RolePage.tsx">
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { getSupabase } from '../lib/supabase'
+
+export default function RolePage() {
+  const { session } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const supabase = getSupabase()
+
+  const handleSelectRole = async (role: 'creator' | 'brand') => {
+    if (!session) return
+
+    setLoading(true)
+
+    try {
+      // Update role directly to profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          role,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session.user.id)
+
+      if (error) throw error
+
+      // After success → navigate('/app')
+      navigate('/app', { replace: true })
+    } catch (err: any) {
+      setLoading(false)
+      alert(err.message || 'Có lỗi xảy ra khi chọn vai trò')
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="w-full max-w-4xl">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
+            Chọn vai trò của bạn
+          </h1>
+          <p className="text-lg text-[#6B7280] max-w-2xl mx-auto">
+            Chọn vai trò phù hợp với cách bạn sử dụng ALINO. Bạn có thể thay đổi sau.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <button
+            onClick={() => handleSelectRole('creator')}
+            disabled={loading}
+            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
+          >
+            <h3 className="text-2xl font-semibold mb-2">Creator</h3>
+            <p className="text-[#6B7280]">
+              Tôi là Creator muốn hợp tác với các Brand
+            </p>
+          </button>
+
+          <button
+            onClick={() => handleSelectRole('brand')}
+            disabled={loading}
+            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
+          >
+            <h3 className="text-2xl font-semibold mb-2">Brand</h3>
+            <p className="text-[#6B7280]">
+              Tôi là Brand muốn hợp tác với các Creator
+            </p>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/types/profile.ts">
 // Core profile fields (matches FINAL schema)
 export interface Profile {
@@ -2877,6 +2841,10 @@ function DashboardEntry() {
 
   return <BrandDashboard />
 }
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
 </file>
 
 <file path="src/pages/OnboardingPage.tsx">
@@ -4807,10 +4775,6 @@ export default function ProfilePage() {
     </div>
   )
 }
-</file>
-
-<file path="src/vite-env.d.ts">
-/// <reference types="vite/client" />
 </file>
 
 <file path="src/main.tsx">
