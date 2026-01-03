@@ -2,16 +2,20 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
+import { getSupabase } from '../lib/supabase'
+import Toast from '../components/Toast'
 import { FaGoogle, FaFacebook, FaInstagram, FaTiktok, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
 
 export default function SettingsPage() {
   const { session } = useAuth()
   const { profile } = useProfile(session?.user?.id, !!session)
+  const supabase = getSupabase()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   // Check if user is OAuth-only (no email/password)
   // Check if user has email provider or if all providers are OAuth
@@ -36,36 +40,87 @@ export default function SettingsPage() {
     { name: 'TikTok', provider: 'tiktok', connected: false, icon: FaTiktok },
   ]
 
+  // Clear error when user starts typing
+  const handleCurrentPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentPassword(e.target.value)
+    if (passwordError) setPasswordError('')
+  }
+
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPassword(e.target.value)
+    if (passwordError) setPasswordError('')
+  }
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value)
+    if (passwordError) setPasswordError('')
+  }
+
   const handleChangePassword = async () => {
+    // Clear previous errors
+    setPasswordError('')
+
+    // Validation: All fields required
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordError('Vui lòng điền đầy đủ thông tin')
       return
     }
 
+    // Validation: New password must be different from current password
+    if (currentPassword === newPassword) {
+      setPasswordError('Mật khẩu mới phải khác với mật khẩu hiện tại')
+      return
+    }
+
+    // Validation: Confirm password must match new password
     if (newPassword !== confirmPassword) {
       setPasswordError('Mật khẩu mới không khớp')
       return
     }
 
+    // Validation: Minimum length
     if (newPassword.length < 6) {
       setPasswordError('Mật khẩu phải có ít nhất 6 ký tự')
       return
     }
 
-    setPasswordError('')
+    if (!session?.user?.email) {
+      setPasswordError('Không tìm thấy thông tin người dùng')
+      return
+    }
+
     setPasswordLoading(true)
 
     try {
-      // TODO: Implement password change logic
-      // This would typically involve:
-      // 1. Verify current password
-      // 2. Update password via Supabase auth
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setPasswordError('')
+      // Step 1: Re-authenticate with current password to verify it's correct
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        setPasswordError('Mật khẩu hiện tại không đúng')
+        setPasswordLoading(false)
+        return
+      }
+
+      // Step 2: Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (updateError) {
+        setPasswordError(updateError.message || 'Có lỗi xảy ra khi đổi mật khẩu')
+        setPasswordLoading(false)
+        return
+      }
+
+      // Success: Clear form and show toast
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      alert('Đổi mật khẩu thành công')
+      setPasswordError('')
+      setToast({ message: 'Đổi mật khẩu thành công', type: 'success' })
     } catch (error: any) {
       setPasswordError(error.message || 'Có lỗi xảy ra khi đổi mật khẩu')
     } finally {
@@ -159,7 +214,7 @@ export default function SettingsPage() {
                   <input
                     type="password"
                     value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    onChange={handleCurrentPasswordChange}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                     placeholder="Nhập mật khẩu hiện tại"
                   />
@@ -172,7 +227,7 @@ export default function SettingsPage() {
                   <input
                     type="password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={handleNewPasswordChange}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                     placeholder="Nhập mật khẩu mới"
                   />
@@ -185,17 +240,11 @@ export default function SettingsPage() {
                   <input
                     type="password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={handleConfirmPasswordChange}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                     placeholder="Nhập lại mật khẩu mới"
                   />
                 </div>
-
-                {passwordError && (
-                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-                    {passwordError}
-                  </div>
-                )}
 
                 <button
                   onClick={handleChangePassword}
@@ -204,6 +253,12 @@ export default function SettingsPage() {
                 >
                   {passwordLoading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
                 </button>
+
+                {passwordError && (
+                  <p className="text-sm text-red-600 mt-2">
+                    {passwordError}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -299,6 +354,15 @@ export default function SettingsPage() {
 
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }
