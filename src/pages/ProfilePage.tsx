@@ -71,7 +71,7 @@ export default function ProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
+      <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Đang tải...</div>
       </div>
     )
@@ -79,7 +79,7 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
+      <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
       </div>
     )
@@ -307,10 +307,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+    <div className="bg-white py-8 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
-          <h1 className="text-3xl font-semibold tracking-tight mb-8">Hồ sơ</h1>
+        <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
 
           <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
             {/* Basic Identity Section */}

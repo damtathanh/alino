@@ -36,8 +36,6 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
     await signOut()
   }
 
-  const dashboardPath = '/app?next=projects'
-
   const nameToShow = displayName || userEmail.split('@')[0]
 
   return (
@@ -71,25 +69,11 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
         <div className="absolute right-0 top-full pt-2 w-56 z-50">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
             <Link
-              to={dashboardPath}
+              to="/dashboard"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
               Quản lý dự án
-            </Link>
-            <Link
-              to="/app?next=profile"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Hồ sơ
-            </Link>
-            <Link
-              to="/app?next=settings"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Cài đặt
             </Link>
             <div className="border-t border-gray-200 my-1" />
             <button

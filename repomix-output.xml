@@ -48,6 +48,7 @@ public/
 src/
   components/
     dashboard/
+      DashboardHeader.tsx
       DashboardLayout.tsx
       NotificationModal.tsx
     layout/
@@ -74,10 +75,12 @@ src/
     LoginPage.tsx
     NotificationsPage.tsx
     OnboardingPage.tsx
+    PrivacyPage.tsx
     ProfilePage.tsx
     RolePage.tsx
     SettingsPage.tsx
     SignupPage.tsx
+    TermsPage.tsx
     VerifyEmailPage.tsx
   types/
     profile.ts
@@ -109,6 +112,514 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
+<file path="src/components/dashboard/DashboardHeader.tsx">
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { FaBell } from 'react-icons/fa'
+import { useAuth } from '../../hooks/useAuth'
+import { useProfile } from '../../hooks/useProfile'
+import UserMenu from '../layout/UserMenu'
+import NotificationModal from './NotificationModal'
+
+/**
+ * DashboardHeader
+ * - Fixed header for dashboard pages
+ * - Height: h-16 (same as Landing Header)
+ * - Left: w-64 (aligned with Sidebar) → Logo + ALINO centered
+ * - Middle: Title + Subtitle (auto by route)
+ * - Right: Notification + UserMenu (tight spacing)
+ */
+export default function DashboardHeader() {
+  const { session } = useAuth()
+  const { profile } = useProfile(session?.user?.id, !!session)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    navigate('/')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const fullName =
+    profile?.display_name ||
+    session?.user?.user_metadata?.display_name ||
+    ''
+
+  const avatarUrl =
+    profile?.avatar_url ||
+    session?.user?.user_metadata?.avatar_url ||
+    undefined
+
+  // 🔔 mock unread count
+  const unreadNotificationCount = 4
+
+  /* ------------------------------
+   * Title & Subtitle by route
+   * ------------------------------ */
+  const pathname = location.pathname
+
+  const getTitleAndSubtitle = () => {
+    if (pathname === '/dashboard') {
+      return {
+        title: `Xin chào ${fullName}!`,
+        subtitle: 'Chào mừng bạn quay trở lại 👋',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/profile')) {
+      return {
+        title: 'Hồ sơ cá nhân',
+        subtitle: 'Quản lý thông tin hiển thị của bạn với đối tác',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/settings')) {
+      return {
+        title: 'Cài đặt',
+        subtitle: 'Quản lý cài đặt tài khoản và tùy chọn',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/services')) {
+      return {
+        title: 'Dịch vụ & Bảng giá',
+        subtitle: 'Thiết lập dịch vụ và mức giá bạn cung cấp',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/opportunities')) {
+      return {
+        title: 'Cơ hội hợp tác',
+        subtitle: 'Khám phá các cơ hội phù hợp với bạn',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/proposals')) {
+      return {
+        title: 'Đề xuất',
+        subtitle: 'Quản lý các đề xuất hợp tác đang diễn ra',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/workspace')) {
+      return {
+        title: 'Trung tâm làm việc',
+        subtitle: 'Theo dõi và xử lý các hoạt động hợp tác',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/analytics')) {
+      return {
+        title: 'Phân tích',
+        subtitle: 'Theo dõi hiệu suất và tăng trưởng của bạn',
+      }
+    }
+
+    return { title: '', subtitle: '' }
+  }
+
+  const { title, subtitle } = getTitleAndSubtitle()
+
+  return (
+    <>
+      <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
+  <div className="h-full flex">
+    {/* LEFT: Sidebar-aligned block */}
+    <div className="w-64 h-full flex items-center justify-center border-r border-gray-200 flex-shrink-0">
+      <Link
+        to="/"
+        onClick={handleLogoClick}
+        className="flex items-center gap-3"
+      >
+        <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
+        <span className="font-bold text-2xl leading-none bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+          ALINO
+        </span>
+      </Link>
+    </div>
+
+    {/* RIGHT AREA: SAME CONTAINER AS LANDING */}
+    <div className="flex-1">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        {/* Title */}
+        <div className="flex flex-col justify-center">
+          <h1 className="text-lg font-semibold text-gray-900 leading-tight">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-sm text-gray-500 leading-tight mt-0.5">
+              {subtitle}
+            </p>
+          )}
+        </div>
+
+        {/* User actions – EXACT SAME POSITION AS LANDING */}
+        {session && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsNotificationModalOpen(true)}
+              className="relative p-2 rounded-lg text-gray-600 hover:text-[#6366F1] hover:bg-gray-100 transition"
+            >
+              <FaBell className="w-5 h-5" />
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {unreadNotificationCount}
+                </span>
+              )}
+            </button>
+
+            <UserMenu
+              userEmail={session.user.email || ''}
+              displayName={fullName}
+              avatarUrl={avatarUrl}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</header>
+
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+      />
+    </>
+  )
+}
+</file>
+
+<file path="src/pages/PrivacyPage.tsx">
+import { Link } from 'react-router-dom'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
+
+export default function PrivacyPage() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 pt-24 pb-16">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
+            <h1 className="text-4xl font-bold mb-4">Chính sách bảo mật</h1>
+            <p className="text-sm text-gray-500 mb-8">
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+
+            <div className="prose prose-gray max-w-none">
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">1. Giới thiệu</h2>
+                <p className="text-gray-700 mb-4">
+                  ALINO cam kết bảo vệ quyền riêng tư của người dùng. Chính sách này mô tả cách chúng tôi thu thập, sử dụng, 
+                  và bảo vệ thông tin cá nhân của bạn khi sử dụng dịch vụ của chúng tôi.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">2. Thông tin chúng tôi thu thập</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi thu thập các loại thông tin sau:
+                </p>
+                <ul className="list-disc pl-6 text-gray-700 mb-4">
+                  <li><strong>Thông tin cá nhân:</strong> Tên, email, ngày sinh, địa chỉ</li>
+                  <li><strong>Thông tin tài khoản:</strong> Thông tin đăng nhập, lịch sử hoạt động</li>
+                  <li><strong>Thông tin hồ sơ:</strong> Thông tin công khai trên hồ sơ của bạn</li>
+                  <li><strong>Thông tin kết nối:</strong> Dữ liệu từ các tài khoản mạng xã hội được kết nối (Google, Facebook, Instagram, TikTok)</li>
+                  <li><strong>Dữ liệu sử dụng:</strong> Thông tin về cách bạn sử dụng nền tảng</li>
+                </ul>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">3. Cách chúng tôi sử dụng thông tin</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi sử dụng thông tin của bạn để:
+                </p>
+                <ul className="list-disc pl-6 text-gray-700 mb-4">
+                  <li>Cung cấp và cải thiện dịch vụ</li>
+                  <li>Kết nối bạn với các đối tác phù hợp (Creators với Brands)</li>
+                  <li>Gửi thông báo và cập nhật về dịch vụ</li>
+                  <li>Phân tích và cải thiện trải nghiệm người dùng</li>
+                  <li>Tuân thủ các nghĩa vụ pháp lý</li>
+                </ul>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">4. Kết nối tài khoản mạng xã hội</h2>
+                <p className="text-gray-700 mb-4">
+                  Khi bạn kết nối tài khoản mạng xã hội (Google, Facebook, Instagram, TikTok) với ALINO, chúng tôi có thể 
+                  truy cập và lưu trữ một số thông tin từ các tài khoản đó để cung cấp dịch vụ tốt hơn, bao gồm thông tin hồ sơ 
+                  công khai và dữ liệu cần thiết cho các tính năng của nền tảng.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">5. Chia sẻ thông tin</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi không bán thông tin cá nhân của bạn. Chúng tôi có thể chia sẻ thông tin trong các trường hợp sau:
+                </p>
+                <ul className="list-disc pl-6 text-gray-700 mb-4">
+                  <li>Với các đối tác phù hợp trên nền tảng (thông tin công khai từ hồ sơ của bạn)</li>
+                  <li>Với các nhà cung cấp dịch vụ hỗ trợ hoạt động của chúng tôi</li>
+                  <li>Khi được yêu cầu bởi pháp luật</li>
+                </ul>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">6. Bảo mật dữ liệu</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi sử dụng các biện pháp bảo mật kỹ thuật và tổ chức phù hợp để bảo vệ thông tin cá nhân của bạn khỏi 
+                  truy cập trái phép, mất mát, hoặc phá hủy.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">7. Quyền của bạn</h2>
+                <p className="text-gray-700 mb-4">
+                  Bạn có quyền:
+                </p>
+                <ul className="list-disc pl-6 text-gray-700 mb-4">
+                  <li>Truy cập và chỉnh sửa thông tin cá nhân của bạn</li>
+                  <li>Yêu cầu xóa tài khoản và dữ liệu</li>
+                  <li>Ngừng kết nối tài khoản mạng xã hội</li>
+                  <li>Yêu cầu xuất dữ liệu của bạn</li>
+                </ul>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">8. Cookie và công nghệ theo dõi</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi sử dụng cookie và các công nghệ tương tự để cải thiện trải nghiệm người dùng và phân tích cách sử dụng dịch vụ.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">9. Thay đổi chính sách</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi có thể cập nhật chính sách này theo thời gian. Chúng tôi sẽ thông báo cho bạn về các thay đổi quan trọng 
+                  qua email hoặc thông báo trên nền tảng.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">10. Liên hệ</h2>
+                <p className="text-gray-700 mb-4">
+                  Nếu bạn có câu hỏi về chính sách bảo mật này, vui lòng liên hệ với chúng tôi qua email hoặc các kênh hỗ trợ được cung cấp.
+                </p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/TermsPage.tsx">
+import { Link } from 'react-router-dom'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
+
+export default function TermsPage() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 pt-24 pb-16">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
+            <h1 className="text-4xl font-bold mb-4">Điều khoản sử dụng</h1>
+            <p className="text-sm text-gray-500 mb-8">
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+
+            <div className="prose prose-gray max-w-none">
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">1. Chấp nhận điều khoản</h2>
+                <p className="text-gray-700 mb-4">
+                  Bằng việc truy cập và sử dụng dịch vụ ALINO, bạn đồng ý tuân thủ và bị ràng buộc bởi các điều khoản sử dụng này. 
+                  Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, bạn không được phép sử dụng dịch vụ.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">2. Mô tả dịch vụ</h2>
+                <p className="text-gray-700 mb-4">
+                  ALINO là một nền tảng kết nối giữa các nhà sáng tạo nội dung (Creators) và các thương hiệu (Brands) 
+                  để tạo điều kiện cho các chiến dịch hợp tác và tiếp thị. Dịch vụ bao gồm nhưng không giới hạn ở việc 
+                  quản lý hồ sơ, tìm kiếm đối tác, và quản lý các dự án hợp tác.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">3. Tài khoản người dùng</h2>
+                <p className="text-gray-700 mb-4">
+                  Để sử dụng một số tính năng của dịch vụ, bạn cần tạo tài khoản. Bạn có trách nhiệm:
+                </p>
+                <ul className="list-disc pl-6 text-gray-700 mb-4">
+                  <li>Bảo mật thông tin đăng nhập của bạn</li>
+                  <li>Cung cấp thông tin chính xác và cập nhật</li>
+                  <li>Thông báo ngay cho chúng tôi về bất kỳ hoạt động đáng ngờ nào</li>
+                </ul>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">4. Quyền và trách nhiệm</h2>
+                <p className="text-gray-700 mb-4">
+                  Người dùng có quyền sử dụng dịch vụ theo đúng mục đích và không được sử dụng dịch vụ cho các hoạt động 
+                  bất hợp pháp hoặc vi phạm quyền của người khác.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">5. Sở hữu trí tuệ</h2>
+                <p className="text-gray-700 mb-4">
+                  Tất cả nội dung trên nền tảng ALINO, bao gồm logo, thiết kế, văn bản, và phần mềm, đều thuộc quyền sở hữu 
+                  của ALINO hoặc các bên cấp phép. Bạn không được phép sao chép, phân phối, hoặc sử dụng nội dung này mà không 
+                  có sự cho phép bằng văn bản.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">6. Giới hạn trách nhiệm</h2>
+                <p className="text-gray-700 mb-4">
+                  ALINO không chịu trách nhiệm về bất kỳ thiệt hại trực tiếp, gián tiếp, ngẫu nhiên, hoặc hậu quả nào phát sinh 
+                  từ việc sử dụng hoặc không thể sử dụng dịch vụ của chúng tôi.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">7. Thay đổi điều khoản</h2>
+                <p className="text-gray-700 mb-4">
+                  Chúng tôi có quyền cập nhật các điều khoản này bất cứ lúc nào. Việc tiếp tục sử dụng dịch vụ sau khi có thay đổi 
+                  được coi là bạn đã chấp nhận các điều khoản mới.
+                </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">8. Liên hệ</h2>
+                <p className="text-gray-700 mb-4">
+                  Nếu bạn có bất kỳ câu hỏi nào về các điều khoản này, vui lòng liên hệ với chúng tôi qua email hoặc các kênh hỗ trợ 
+                  được cung cấp trên nền tảng.
+                </p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+</file>
+
+<file path="migrations/001_cleanup_profiles.sql">
+-- Migration: Clean up profiles table structure
+-- Remove unused columns and ensure proper schema
+
+-- Step 1: Remove unused columns
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS role_selected_at,
+  DROP COLUMN IF EXISTS onboarding_completed_at;
+
+-- Step 2: Ensure all required columns exist with correct types
+-- Core fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS display_name TEXT,
+  ADD COLUMN IF NOT EXISTS avatar_url TEXT,
+  ADD COLUMN IF NOT EXISTS country TEXT,
+  ADD COLUMN IF NOT EXISTS city TEXT,
+  ADD COLUMN IF NOT EXISTS birth_year INTEGER,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Creator fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS bio TEXT,
+  ADD COLUMN IF NOT EXISTS creator_platforms JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS followers_count INTEGER,
+  ADD COLUMN IF NOT EXISTS avg_views INTEGER,
+  ADD COLUMN IF NOT EXISTS content_categories JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS success_collaboration_rate INTEGER CHECK (success_collaboration_rate >= 0 AND success_collaboration_rate <= 100),
+  ADD COLUMN IF NOT EXISTS preferred_collaboration_type JSONB DEFAULT '[]'::jsonb;
+
+-- Brand fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS company_name TEXT,
+  ADD COLUMN IF NOT EXISTS website TEXT,
+  ADD COLUMN IF NOT EXISTS industry TEXT,
+  ADD COLUMN IF NOT EXISTS company_size TEXT,
+  ADD COLUMN IF NOT EXISTS campaign_budget_range TEXT,
+  ADD COLUMN IF NOT EXISTS campaign_goal TEXT,
+  ADD COLUMN IF NOT EXISTS target_platforms JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS target_creator_size TEXT,
+  ADD COLUMN IF NOT EXISTS contact_person_name TEXT,
+  ADD COLUMN IF NOT EXISTS contact_person_phone TEXT;
+
+-- Step 3: Remove old columns that are no longer needed
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS collaboration_expectation,
+  DROP COLUMN IF EXISTS collaboration_success_rate,
+  DROP COLUMN IF EXISTS budget,
+  DROP COLUMN IF EXISTS contact_person_email;
+
+-- Step 4: Create function to upsert profile on first login
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, role, onboarding_completed)
+  VALUES (NEW.id, NULL, false)
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Step 5: Create trigger (if not exists)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- Step 6: Update RLS policies
+-- Users can read their own profile
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+CREATE POLICY "Users can read own profile"
+  ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = id);
+
+-- Users can update their own profile
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id);
+
+-- Users can insert their own profile
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Step 7: Ensure updated_at is updated on change
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+</file>
+
 <file path="src/components/dashboard/DashboardLayout.tsx">
 import { Link, useLocation } from 'react-router-dom'
 import { 
@@ -123,7 +634,7 @@ import {
   FaSignOutAlt,
 } from 'react-icons/fa'
 import { useAuth } from '../../hooks/useAuth'
-import { useProfile } from '../../hooks/useProfile'
+import DashboardHeader from './DashboardHeader'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -131,17 +642,22 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation()
-  const { session, signOut } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { signOut } = useAuth()
 
-  const sidebarItems = [
+  // Main navigation items
+  const mainNavItems = [
     { path: '/dashboard', label: 'Bảng điều khiển', icon: FaTh },
-    { path: '/dashboard/profile-public', label: 'Hồ sơ công khai', icon: FaUser },
+    { path: '/dashboard/profile', label: 'Hồ sơ cá nhân', icon: FaUser },
     { path: '/dashboard/services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
     { path: '/dashboard/opportunities', label: 'Cơ hội', icon: FaLightbulb },
     { path: '/dashboard/proposals', label: 'Đề xuất', icon: FaFileAlt },
     { path: '/dashboard/workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
     { path: '/dashboard/analytics', label: 'Phân tích', icon: FaChartBar },
+  ]
+
+  // Account section items
+  const accountItems = [
+    { path: '/dashboard/settings', label: 'Cài đặt', icon: FaCog },
   ]
 
   const isActive = (path: string) => {
@@ -152,73 +668,82 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="fixed left-0 top-20 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-4">
-            {/* Navigation Items */}
-            <nav className="space-y-1">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.path)
+    <>
+      <DashboardHeader />
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="flex">
+          {/* Sidebar */}
+          <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto">
+            <div className="p-4 h-full flex flex-col">
+              {/* Main Navigation Items */}
+              <nav className="space-y-1">
+                {mainNavItems.map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.path)
 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                      ${active 
-                        ? 'bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'
-                      }
-                    `}
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`
+                        flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                        ${active 
+                          ? 'bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  )
+                })}
+              </nav>
+
+              {/* Account Section - Pinned to Bottom */}
+              <div className="mt-auto pt-4 border-t border-gray-200">
+                <nav className="space-y-1">
+                  {accountItems.map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.path)
+
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`
+                          flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                          ${active
+                            ? 'bg-gray-100 text-[#6366F1]'
+                            : 'text-gray-700 hover:bg-gray-100'
+                          }
+                        `}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    )})}
+                  <button
+                    onClick={async () => {
+                      await signOut()
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
                   >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                )
-              })}
-            </nav>
+                    <FaSignOutAlt className="w-5 h-5 text-red-600" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </aside>
 
-            {/* Divider */}
-            <div className="border-t border-gray-200 my-4" />
-
-            {/* Settings & Logout */}
-            <nav className="space-y-1">
-              <Link
-                to="/settings"
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  ${location.pathname === '/settings'
-                    ? 'bg-gray-100 text-[#6366F1]'
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }
-                `}
-              >
-                <FaCog className="w-5 h-5" />
-                <span>Cài đặt</span>
-              </Link>
-              <button
-                onClick={async () => {
-                  await signOut()
-                }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors w-full text-left"
-              >
-                <FaSignOutAlt className="w-5 h-5" />
-                <span>Đăng xuất</span>
-              </button>
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 ml-64">
-          {children}
-        </main>
+          {/* Main Content */}
+          <main className="flex-1 ml-64">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 </file>
@@ -575,6 +1100,277 @@ function NotificationCard({ notification, onMarkAsRead }: NotificationCardProps)
 }
 </file>
 
+<file path="src/components/layout/Footer.tsx">
+import { Link } from 'react-router-dom'
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa'
+
+export default function Footer() {
+  return (
+    <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-5 gap-12 mb-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo/logo.png"
+                alt="ALINO"
+                className="w-7 h-7"
+              />
+              <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+                ALINO
+              </span>
+            </div>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              Nền tảng hợp tác cho Creator và Brand chuyên nghiệp.
+            </p>
+            <div className="flex items-center gap-4 pt-2">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#1877F2] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaFacebook size={20} />
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#DD2A7B] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaInstagram size={20} />
+              </a>
+              <a
+                href="https://tiktok.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#000000] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaTiktok size={20} />
+              </a>
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#FF0000] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaYoutube size={20} />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9CA3AF] hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-200"
+              >
+                <FaLinkedin size={20} />
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Sản phẩm</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#product" className="hover:text-[#6366F1] transition-colors">
+                  Tính năng
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" className="hover:text-[#6366F1] transition-colors">
+                  Bảng giá
+                </a>
+              </li>
+              <li>
+                <a href="#how-it-works" className="hover:text-[#6366F1] transition-colors">
+                  Cách hoạt động
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Công ty</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <a href="#about" className="hover:text-[#6366F1] transition-colors">
+                  Về chúng tôi
+                </a>
+              </li>
+              <li>
+                <a href="#news" className="hover:text-[#6366F1] transition-colors">
+                  Tin tức
+                </a>
+              </li>
+              <li>
+                <a href="#contact" className="hover:text-[#6366F1] transition-colors">
+                  Liên hệ
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Pháp lý</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li>
+                <Link to="/terms" className="hover:text-[#6366F1] transition-colors">
+                  Điều khoản sử dụng
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-[#6366F1] transition-colors">
+                  Chính sách bảo mật
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 tracking-tight">Liên hệ</h4>
+            <ul className="space-y-3 text-sm text-[#6B7280]">
+              <li className="flex items-start gap-3">
+                <FaPhone className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="tel:+84707970216" className="hover:text-[#6366F1] transition-colors">
+                  +84 707 970 216
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaEnvelope className="mt-0.5 flex-shrink-0" size={16} />
+                <a href="mailto:contact@alino.net" className="hover:text-[#6366F1] transition-colors">
+                  contact@alino.net
+                </a>
+              </li>
+              <li className="flex items-start gap-3 leading-relaxed">
+                <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={16} />
+                <span>
+                  Landmark 81
+                  <br />
+                  720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh, Việt Nam
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="pt-8 border-t border-black/5 text-center text-sm text-[#9CA3AF]">
+          © 2025 ALINO. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  )
+}
+</file>
+
+<file path="src/components/ScrollToTop.tsx">
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+
+/**
+ * ScrollToTop component that scrolls to top on every route change.
+ * This ensures that navigating between pages always starts at the top.
+ */
+export default function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  return null
+}
+</file>
+
+<file path="src/components/Toast.tsx">
+import { useEffect } from 'react'
+
+interface ToastProps {
+  message: string
+  type: 'success' | 'error'
+  onClose: () => void
+  duration?: number
+}
+
+export default function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose()
+    }, duration)
+
+    return () => clearTimeout(timer)
+  }, [duration, onClose])
+
+  return (
+    <div className="fixed top-4 right-4 z-50" style={{ animation: 'slideIn 0.3s ease-out' }}>
+      <div
+        className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] ${
+          type === 'success'
+            ? 'bg-green-50 border border-green-200 text-green-800'
+            : 'bg-red-50 border border-red-200 text-red-800'
+        }`}
+      >
+        {type === 'success' ? (
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )}
+        <span className="text-sm font-medium">{message}</span>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
+
+let supabaseClient: SupabaseClient | null = null
+
+export function getSupabase() {
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  }
+
+  return supabaseClient
+}
+</file>
+
+<file path="src/pages/BrandDashboard.tsx">
+export default function BrandDashboard() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
+          <h1 className="text-4xl font-semibold tracking-tight mb-4">
+            Brand Dashboard
+          </h1>
+          <p className="text-lg text-[#6B7280]">
+            Trang này đang được phát triển
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/pages/ComingSoonPage.tsx">
 /**
  * Placeholder page for unfinished dashboard features
@@ -595,11 +1391,32 @@ export default function ComingSoonPage() {
 }
 </file>
 
+<file path="src/pages/CreatorDashboard.tsx">
+export default function CreatorDashboard() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
+          <h1 className="text-4xl font-semibold tracking-tight mb-4">
+            Creator Dashboard
+          </h1>
+          <p className="text-lg text-[#6B7280]">
+            Trang này đang được phát triển
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/pages/Dashboard.tsx">
 import { useLocation } from 'react-router-dom'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import DashboardHome from './DashboardHome'
 import ComingSoonPage from './ComingSoonPage'
+import ProfilePage from './ProfilePage'
+import SettingsPage from './SettingsPage'
 
 /**
  * Unified Dashboard component that works for both Creator and Brand roles.
@@ -613,6 +1430,24 @@ export default function Dashboard() {
     return (
       <DashboardLayout>
         <DashboardHome />
+      </DashboardLayout>
+    )
+  }
+  
+  // Profile page
+  if (location.pathname === '/dashboard/profile') {
+    return (
+      <DashboardLayout>
+        <ProfilePage />
+      </DashboardLayout>
+    )
+  }
+  
+  // Settings page
+  if (location.pathname === '/dashboard/settings') {
+    return (
+      <DashboardLayout>
+        <SettingsPage />
       </DashboardLayout>
     )
   }
@@ -954,486 +1789,306 @@ function NotificationCard({ notification, onMarkAsRead }: NotificationCardProps)
 }
 </file>
 
-<file path="migrations/001_cleanup_profiles.sql">
--- Migration: Clean up profiles table structure
--- Remove unused columns and ensure proper schema
-
--- Step 1: Remove unused columns
-ALTER TABLE public.profiles
-  DROP COLUMN IF EXISTS role_selected_at,
-  DROP COLUMN IF EXISTS onboarding_completed_at;
-
--- Step 2: Ensure all required columns exist with correct types
--- Core fields
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS display_name TEXT,
-  ADD COLUMN IF NOT EXISTS avatar_url TEXT,
-  ADD COLUMN IF NOT EXISTS country TEXT,
-  ADD COLUMN IF NOT EXISTS city TEXT,
-  ADD COLUMN IF NOT EXISTS birth_year INTEGER,
-  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
--- Creator fields
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS bio TEXT,
-  ADD COLUMN IF NOT EXISTS creator_platforms JSONB DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS followers_count INTEGER,
-  ADD COLUMN IF NOT EXISTS avg_views INTEGER,
-  ADD COLUMN IF NOT EXISTS content_categories JSONB DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS success_collaboration_rate INTEGER CHECK (success_collaboration_rate >= 0 AND success_collaboration_rate <= 100),
-  ADD COLUMN IF NOT EXISTS preferred_collaboration_type JSONB DEFAULT '[]'::jsonb;
-
--- Brand fields
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS company_name TEXT,
-  ADD COLUMN IF NOT EXISTS website TEXT,
-  ADD COLUMN IF NOT EXISTS industry TEXT,
-  ADD COLUMN IF NOT EXISTS company_size TEXT,
-  ADD COLUMN IF NOT EXISTS campaign_budget_range TEXT,
-  ADD COLUMN IF NOT EXISTS campaign_goal TEXT,
-  ADD COLUMN IF NOT EXISTS target_platforms JSONB DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS target_creator_size TEXT,
-  ADD COLUMN IF NOT EXISTS contact_person_name TEXT,
-  ADD COLUMN IF NOT EXISTS contact_person_phone TEXT;
-
--- Step 3: Remove old columns that are no longer needed
-ALTER TABLE public.profiles
-  DROP COLUMN IF EXISTS collaboration_expectation,
-  DROP COLUMN IF EXISTS collaboration_success_rate,
-  DROP COLUMN IF EXISTS budget,
-  DROP COLUMN IF EXISTS contact_person_email;
-
--- Step 4: Create function to upsert profile on first login
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, role, onboarding_completed)
-  VALUES (NEW.id, NULL, false)
-  ON CONFLICT (id) DO NOTHING;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Step 5: Create trigger (if not exists)
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user();
-
--- Step 6: Update RLS policies
--- Users can read their own profile
-DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
-CREATE POLICY "Users can read own profile"
-  ON public.profiles
-  FOR SELECT
-  USING (auth.uid() = id);
-
--- Users can update their own profile
-DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-CREATE POLICY "Users can update own profile"
-  ON public.profiles
-  FOR UPDATE
-  USING (auth.uid() = id);
-
--- Users can insert their own profile
-DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
-CREATE POLICY "Users can insert own profile"
-  ON public.profiles
-  FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- Step 7: Ensure updated_at is updated on change
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
-CREATE TRIGGER update_profiles_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
-</file>
-
-<file path="src/components/layout/Footer.tsx">
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa'
-
-export default function Footer() {
-  return (
-    <footer className="relative pt-20 pb-8 bg-white border-t border-black/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-5 gap-12 mb-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo/logo.png"
-                alt="ALINO"
-                className="w-7 h-7"
-              />
-              <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-                ALINO
-              </span>
-            </div>
-            <p className="text-sm text-[#6B7280] leading-relaxed">
-              Nền tảng hợp tác cho Creator và Brand chuyên nghiệp.
-            </p>
-            <div className="flex items-center gap-4 pt-2">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#1877F2] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaFacebook size={20} />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#DD2A7B] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaInstagram size={20} />
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#000000] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaTiktok size={20} />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#FF0000] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaYoutube size={20} />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9CA3AF] hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-200"
-              >
-                <FaLinkedin size={20} />
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Sản phẩm</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li>
-                <a href="#product" className="hover:text-[#6366F1] transition-colors">
-                  Tính năng
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" className="hover:text-[#6366F1] transition-colors">
-                  Bảng giá
-                </a>
-              </li>
-              <li>
-                <a href="#how-it-works" className="hover:text-[#6366F1] transition-colors">
-                  Cách hoạt động
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Công ty</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li>
-                <a href="#about" className="hover:text-[#6366F1] transition-colors">
-                  Về chúng tôi
-                </a>
-              </li>
-              <li>
-                <a href="#news" className="hover:text-[#6366F1] transition-colors">
-                  Tin tức
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="hover:text-[#6366F1] transition-colors">
-                  Liên hệ
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Pháp lý</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li>
-                <a href="#terms" className="hover:text-[#6366F1] transition-colors">
-                  Điều khoản sử dụng
-                </a>
-              </li>
-              <li>
-                <a href="#privacy" className="hover:text-[#6366F1] transition-colors">
-                  Chính sách bảo mật
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-4 tracking-tight">Liên hệ</h4>
-            <ul className="space-y-3 text-sm text-[#6B7280]">
-              <li className="flex items-start gap-3">
-                <FaPhone className="mt-0.5 flex-shrink-0" size={16} />
-                <a href="tel:+84707970216" className="hover:text-[#6366F1] transition-colors">
-                  +84 707 970 216
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaEnvelope className="mt-0.5 flex-shrink-0" size={16} />
-                <a href="mailto:contact@alino.net" className="hover:text-[#6366F1] transition-colors">
-                  contact@alino.net
-                </a>
-              </li>
-              <li className="flex items-start gap-3 leading-relaxed">
-                <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" size={16} />
-                <span>
-                  Landmark 81
-                  <br />
-                  720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh, Việt Nam
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="pt-8 border-t border-black/5 text-center text-sm text-[#9CA3AF]">
-          © 2025 ALINO. All rights reserved.
-        </div>
-      </div>
-    </footer>
-  )
-}
-</file>
-
-<file path="src/components/ScrollToTop.tsx">
-import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
-
-/**
- * ScrollToTop component that scrolls to top on every route change.
- * This ensures that navigating between pages always starts at the top.
- */
-export default function ScrollToTop() {
-  const { pathname } = useLocation()
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
-
-  return null
-}
-</file>
-
-<file path="src/components/Toast.tsx">
-import { useEffect } from 'react'
-
-interface ToastProps {
-  message: string
-  type: 'success' | 'error'
-  onClose: () => void
-  duration?: number
-}
-
-export default function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose()
-    }, duration)
-
-    return () => clearTimeout(timer)
-  }, [duration, onClose])
-
-  return (
-    <div className="fixed top-4 right-4 z-50" style={{ animation: 'slideIn 0.3s ease-out' }}>
-      <div
-        className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] ${
-          type === 'success'
-            ? 'bg-green-50 border border-green-200 text-green-800'
-            : 'bg-red-50 border border-red-200 text-red-800'
-        }`}
-      >
-        {type === 'success' ? (
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        ) : (
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
-        <span className="text-sm font-medium">{message}</span>
-      </div>
-    </div>
-  )
-}
-</file>
-
-<file path="src/lib/supabase.ts">
-import { createClient } from '@supabase/supabase-js'
-import type { SupabaseClient } from '@supabase/supabase-js'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-let supabaseClient: SupabaseClient | null = null
-
-export function getSupabase() {
-  if (!supabaseClient) {
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    })
-  }
-
-  return supabaseClient
-}
-</file>
-
-<file path="src/pages/BrandDashboard.tsx">
-export default function BrandDashboard() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight mb-4">
-            Brand Dashboard
-          </h1>
-          <p className="text-lg text-[#6B7280]">
-            Trang này đang được phát triển
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-</file>
-
-<file path="src/pages/CreatorDashboard.tsx">
-export default function CreatorDashboard() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-12 shadow-xl border border-black/5 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight mb-4">
-            Creator Dashboard
-          </h1>
-          <p className="text-lg text-[#6B7280]">
-            Trang này đang được phát triển
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-</file>
-
 <file path="src/pages/SettingsPage.tsx">
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import { FaGoogle, FaFacebook, FaInstagram, FaTiktok, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
 
 export default function SettingsPage() {
-  const { signOut } = useAuth()
+  const { session } = useAuth()
+  const { profile } = useProfile(session?.user?.id, !!session)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+
+  // Check if user is OAuth-only (no email/password)
+  // Check if user has email provider or if all providers are OAuth
+  const userProviders = session?.user?.app_metadata?.providers || []
+  const hasEmailProvider = userProviders.includes('email') || session?.user?.email
+  const isOAuthOnly = !hasEmailProvider && userProviders.length > 0
+
+  // Get account created date
+  const accountCreatedDate = session?.user?.created_at 
+    ? new Date(session.user.created_at).toLocaleDateString('vi-VN', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })
+    : 'N/A'
+
+  // Mock connected accounts - replace with real data later
+  const connectedAccounts = [
+    { name: 'Google', provider: 'google', connected: true, icon: FaGoogle },
+    { name: 'Facebook', provider: 'facebook', connected: false, icon: FaFacebook },
+    { name: 'Instagram', provider: 'instagram', connected: false, icon: FaInstagram },
+    { name: 'TikTok', provider: 'tiktok', connected: false, icon: FaTiktok },
+  ]
 
   const handleChangePassword = async () => {
-    // Coming soon
-  }
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Vui lòng điền đầy đủ thông tin')
+      return
+    }
 
-  const handleChangeEmail = async () => {
-    // Coming soon
-  }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Mật khẩu mới không khớp')
+      return
+    }
 
-  const handleLogoutAll = async () => {
-    // Coming soon
-  }
+    if (newPassword.length < 6) {
+      setPasswordError('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
 
-  const handleDeleteAccount = async () => {
-    // Coming soon
+    setPasswordError('')
+    setPasswordLoading(true)
+
+    try {
+      // TODO: Implement password change logic
+      // This would typically involve:
+      // 1. Verify current password
+      // 2. Update password via Supabase auth
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setPasswordError('')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      alert('Đổi mật khẩu thành công')
+    } catch (error: any) {
+      setPasswordError(error.message || 'Có lỗi xảy ra khi đổi mật khẩu')
+    } finally {
+      setPasswordLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
-          <h1 className="text-3xl font-semibold tracking-tight mb-8">Cài đặt</h1>
+    <div className="bg-gray-50 py-8 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* CARD 1: Account Information */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-2xl font-semibold text-[#374151] mb-6">Thông tin tài khoản</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={session?.user?.email || ''}
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-50 text-gray-600 cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1">Email không thể thay đổi</p>
+              </div>
 
-          <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ngày tạo tài khoản
+                </label>
+                <p className="text-gray-700">{accountCreatedDate}</p>
+              </div>
 
-            <div className="border-b border-gray-200 pb-6">
-              <h2 className="text-lg font-semibold text-[#374151] mb-2">Đổi mật khẩu</h2>
-              <p className="text-sm text-[#6B7280] mb-4">
-                Cập nhật mật khẩu của bạn để bảo vệ tài khoản
-              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Tài khoản đã kết nối
+                </label>
+                <div className="space-y-2">
+                  {connectedAccounts.map((account) => {
+                    const Icon = account.icon
+                    return (
+                      <div
+                        key={account.provider}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-5 h-5 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-700">{account.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {account.connected ? (
+                            <>
+                              <FaCheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="text-sm text-green-600">Đã kết nối</span>
+                            </>
+                          ) : (
+                            <>
+                              <FaTimesCircle className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-500">Chưa kết nối</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CARD 2: Change Password */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-2xl font-semibold text-[#374151] mb-6">Đổi mật khẩu</h2>
+            
+            {isOAuthOnly ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  Tài khoản của bạn được đăng nhập qua OAuth. Tính năng đổi mật khẩu không khả dụng cho tài khoản này.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mật khẩu hiện tại
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                    placeholder="Nhập mật khẩu hiện tại"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                    placeholder="Nhập mật khẩu mới"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Xác nhận mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                    placeholder="Nhập lại mật khẩu mới"
+                  />
+                </div>
+
+                {passwordError && (
+                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                    {passwordError}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleChangePassword}
+                  disabled={passwordLoading}
+                  className="px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {passwordLoading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* CARD 3: Subscription */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-2xl font-semibold text-[#374151] mb-6">Gói đăng ký</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gói hiện tại
+                </label>
+                <p className="text-gray-700">Miễn phí</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ngày hết hạn
+                </label>
+                <p className="text-gray-700">Không giới hạn</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Trạng thái
+                </label>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  Đang hoạt động
+                </span>
+              </div>
+
               <button
-                onClick={handleChangePassword}
                 disabled
                 className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] opacity-50 cursor-not-allowed"
               >
-                Coming soon
-              </button>
-            </div>
-
-            <div className="border-b border-gray-200 pb-6">
-              <h2 className="text-lg font-semibold text-[#374151] mb-2">Đổi email</h2>
-              <p className="text-sm text-[#6B7280] mb-4">
-                Cập nhật địa chỉ email của bạn
-              </p>
-              <button
-                onClick={handleChangeEmail}
-                disabled
-                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] opacity-50 cursor-not-allowed"
-              >
-                Coming soon
-              </button>
-            </div>
-
-            <div className="border-b border-gray-200 pb-6">
-              <h2 className="text-lg font-semibold text-[#374151] mb-2">Đăng xuất tất cả thiết bị</h2>
-              <p className="text-sm text-[#6B7280] mb-4">
-                Đăng xuất khỏi tất cả các thiết bị và trình duyệt
-              </p>
-              <button
-                onClick={handleLogoutAll}
-                disabled
-                className="px-6 py-2.5 rounded-xl font-medium text-[#6366F1] border border-[#6366F1] opacity-50 cursor-not-allowed"
-              >
-                Coming soon
-              </button>
-            </div>
-
-            <div className="pb-6">
-              <h2 className="text-lg font-semibold text-red-600 mb-2">Xóa tài khoản</h2>
-              <p className="text-sm text-[#6B7280] mb-4">
-                Xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn
-              </p>
-              <button
-                onClick={handleDeleteAccount}
-                disabled
-                className="px-6 py-2.5 rounded-xl font-medium text-red-600 border border-red-600 opacity-50 cursor-not-allowed"
-              >
-                Coming soon
+                Nâng cấp gói (Coming soon)
               </button>
             </div>
           </div>
+
+          {/* CARD 4: Security & Data Usage (READ-ONLY) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-2xl font-semibold text-[#374151] mb-6">Bảo mật & Sử dụng dữ liệu</h2>
+            
+            <div className="space-y-4 text-gray-700">
+              <div>
+                <h3 className="font-semibold mb-2">Dữ liệu chúng tôi thu thập</h3>
+                <p className="text-sm mb-4">
+                  ALINO thu thập thông tin cá nhân của bạn để cung cấp và cải thiện dịch vụ, bao gồm:
+                </p>
+                <ul className="list-disc pl-6 text-sm space-y-1 mb-4">
+                  <li>Thông tin tài khoản (email, tên, ngày sinh, địa chỉ)</li>
+                  <li>Thông tin hồ sơ công khai</li>
+                  <li>Dữ liệu từ các tài khoản mạng xã hội được kết nối (Google, Facebook, Instagram, TikTok)</li>
+                  <li>Thông tin về cách bạn sử dụng nền tảng</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Mục đích sử dụng</h3>
+                <p className="text-sm mb-4">
+                  Chúng tôi sử dụng dữ liệu của bạn để:
+                </p>
+                <ul className="list-disc pl-6 text-sm space-y-1 mb-4">
+                  <li>Kết nối bạn với các đối tác phù hợp (Creators với Brands)</li>
+                  <li>Cải thiện trải nghiệm người dùng và tính năng của nền tảng</li>
+                  <li>Gửi thông báo và cập nhật về dịch vụ</li>
+                  <li>Phân tích và tối ưu hóa hiệu suất</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Kết nối mạng xã hội</h3>
+                <p className="text-sm mb-4">
+                  Khi bạn kết nối tài khoản mạng xã hội với ALINO, chúng tôi có thể truy cập và lưu trữ 
+                  thông tin công khai từ các tài khoản đó để cung cấp dịch vụ tốt hơn và tạo điều kiện 
+                  cho các tính năng của nền tảng.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700">
+                  Để biết thêm chi tiết về cách chúng tôi xử lý dữ liệu của bạn, vui lòng xem{' '}
+                  <Link to="/privacy" className="text-[#6366F1] hover:underline">
+                    Chính sách bảo mật
+                  </Link>
+                  {' '}của chúng tôi.
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -3050,178 +3705,6 @@ export default function VerifyEmailPage() {
 }
 </file>
 
-<file path="src/components/layout/Header.tsx">
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { FaBell } from 'react-icons/fa'
-import { useAuth } from '../../hooks/useAuth'
-import { useProfile } from '../../hooks/useProfile'
-import UserMenu from './UserMenu'
-import NotificationModal from '../dashboard/NotificationModal'
-
-export default function Header() {
-  const { session, loading: authLoading, isAuthenticated } = useAuth()
-  const { profile } = useProfile(session?.user?.id, isAuthenticated)
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
-
-  // Check if we're in dashboard mode
-  const isDashboardMode = location.pathname.startsWith('/dashboard') || 
-                          location.pathname.startsWith('/profile') ||
-                          location.pathname.startsWith('/settings')
-
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (location.pathname !== '/') {
-      navigate('/')
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  // Read display_name and avatar_url from profiles table FIRST (primary source)
-  // Fallback to auth metadata if profile not loaded or avatar_url is null
-  const displayName = profile?.display_name || session?.user?.user_metadata?.display_name || undefined
-  const avatarUrl = profile?.avatar_url || session?.user?.user_metadata?.avatar_url || undefined
-
-  // Mock unread count - replace with real data later
-  const unreadNotificationCount = 4
-
-  // Get dashboard title and subtitle based on current route
-  const getDashboardTitle = () => {
-    const path = location.pathname
-    const firstName = displayName?.split(' ')[0] || 'Thành' // Default to "Thành" if no name
-    
-    if (path === '/dashboard') {
-      return {
-        title: `Xin chào ${firstName}`,
-        subtitle: 'Chào mừng bạn đã quay trở lại 👋'
-      }
-    }
-    if (path === '/dashboard/profile-public') {
-      return {
-        title: 'Hồ sơ công khai',
-        subtitle: 'Quản lý thông tin hiển thị của bạn với đối tác'
-      }
-    }
-    if (path === '/dashboard/services') {
-      return {
-        title: 'Dịch vụ & Bảng giá',
-        subtitle: 'Thiết lập dịch vụ và mức giá bạn cung cấp'
-      }
-    }
-    if (path === '/dashboard/opportunities') {
-      return {
-        title: 'Cơ hội hợp tác',
-        subtitle: 'Khám phá các cơ hội phù hợp với bạn'
-      }
-    }
-    if (path === '/dashboard/proposals') {
-      return {
-        title: 'Đề xuất',
-        subtitle: 'Quản lý các đề xuất hợp tác đang diễn ra'
-      }
-    }
-    if (path === '/dashboard/workspace') {
-      return {
-        title: 'Trung tâm làm việc',
-        subtitle: 'Theo dõi và xử lý các hoạt động hợp tác'
-      }
-    }
-    if (path === '/dashboard/analytics') {
-      return {
-        title: 'Phân tích',
-        subtitle: 'Theo dõi hiệu suất và tăng trưởng của bạn'
-      }
-    }
-    return null
-  }
-
-  const dashboardTitle = isDashboardMode ? getDashboardTitle() : null
-
-  return (
-    <>
-      <header className={`fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-xl border-b border-black/5 ${isDashboardMode && dashboardTitle ? 'h-20' : 'h-16'}`}>
-        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link
-              to="/"
-              onClick={handleLogoClick}
-              className="flex items-center gap-3 cursor-pointer flex-shrink-0"
-            >
-              <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
-              <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-                ALINO
-              </span>
-            </Link>
-
-            {/* Dashboard Title & Subtitle - only show in dashboard mode */}
-            {isDashboardMode && dashboardTitle && (
-              <div className="hidden md:block border-l border-gray-200 pl-6">
-                <h1 className="text-lg font-semibold text-gray-900 leading-tight">{dashboardTitle.title}</h1>
-                <p className="text-sm text-gray-500 leading-tight mt-0.5">{dashboardTitle.subtitle}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Landing page navigation - only show when NOT in dashboard mode */}
-          {!isDashboardMode && (
-            <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
-              <a href="#about">Về chúng tôi</a>
-              <a href="#product">Sản phẩm</a>
-              <a href="#news">Tin tức</a>
-              <a href="#contact">Liên hệ</a>
-            </nav>
-          )}
-
-          <div className="flex items-center gap-4 text-sm">
-            {authLoading ? null : session ? (
-              <>
-                {/* Notification Icon - only show in dashboard mode */}
-                {isDashboardMode && (
-                  <button
-                    onClick={() => setIsNotificationModalOpen(true)}
-                    className="relative p-2 text-gray-600 hover:text-[#6366F1] transition-colors"
-                  >
-                    <FaBell className="w-5 h-5" />
-                    {unreadNotificationCount > 0 && (
-                      <span className="absolute top-0 right-0 w-4 h-4 bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white text-xs font-bold rounded-full flex items-center justify-center">
-                        {unreadNotificationCount}
-                      </span>
-                    )}
-                  </button>
-                )}
-                <UserMenu 
-                  userEmail={session.user.email || ''}
-                  displayName={displayName}
-                  avatarUrl={avatarUrl}
-                />
-              </>
-            ) : (
-              <>
-                <Link to="/login">Đăng nhập</Link>
-                <Link
-                  to="/signup"
-                  className="px-5 py-2.5 rounded-full text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
-                >
-                  Đăng ký
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Notification Modal */}
-      <NotificationModal 
-        isOpen={isNotificationModalOpen} 
-        onClose={() => setIsNotificationModalOpen(false)} 
-      />
-    </>
-  )
-}
-</file>
-
 <file path="src/components/layout/UserMenu.tsx">
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -3261,8 +3744,6 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
     await signOut()
   }
 
-  const dashboardPath = '/app?next=projects'
-
   const nameToShow = displayName || userEmail.split('@')[0]
 
   return (
@@ -3296,25 +3777,11 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
         <div className="absolute right-0 top-full pt-2 w-56 z-50">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
             <Link
-              to={dashboardPath}
+              to="/dashboard"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
               Quản lý dự án
-            </Link>
-            <Link
-              to="/app?next=profile"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Hồ sơ
-            </Link>
-            <Link
-              to="/app?next=settings"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Cài đặt
             </Link>
             <div className="border-t border-gray-200 my-1" />
             <button
@@ -3509,216 +3976,90 @@ export interface BrandProfile extends Profile {
 export type ProfileWithRole = CreatorProfile | BrandProfile
 </file>
 
-<file path="src/router.tsx">
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { useAuth } from './hooks/useAuth'
-import { useProfile } from './hooks/useProfile'
-import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
-import VerifyEmailPage from './pages/VerifyEmailPage'
-import AppGate from './pages/AppGate'
-import RolePage from './pages/RolePage'
-import OnboardingPage from './pages/OnboardingPage'
-import CreatorDashboard from './pages/CreatorDashboard'
-import BrandDashboard from './pages/BrandDashboard'
-import Dashboard from './pages/Dashboard'
-import DashboardHome from './pages/DashboardHome'
-import ComingSoonPage from './pages/ComingSoonPage'
-import ProfilePage from './pages/ProfilePage'
-import SettingsPage from './pages/SettingsPage'
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />
-  }
-
-  return <>{children}</>
-}
-
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (session) {
-    return <Navigate to="/app" replace />
-  }
-
-  return <>{children}</>
-}
-
-export function Router() {
-  return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      
-      <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <SignupPage />
-          </PublicRoute>
-        }
-      />
-      
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-
-      <Route path="/app" element={<AppGate />} />
-
-      <Route
-        path="/role"
-        element={
-          <ProtectedRoute>
-            <RolePage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/onboarding"
-        element={
-          <ProtectedRoute>
-            <OnboardingPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/dashboard"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/dashboard/profile-public"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/dashboard/services"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/dashboard/opportunities"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/dashboard/proposals"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/dashboard/workspace"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/dashboard/analytics"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/projects"
-        element={<DashboardEntry />}
-      />
-
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
-}
-
-function DashboardEntry() {
-  const { session, loading: authLoading, user, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading, error: profileError } = useProfile(user?.id, isAuthenticated)
-
-  // a) If not authenticated → do nothing (let AppGate handle it)
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  // b) If profile is loading → do nothing (show loading)
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  // c) If profile error or missing → let AppGate handle redirect (don't redirect here)
-  if (profileError || !profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  // Profile loaded successfully, render unified dashboard
-  return <Dashboard />
-}
-</file>
-
 <file path="src/vite-env.d.ts">
 /// <reference types="vite/client" />
+</file>
+
+<file path="src/components/layout/Header.tsx">
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { useProfile } from '../../hooks/useProfile'
+import UserMenu from './UserMenu'
+
+/**
+ * Landing Page Header Component
+ * - Used ONLY on landing pages (not dashboard)
+ * - Contains: Logo | Navigation | UserMenu
+ */
+export default function Header() {
+  const { session, loading: authLoading } = useAuth()
+  const { profile } = useProfile(session?.user?.id, !!session)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (location.pathname !== '/') navigate('/')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const displayName =
+    profile?.display_name ||
+    session?.user?.user_metadata?.display_name ||
+    undefined
+
+  const avatarUrl =
+    profile?.avatar_url ||
+    session?.user?.user_metadata?.avatar_url ||
+    undefined
+
+  return (
+    <header className="fixed top-0 inset-x-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-black/5">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        {/* Logo */}
+        <Link
+          to="/"
+          onClick={handleLogoClick}
+          className="flex items-center gap-3"
+        >
+          <img src="/logo/logo.png" alt="ALINO" className="w-8 h-8" />
+          <span className="font-bold text-2xl leading-tight bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
+            ALINO
+          </span>
+        </Link>
+
+        {/* Navigation */}
+        <nav className="hidden md:flex items-center gap-10 text-sm text-[#6B7280]">
+          <a href="#about">Về chúng tôi</a>
+          <a href="#features">Tính năng</a>
+          <a href="#news">Tin tức</a>
+          <a href="#contact">Liên hệ</a>
+        </nav>
+
+        {/* Actions */}
+        <div className="flex items-center gap-4 text-sm">
+          {authLoading ? null : session ? (
+            <UserMenu
+              userEmail={session.user.email || ''}
+              displayName={displayName}
+              avatarUrl={avatarUrl}
+            />
+          ) : (
+            <>
+              <Link to="/login">Đăng nhập</Link>
+              <Link
+                to="/signup"
+                className="px-5 py-2.5 rounded-full text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899]"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}
 </file>
 
 <file path="src/hooks/useProfile.ts">
@@ -3831,7 +4172,7 @@ export function useProfile(
 
 <file path="src/pages/OnboardingPage.tsx">
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getSupabase } from '../lib/supabase'
 
@@ -4102,6 +4443,21 @@ export default function OnboardingPage() {
         .eq('id', session.user.id)
 
       if (error) throw error
+
+      // Insert consent record
+      const { error: consentError } = await supabase
+        .from('user_consents')
+        .insert({
+          user_id: session.user.id,
+          policy_version: 'v1.0',
+          accepted_via: 'onboarding',
+          accepted_at: new Date().toISOString(),
+        })
+
+      if (consentError) {
+        console.error('Error inserting consent:', consentError)
+        // Don't block onboarding if consent insert fails
+      }
 
       // Redirect to /app - AppGate will handle routing
       navigate('/app', { replace: true })
@@ -4809,6 +5165,18 @@ function Step5Finalize({
         </ul>
       </div>
 
+      <p className="text-sm text-gray-600 mb-6 text-center">
+        By clicking Continue, you agree to ALINO's{' '}
+        <Link to="/terms" className="text-[#6366F1] hover:underline">
+          Terms of Service
+        </Link>
+        {' '}and{' '}
+        <Link to="/privacy" className="text-[#6366F1] hover:underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+
       <button
         onClick={onComplete}
         disabled={loading}
@@ -4895,7 +5263,7 @@ export default function ProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
+      <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Đang tải...</div>
       </div>
     )
@@ -4903,7 +5271,7 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
+      <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
       </div>
     )
@@ -5131,10 +5499,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+    <div className="bg-white py-8 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
-          <h1 className="text-3xl font-semibold tracking-tight mb-8">Hồ sơ</h1>
+        <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
 
           <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
             {/* Basic Identity Section */}
@@ -5772,6 +6139,204 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 )
 </file>
 
+<file path="src/router.tsx">
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useAuth } from './hooks/useAuth'
+import { useProfile } from './hooks/useProfile'
+import LandingPage from './pages/LandingPage'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import AppGate from './pages/AppGate'
+import RolePage from './pages/RolePage'
+import OnboardingPage from './pages/OnboardingPage'
+import CreatorDashboard from './pages/CreatorDashboard'
+import BrandDashboard from './pages/BrandDashboard'
+import Dashboard from './pages/Dashboard'
+import DashboardHome from './pages/DashboardHome'
+import ComingSoonPage from './pages/ComingSoonPage'
+import TermsPage from './pages/TermsPage'
+import PrivacyPage from './pages/PrivacyPage'
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />
+  }
+
+  return <>{children}</>
+}
+
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (session) {
+    return <Navigate to="/app" replace />
+  }
+
+  return <>{children}</>
+}
+
+export function Router() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignupPage />
+          </PublicRoute>
+        }
+      />
+      
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+
+      <Route path="/app" element={<AppGate />} />
+
+      <Route
+        path="/role"
+        element={
+          <ProtectedRoute>
+            <RolePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/profile"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/services"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/opportunities"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/proposals"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/workspace"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/analytics"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/settings"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/projects"
+        element={<DashboardEntry />}
+      />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+function DashboardEntry() {
+  const { session, loading: authLoading, user, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading, error: profileError } = useProfile(user?.id, isAuthenticated)
+
+  // a) If not authenticated → do nothing (let AppGate handle it)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // b) If profile is loading → do nothing (show loading)
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // c) If profile error or missing → let AppGate handle redirect (don't redirect here)
+  if (profileError || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // Profile loaded successfully, render unified dashboard
+  return <Dashboard />
+}
+</file>
+
 <file path="index.html">
 <!doctype html>
 <html lang="vi">
@@ -6045,14 +6610,12 @@ import Footer from './components/layout/Footer'
 function AppContent() {
   const location = useLocation()
   
-  // Check if we're in dashboard mode - hide Footer
-  const isDashboardMode = location.pathname.startsWith('/dashboard') || 
-                          location.pathname.startsWith('/profile') ||
-                          location.pathname.startsWith('/settings')
+  // Check if we're in dashboard mode - hide Header and Footer
+  const isDashboardMode = location.pathname.startsWith('/dashboard')
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {!isDashboardMode && <Header />}
       <main className="flex-1">
         <Router />
       </main>

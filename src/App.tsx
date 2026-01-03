@@ -7,14 +7,12 @@ import Footer from './components/layout/Footer'
 function AppContent() {
   const location = useLocation()
   
-  // Check if we're in dashboard mode - hide Footer
-  const isDashboardMode = location.pathname.startsWith('/dashboard') || 
-                          location.pathname.startsWith('/profile') ||
-                          location.pathname.startsWith('/settings')
+  // Check if we're in dashboard mode - hide Header and Footer
+  const isDashboardMode = location.pathname.startsWith('/dashboard')
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {!isDashboardMode && <Header />}
       <main className="flex-1">
         <Router />
       </main>

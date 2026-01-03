@@ -14,8 +14,8 @@ import BrandDashboard from './pages/BrandDashboard'
 import Dashboard from './pages/Dashboard'
 import DashboardHome from './pages/DashboardHome'
 import ComingSoonPage from './pages/ComingSoonPage'
-import ProfilePage from './pages/ProfilePage'
-import SettingsPage from './pages/SettingsPage'
+import TermsPage from './pages/TermsPage'
+import PrivacyPage from './pages/PrivacyPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -78,6 +78,9 @@ export function Router() {
       
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+
       <Route path="/app" element={<AppGate />} />
 
       <Route
@@ -104,7 +107,7 @@ export function Router() {
       />
 
       <Route
-        path="/dashboard/profile-public"
+        path="/dashboard/profile"
         element={<DashboardEntry />}
       />
 
@@ -134,26 +137,13 @@ export function Router() {
       />
 
       <Route
-        path="/projects"
+        path="/dashboard/settings"
         element={<DashboardEntry />}
       />
 
       <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
+        path="/projects"
+        element={<DashboardEntry />}
       />
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getSupabase } from '../lib/supabase'
 
@@ -270,6 +270,21 @@ export default function OnboardingPage() {
         .eq('id', session.user.id)
 
       if (error) throw error
+
+      // Insert consent record
+      const { error: consentError } = await supabase
+        .from('user_consents')
+        .insert({
+          user_id: session.user.id,
+          policy_version: 'v1.0',
+          accepted_via: 'onboarding',
+          accepted_at: new Date().toISOString(),
+        })
+
+      if (consentError) {
+        console.error('Error inserting consent:', consentError)
+        // Don't block onboarding if consent insert fails
+      }
 
       // Redirect to /app - AppGate will handle routing
       navigate('/app', { replace: true })
@@ -976,6 +991,18 @@ function Step5Finalize({
           )}
         </ul>
       </div>
+
+      <p className="text-sm text-gray-600 mb-6 text-center">
+        By clicking Continue, you agree to ALINO's{' '}
+        <Link to="/terms" className="text-[#6366F1] hover:underline">
+          Terms of Service
+        </Link>
+        {' '}and{' '}
+        <Link to="/privacy" className="text-[#6366F1] hover:underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
 
       <button
         onClick={onComplete}

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { FaFacebook, FaInstagram, FaTiktok, FaYoutube, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa'
 
 export default function Footer() {
@@ -109,14 +110,14 @@ export default function Footer() {
             <h4 className="font-semibold text-sm mb-4 tracking-tight">Pháp lý</h4>
             <ul className="space-y-3 text-sm text-[#6B7280]">
               <li>
-                <a href="#terms" className="hover:text-[#6366F1] transition-colors">
+                <Link to="/terms" className="hover:text-[#6366F1] transition-colors">
                   Điều khoản sử dụng
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#privacy" className="hover:text-[#6366F1] transition-colors">
+                <Link to="/privacy" className="hover:text-[#6366F1] transition-colors">
                   Chính sách bảo mật
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
