@@ -15,24 +15,12 @@ export default function RolePage() {
     setLoading(true)
 
     try {
-      // Get existing onboarding_data
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('onboarding_data')
-        .eq('id', session.user.id)
-        .single()
-
-      const existingData = (existingProfile?.onboarding_data as any) || {}
-
-      // Update role and save role_selected_at timestamp in onboarding_data
+      // Update role directly to profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
           role,
-          onboarding_data: {
-            ...existingData,
-            role_selected_at: new Date().toISOString(),
-          },
+          updated_at: new Date().toISOString(),
         })
         .eq('id', session.user.id)
 

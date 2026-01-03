@@ -2,7 +2,32 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getSupabase } from '../lib/supabase'
-import type { OnboardingData } from '../types/profile'
+
+// Form state interfaces
+interface CreatorFormData {
+  display_name?: string
+  country?: string
+  city?: string
+  birth_year?: number
+  creator_platforms?: string[]
+  followers_count?: number
+  avg_views?: number
+  content_categories?: string[]
+  collaboration_expectation?: ('paid' | 'gift' | 'affiliate')[]
+}
+
+interface BrandFormData {
+  company_name?: string
+  industry?: string
+  country?: string
+  city?: string
+  company_size?: string
+  budget?: number
+  campaign_budget_range?: string
+  target_platforms?: string[]
+  campaign_goal?: string
+  preferred_collaboration_type?: ('paid' | 'gift' | 'affiliate')[]
+}
 
 export default function OnboardingPage() {
   const { session } = useAuth()
@@ -11,17 +36,14 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  // Form state
-  const [formData, setFormData] = useState<OnboardingData>({})
+  const [role, setRole] = useState<'creator' | 'brand' | null>(null)
+  
+  // Form state - separate for creator and brand
+  const [creatorData, setCreatorData] = useState<CreatorFormData>({})
+  const [brandData, setBrandData] = useState<BrandFormData>({})
 
   useEffect(() => {
-    if (!session) {
-      navigate('/app', { replace: true })
-      return
-    }
-
-    // Check if onboarding already completed
+    if (!session) return
     checkOnboardingStatus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session])
@@ -32,57 +54,85 @@ export default function OnboardingPage() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('onboarding_completed, role')
+        .select('onboarding_completed, role, onboarding_data')
         .eq('id', session.user.id)
         .single()
 
       if (error && error.code !== 'PGRST116') throw error
 
-      if (data?.onboarding_completed) {
-        navigate('/app', { replace: true })
-        return
-      }
-
+      // Let AppGate handle redirects - don't redirect here
       if (data?.role) {
-        // Load existing data
-        loadExistingData()
+        setRole(data.role)
+        loadExistingData(data.role, data.onboarding_data)
       }
     } catch (err) {
       console.error('Error checking onboarding:', err)
     }
   }
 
-  async function loadExistingData() {
+  async function loadExistingData(userRole: 'creator' | 'brand', onboardingData: any) {
     if (!session) return
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('onboarding_data, role')
-        .eq('id', session.user.id)
-        .single()
+      // Read from onboarding_data JSON, not profile columns
+      const data = onboardingData || {}
 
-      if (error) throw error
+      if (userRole === 'creator') {
+        const step2 = data.step2 || {}
+        const step3 = data.step3 || {}
+        const step4 = data.step4 || {}
+        
+        const cd: CreatorFormData = {
+          display_name: step2.display_name || undefined,
+          country: step2.country || undefined,
+          city: step2.city || undefined,
+          birth_year: step2.birth_year || undefined,
+          creator_platforms: step3.creator_platforms || undefined,
+          followers_count: step3.followers_count || undefined,
+          avg_views: step3.avg_views || undefined,
+          content_categories: step3.content_categories || undefined,
+          collaboration_expectation: step4.collaboration_expectation || undefined,
+        }
+        setCreatorData(cd)
 
-      if (data?.onboarding_data && typeof data.onboarding_data === 'object') {
-        setFormData(data.onboarding_data as OnboardingData)
-      }
-
-      // Determine current step based on existing data
-      if (data?.role) {
-        if (!data.onboarding_data || Object.keys(data.onboarding_data).length === 0) {
+        // Determine current step based on onboarding_data
+        if (!step2.display_name) {
           setCurrentStep(2)
+        } else if (!step3.creator_platforms || step3.creator_platforms.length === 0) {
+          setCurrentStep(3)
+        } else if (!step4.collaboration_expectation || step4.collaboration_expectation.length === 0) {
+          setCurrentStep(4)
         } else {
-          const od = data.onboarding_data as OnboardingData
-          if (!od.display_name && !od.brand_name) {
-            setCurrentStep(2)
-          } else if (!od.creator_platforms && !od.company_size) {
-            setCurrentStep(3)
-          } else if (!od.collaboration_expectation && !od.collaboration_goal) {
-            setCurrentStep(4)
-          } else {
-            setCurrentStep(5)
-          }
+          setCurrentStep(5)
+        }
+      } else {
+        const step2 = data.step2 || {}
+        const step3 = data.step3 || {}
+        const step4 = data.step4 || {}
+        
+        const bd: BrandFormData = {
+          company_name: step2.company_name || undefined,
+          industry: step2.industry || undefined,
+          country: step2.country || undefined,
+          city: step2.city || undefined,
+          company_size: step3.company_size || undefined,
+          budget: step3.budget || undefined,
+          campaign_budget_range: step3.campaign_budget_range || undefined,
+          target_platforms: step3.target_platforms || undefined,
+          campaign_goal: step4.campaign_goal || undefined,
+          preferred_collaboration_type: step4.preferred_collaboration_type || undefined,
+        }
+        setBrandData(bd)
+
+        // Determine current step based on onboarding_data
+        if (!step2.company_name) {
+          setCurrentStep(2)
+        } else if (!step3.company_size) {
+          setCurrentStep(3)
+        } else if (!step4.campaign_goal) {
+          setCurrentStep(4)
+        } else {
+          setCurrentStep(5)
         }
       }
     } catch (err) {
@@ -90,24 +140,61 @@ export default function OnboardingPage() {
     }
   }
 
-  async function saveStep(stepData: Partial<OnboardingData>, nextStep?: number) {
-    if (!session) return
+  // Helper to merge onboarding_data JSON
+  async function mergeOnboardingData(stepKey: string, stepData: any) {
+    if (!session) return null
+
+    // Fetch current onboarding_data
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('onboarding_data')
+      .eq('id', session.user.id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    // Merge new step data into existing onboarding_data
+    const currentData = profile?.onboarding_data || {}
+    const mergedData = {
+      ...currentData,
+      [stepKey]: stepData,
+    }
+
+    // Update only onboarding_data column
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        onboarding_data: mergedData,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', session.user.id)
+
+    if (updateError) throw updateError
+
+    return mergedData
+  }
+
+  async function saveStep(stepData: CreatorFormData | BrandFormData, nextStep?: number) {
+    if (!session || !role) return
 
     setLoading(true)
     setError('')
 
     try {
-      const updatedData = { ...formData, ...stepData }
-      setFormData(updatedData)
+      // Determine step key based on current step
+      const stepKey = `step${currentStep}`
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          onboarding_data: updatedData,
-        })
-        .eq('id', session.user.id)
+      // Update local state
+      if (role === 'creator') {
+        const cd = { ...creatorData, ...stepData } as CreatorFormData
+        setCreatorData(cd)
+      } else {
+        const bd = { ...brandData, ...stepData } as BrandFormData
+        setBrandData(bd)
+      }
 
-      if (error) throw error
+      // Save to onboarding_data JSON (merge)
+      await mergeOnboardingData(stepKey, stepData)
 
       if (nextStep) {
         setCurrentStep(nextStep)
@@ -120,48 +207,77 @@ export default function OnboardingPage() {
   }
 
   async function handleComplete() {
-    if (!session) return
+    if (!session || !role) return
 
     setLoading(true)
     setError('')
 
     try {
-      const finalData = {
-        ...formData,
-        onboarding_completed_at: new Date().toISOString(),
+      // Fetch onboarding_data
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('onboarding_data')
+        .eq('id', session.user.id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const onboardingData = profile?.onboarding_data || {}
+
+      // Map onboarding_data to profile columns
+      const updateData: any = {
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
       }
 
+      if (role === 'creator') {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+
+        updateData.display_name = step2.display_name || null
+        updateData.country = step2.country || null
+        updateData.city = step2.city || null
+        updateData.birth_year = step2.birth_year || null
+        updateData.creator_platforms = step3.creator_platforms || null
+        updateData.followers_count = step3.followers_count || null
+        updateData.avg_views = step3.avg_views || null
+        updateData.content_categories = step3.content_categories || null
+        updateData.collaboration_expectation = step4.collaboration_expectation || null
+      } else {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+
+        updateData.brand_name = step2.company_name || null
+        updateData.industry = step2.industry || null
+        updateData.country = step2.country || null
+        updateData.city = step2.city || null
+        updateData.company_size = step3.company_size || null
+        // monthly_marketing_budget must be NUMERIC (convert to number)
+        const budgetValue = step3.budget || step3.campaign_budget_range
+        updateData.monthly_marketing_budget = budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
+        updateData.target_platforms = step3.target_platforms || null
+        // collaboration_goal must be TEXT[] (array), convert string to array if needed
+        const goalValue = step4.campaign_goal || step4.collaboration_goal
+        updateData.collaboration_goal = Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+      }
+
+      // Update profile columns and set onboarding_completed = true
       const { error } = await supabase
         .from('profiles')
-        .update({
-          onboarding_completed: true,
-          onboarding_data: finalData,
-        })
+        .update(updateData)
         .eq('id', session.user.id)
 
       if (error) throw error
 
+      // Redirect to /app - AppGate will handle routing
       navigate('/app', { replace: true })
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
       setLoading(false)
     }
   }
-
-  const [role, setRole] = useState<'creator' | 'brand' | null>(null)
-
-  useEffect(() => {
-    async function getRole() {
-      if (!session) return null
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-      return data?.role || null
-    }
-    getRole().then(setRole)
-  }, [session, supabase])
 
   if (!role) {
     return (
@@ -203,7 +319,8 @@ export default function OnboardingPage() {
           {currentStep === 2 && (
             <Step2BasicIdentity
               role={role}
-              formData={formData}
+              creatorData={creatorData}
+              brandData={brandData}
               onSave={(data) => saveStep(data, 3)}
               loading={loading}
             />
@@ -213,7 +330,8 @@ export default function OnboardingPage() {
           {currentStep === 3 && (
             <Step3Metrics
               role={role}
-              formData={formData}
+              creatorData={creatorData}
+              brandData={brandData}
               onSave={(data) => saveStep(data, 4)}
               loading={loading}
             />
@@ -223,7 +341,8 @@ export default function OnboardingPage() {
           {currentStep === 4 && (
             <Step4Collaboration
               role={role}
-              formData={formData}
+              creatorData={creatorData}
+              brandData={brandData}
               onSave={(data) => saveStep(data, 5)}
               loading={loading}
             />
@@ -233,7 +352,8 @@ export default function OnboardingPage() {
           {currentStep === 5 && (
             <Step5Finalize
               role={role}
-              formData={formData}
+              creatorData={creatorData}
+              brandData={brandData}
               onComplete={handleComplete}
               loading={loading}
             />
@@ -260,23 +380,32 @@ export default function OnboardingPage() {
 // Step 2: Basic Identity
 function Step2BasicIdentity({
   role,
-  formData,
+  creatorData,
+  brandData,
   onSave,
   loading,
 }: {
   role: 'creator' | 'brand'
-  formData: OnboardingData
-  onSave: (data: Partial<OnboardingData>) => void
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onSave: (data: CreatorFormData | BrandFormData) => void
   loading: boolean
 }) {
-  const [localData, setLocalData] = useState({
-    display_name: formData.display_name || '',
-    brand_name: formData.brand_name || '',
-    country: formData.country || '',
-    city: formData.city || '',
-    birth_year: formData.birth_year || undefined,
-    industry: formData.industry || '',
-  })
+  const [localData, setLocalData] = useState(
+    role === 'creator'
+      ? {
+          display_name: creatorData.display_name || '',
+          country: creatorData.country || '',
+          city: creatorData.city || '',
+          birth_year: creatorData.birth_year || undefined,
+        }
+      : {
+          company_name: brandData.company_name || '',
+          industry: brandData.industry || '',
+          country: brandData.country || '',
+          city: brandData.city || '',
+        }
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -286,14 +415,14 @@ function Step2BasicIdentity({
         country: localData.country,
         city: localData.city,
         birth_year: localData.birth_year,
-      })
+      } as CreatorFormData)
     } else {
       onSave({
-        brand_name: localData.brand_name,
+        company_name: localData.company_name,
         industry: localData.industry,
         country: localData.country,
         city: localData.city,
-      })
+      } as BrandFormData)
     }
   }
 
@@ -316,7 +445,7 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.display_name}
-                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value })}
+                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 required
               />
@@ -354,7 +483,7 @@ function Step2BasicIdentity({
                 min="1950"
                 max={new Date().getFullYear()}
                 value={localData.birth_year || ''}
-                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })}
+                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
               />
             </div>
@@ -363,12 +492,12 @@ function Step2BasicIdentity({
           <>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
-                Tên thương hiệu *
+                Tên công ty *
               </label>
               <input
                 type="text"
-                value={localData.brand_name}
-                onChange={(e) => setLocalData({ ...localData, brand_name: e.target.value })}
+                value={localData.company_name}
+                onChange={(e) => setLocalData({ ...localData, company_name: e.target.value } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 required
               />
@@ -380,7 +509,7 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.industry}
-                onChange={(e) => setLocalData({ ...localData, industry: e.target.value })}
+                onChange={(e) => setLocalData({ ...localData, industry: e.target.value } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 required
               />
@@ -427,26 +556,34 @@ function Step2BasicIdentity({
 // Step 3: Business/Creator Metrics
 function Step3Metrics({
   role,
-  formData,
+  creatorData,
+  brandData,
   onSave,
   loading,
 }: {
   role: 'creator' | 'brand'
-  formData: OnboardingData
-  onSave: (data: Partial<OnboardingData>) => void
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onSave: (data: CreatorFormData | BrandFormData) => void
   loading: boolean
 }) {
   const platforms = ['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn']
   
-  const [localData, setLocalData] = useState({
-    creator_platforms: formData.creator_platforms || [],
-    followers_count: formData.followers_count || undefined,
-    avg_views: formData.avg_views || undefined,
-    content_categories: formData.content_categories || [],
-    company_size: formData.company_size || '',
-    monthly_marketing_budget: formData.monthly_marketing_budget || undefined,
-    target_platforms: formData.target_platforms || [],
-  })
+  const [localData, setLocalData] = useState(
+    role === 'creator'
+      ? {
+          creator_platforms: creatorData.creator_platforms || [],
+          followers_count: creatorData.followers_count || undefined,
+          avg_views: creatorData.avg_views || undefined,
+          content_categories: creatorData.content_categories || [],
+        }
+      : {
+          company_size: brandData.company_size || '',
+          budget: brandData.budget || undefined,
+          campaign_budget_range: brandData.campaign_budget_range || '',
+          target_platforms: brandData.target_platforms || [],
+        }
+  )
 
   const togglePlatform = (platform: string, type: 'creator' | 'target') => {
     if (type === 'creator') {
@@ -454,13 +591,13 @@ function Step3Metrics({
       const updated = current.includes(platform)
         ? current.filter((p) => p !== platform)
         : [...current, platform]
-      setLocalData({ ...localData, creator_platforms: updated })
+      setLocalData({ ...localData, creator_platforms: updated } as any)
     } else {
       const current = localData.target_platforms || []
       const updated = current.includes(platform)
         ? current.filter((p) => p !== platform)
         : [...current, platform]
-      setLocalData({ ...localData, target_platforms: updated })
+      setLocalData({ ...localData, target_platforms: updated } as any)
     }
   }
 
@@ -469,7 +606,7 @@ function Step3Metrics({
     const updated = current.includes(category)
       ? current.filter((c) => c !== category)
       : [...current, category]
-    setLocalData({ ...localData, content_categories: updated })
+      setLocalData({ ...localData, content_categories: updated } as any)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -480,13 +617,14 @@ function Step3Metrics({
         followers_count: localData.followers_count,
         avg_views: localData.avg_views,
         content_categories: localData.content_categories,
-      })
+      } as CreatorFormData)
     } else {
       onSave({
         company_size: localData.company_size,
-        monthly_marketing_budget: localData.monthly_marketing_budget,
+        budget: localData.budget,
+        campaign_budget_range: localData.campaign_budget_range,
         target_platforms: localData.target_platforms,
-      })
+      } as BrandFormData)
     }
   }
 
@@ -533,7 +671,7 @@ function Step3Metrics({
                 type="number"
                 min="0"
                 value={localData.followers_count || ''}
-                onChange={(e) => setLocalData({ ...localData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })}
+                onChange={(e) => setLocalData({ ...localData, followers_count: e.target.value ? parseInt(e.target.value) : undefined } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 placeholder="Ví dụ: 100000"
               />
@@ -546,7 +684,7 @@ function Step3Metrics({
                 type="number"
                 min="0"
                 value={localData.avg_views || ''}
-                onChange={(e) => setLocalData({ ...localData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })}
+                onChange={(e) => setLocalData({ ...localData, avg_views: e.target.value ? parseInt(e.target.value) : undefined } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 placeholder="Ví dụ: 50000"
               />
@@ -581,7 +719,7 @@ function Step3Metrics({
               </label>
               <select
                 value={localData.company_size}
-                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value })}
+                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 required
               >
@@ -595,15 +733,27 @@ function Step3Metrics({
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
-                Ngân sách marketing hàng tháng (USD)
+                Ngân sách marketing (USD)
               </label>
               <input
                 type="number"
                 min="0"
-                value={localData.monthly_marketing_budget || ''}
-                onChange={(e) => setLocalData({ ...localData, monthly_marketing_budget: e.target.value ? parseInt(e.target.value) : undefined })}
+                value={localData.budget || ''}
+                onChange={(e) => setLocalData({ ...localData, budget: e.target.value ? parseInt(e.target.value) : undefined } as any)}
                 className="w-full px-4 py-2.5 border rounded-lg"
                 placeholder="Ví dụ: 5000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Khoảng ngân sách chiến dịch
+              </label>
+              <input
+                type="text"
+                value={localData.campaign_budget_range}
+                onChange={(e) => setLocalData({ ...localData, campaign_budget_range: e.target.value } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: $1000 - $5000"
               />
             </div>
             <div>
@@ -645,26 +795,57 @@ function Step3Metrics({
 // Step 4: Collaboration Intent
 function Step4Collaboration({
   role,
-  formData,
+  creatorData,
+  brandData,
   onSave,
   loading,
 }: {
   role: 'creator' | 'brand'
-  formData: OnboardingData
-  onSave: (data: Partial<OnboardingData>) => void
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onSave: (data: CreatorFormData | BrandFormData) => void
   loading: boolean
 }) {
-  const [localData, setLocalData] = useState({
-    collaboration_expectation: formData.collaboration_expectation || '',
-    collaboration_goal: formData.collaboration_goal || '',
-  })
+  const collaborationTypes: ('paid' | 'gift' | 'affiliate')[] = ['paid', 'gift', 'affiliate']
+  
+  const [localData, setLocalData] = useState(
+    role === 'creator'
+      ? {
+          collaboration_expectation: creatorData.collaboration_expectation || [],
+        }
+      : {
+          campaign_goal: brandData.campaign_goal || '',
+          preferred_collaboration_type: brandData.preferred_collaboration_type || [],
+        }
+  )
+
+  const toggleCollaborationType = (type: 'paid' | 'gift' | 'affiliate') => {
+    if (role === 'creator') {
+      const current = localData.collaboration_expectation || []
+      const updated = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type]
+      setLocalData({ ...localData, collaboration_expectation: updated } as any)
+    } else {
+      const current = localData.preferred_collaboration_type || []
+      const updated = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type]
+      setLocalData({ ...localData, preferred_collaboration_type: updated } as any)
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (role === 'creator') {
-      onSave({ collaboration_expectation: localData.collaboration_expectation })
+      onSave({
+        collaboration_expectation: localData.collaboration_expectation,
+      } as CreatorFormData)
     } else {
-      onSave({ collaboration_goal: localData.collaboration_goal })
+      onSave({
+        campaign_goal: localData.campaign_goal,
+        preferred_collaboration_type: localData.preferred_collaboration_type,
+      } as BrandFormData)
     }
   }
 
@@ -678,23 +859,68 @@ function Step4Collaboration({
       </p>
 
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-[#374151] mb-2">
-            {role === 'creator' ? 'Kỳ vọng hợp tác *' : 'Mục tiêu hợp tác *'}
-          </label>
-          <textarea
-            value={role === 'creator' ? localData.collaboration_expectation : localData.collaboration_goal}
-            onChange={(e) =>
-              role === 'creator'
-                ? setLocalData({ ...localData, collaboration_expectation: e.target.value })
-                : setLocalData({ ...localData, collaboration_goal: e.target.value })
-            }
-            rows={5}
-            className="w-full px-4 py-2.5 border rounded-lg"
-            placeholder={role === 'creator' ? 'Mô tả kỳ vọng của bạn về các hợp tác...' : 'Mô tả mục tiêu hợp tác của thương hiệu...'}
-            required
-          />
-        </div>
+        {role === 'creator' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Loại hợp tác mong muốn *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {collaborationTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleCollaborationType(type)}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.collaboration_expectation?.includes(type)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Mục tiêu chiến dịch *
+              </label>
+              <textarea
+                value={localData.campaign_goal}
+                onChange={(e) => setLocalData({ ...localData, campaign_goal: e.target.value } as any)}
+                rows={5}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Mô tả mục tiêu hợp tác của thương hiệu..."
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Loại hợp tác ưa thích *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {collaborationTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleCollaborationType(type)}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.preferred_collaboration_type?.includes(type)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         <button
           type="submit"
@@ -711,12 +937,14 @@ function Step4Collaboration({
 // Step 5: Finalize
 function Step5Finalize({
   role,
-  formData,
+  creatorData,
+  brandData,
   onComplete,
   loading,
 }: {
   role: 'creator' | 'brand'
-  formData: OnboardingData
+  creatorData: CreatorFormData
+  brandData: BrandFormData
   onComplete: () => void
   loading: boolean
 }) {
@@ -734,16 +962,16 @@ function Step5Finalize({
         <ul className="text-sm text-[#6B7280] space-y-1">
           {role === 'creator' && (
             <>
-              <li>• Tên: {formData.display_name || 'Chưa có'}</li>
-              <li>• Địa điểm: {formData.city && formData.country ? `${formData.city}, ${formData.country}` : 'Chưa có'}</li>
-              <li>• Nền tảng: {formData.creator_platforms?.length || 0} nền tảng</li>
+              <li>• Tên: {creatorData.display_name || 'Chưa có'}</li>
+              <li>• Địa điểm: {creatorData.city && creatorData.country ? `${creatorData.city}, ${creatorData.country}` : 'Chưa có'}</li>
+              <li>• Nền tảng: {creatorData.creator_platforms?.length || 0} nền tảng</li>
             </>
           )}
           {role === 'brand' && (
             <>
-              <li>• Thương hiệu: {formData.brand_name || 'Chưa có'}</li>
-              <li>• Ngành: {formData.industry || 'Chưa có'}</li>
-              <li>• Quy mô: {formData.company_size || 'Chưa có'}</li>
+              <li>• Công ty: {brandData.company_name || 'Chưa có'}</li>
+              <li>• Ngành: {brandData.industry || 'Chưa có'}</li>
+              <li>• Quy mô: {brandData.company_size || 'Chưa có'}</li>
             </>
           )}
         </ul>

@@ -70,16 +70,35 @@ export default function AvatarUpload({
         throw new Error('Không thể crop ảnh')
       }
 
-      // Upload to Supabase
+      // Upload to Supabase Storage
       const supabase = getSupabase()
-      const path = `avatars/${userId}-${Date.now()}.jpg`
+      const timestamp = Date.now()
+      const fileExt = 'jpg'
+      const path = `${userId}/${timestamp}.${fileExt}`
 
-      await supabase.storage.from('avatars').upload(path, croppedImage, {
-        upsert: true,
-      })
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, croppedImage, {
+          upsert: true,
+          contentType: 'image/jpeg',
+        })
 
-      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-      onAvatarChange(data.publicUrl)
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`)
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      if (!urlData?.publicUrl) {
+        throw new Error('Failed to get public URL')
+      }
+
+      // Pass public URL to parent component
+      onAvatarChange(urlData.publicUrl)
 
       // Close modal and reset
       setShowCropModal(false)
@@ -88,7 +107,14 @@ export default function AvatarUpload({
       setZoom(1)
       setCroppedAreaPixels(null)
     } catch (error: any) {
+      console.error('Avatar upload error:', error)
       alert(error.message || 'Upload thất bại')
+      // Reset state on error
+      setShowCropModal(false)
+      setImageSrc(null)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+      setCroppedAreaPixels(null)
     } finally {
       setUploading(false)
     }
@@ -124,13 +150,6 @@ export default function AvatarUpload({
             <span className="text-white text-xs font-medium">Đổi avatar</span>
           </div>
         </div>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="text-sm text-indigo-600 hover:underline"
-        >
-          Thay đổi avatar
-        </button>
       </div>
 
       <input
@@ -143,12 +162,12 @@ export default function AvatarUpload({
 
       {/* MODAL */}
       {showCropModal && imageSrc && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 flex justify-center p-4">
           <div 
             className="bg-white rounded-xl p-5 w-full"
             style={{ 
               maxWidth: '400px',
-              maxHeight: '90vh',
+              maxHeight: '80vh',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -200,8 +219,8 @@ export default function AvatarUpload({
             </div>
 
             {/* Buttons - Always visible */}
-            <div className="flex justify-end gap-2 mt-auto flex-shrink-0">
-              <button
+            <div className="flex justify-end gap-2 mt-3 flex-shrink-0">
+            <button
                 onClick={handleCancel}
                 disabled={uploading}
                 className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium disabled:opacity-50"

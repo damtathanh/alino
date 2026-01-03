@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useProfile } from './hooks/useProfile'
 import LandingPage from './pages/LandingPage'
@@ -128,10 +129,11 @@ export function Router() {
 }
 
 function DashboardEntry() {
-  const { session, loading, user, isAuthenticated } = useAuth()
-  const { profile } = useProfile(user?.id, isAuthenticated)
+  const { session, loading: authLoading, user, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading, error: profileError } = useProfile(user?.id, isAuthenticated)
 
-  if (loading) {
+  // a) If not authenticated → do nothing (let AppGate handle it)
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#6B7280]">Đang tải...</div>
@@ -139,12 +141,7 @@ function DashboardEntry() {
     )
   }
 
-  // Minimal session guard
   if (!session) {
-    return <Navigate to="/" replace />
-  }
-
-  if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#6B7280]">Đang tải...</div>
@@ -152,6 +149,25 @@ function DashboardEntry() {
     )
   }
 
+  // b) If profile is loading → do nothing (show loading)
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // c) If profile error or missing → let AppGate handle redirect (don't redirect here)
+  if (profileError || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  // Profile loaded successfully, render dashboard
   if (profile.role === 'creator') {
     return <CreatorDashboard />
   }

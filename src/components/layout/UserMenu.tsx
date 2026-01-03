@@ -5,10 +5,11 @@ import { useAuth } from '../../hooks/useAuth'
 interface UserMenuProps {
   userEmail: string
   displayName?: string
+  avatarUrl?: string | null
   role?: string | null
 }
 
-export default function UserMenu({ userEmail, displayName, role }: UserMenuProps) {
+export default function UserMenu({ userEmail, displayName, avatarUrl, role }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -50,9 +51,17 @@ export default function UserMenu({ userEmail, displayName, role }: UserMenuProps
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-0 py-0 text-[#6B7280] hover:text-[#6366F1] transition-colors group"
       >
-        <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
-          {nameToShow.charAt(0).toUpperCase()}
-        </div>
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt={nameToShow}
+            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
+            {nameToShow.charAt(0).toUpperCase()}
+          </div>
+        )}
         <span className="text-sm whitespace-nowrap">
           {nameToShow}
         </span>

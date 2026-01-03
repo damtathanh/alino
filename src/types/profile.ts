@@ -1,44 +1,39 @@
+// Core profile fields (matches FINAL schema)
 export interface Profile {
   id: string
   role: 'creator' | 'brand' | null
+  display_name?: string | null
+  avatar_url?: string | null
+  bio?: string | null
+  birth_year?: number | null
+  country?: string | null
+  city?: string | null
   onboarding_completed: boolean
-  onboarding_data?: OnboardingData
+  onboarding_data?: any
+  is_admin?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
-export interface OnboardingData {
-  // Step 1 - Role
-  role_selected_at?: string
-
-  // Step 2 - Basic Identity
-  // Creator fields
-  display_name?: string
-  avatar_url?: string
-  country?: string
-  city?: string
-  birth_year?: number
-  gender?: 'male' | 'female' | 'other'
-  phone_number?: string
-
-  // Brand fields
-  brand_name?: string
-  industry?: string
-
-  // Step 3 - Business/Creator Metrics
-  // Creator fields
-  creator_platforms?: string[]
-  followers_count?: number
-  avg_views?: number
-  content_categories?: string[]
-
-  // Brand fields
-  company_size?: string
-  monthly_marketing_budget?: number
-  target_platforms?: string[]
-
-  // Step 4 - Collaboration Intent
-  // Creator
-  collaboration_expectation?: string
-  // Brand
-  collaboration_goal?: string
+// Creator-specific fields (matches FINAL schema)
+export interface CreatorProfile extends Profile {
+  role: 'creator'
+  creator_platforms?: string[] | null // TEXT[]
+  content_categories?: string[] | null // TEXT[]
+  followers_count?: number | null
+  avg_views?: number | null
+  collaboration_expectation?: string[] | null // TEXT[]
 }
 
+// Brand-specific fields (matches FINAL schema)
+export interface BrandProfile extends Profile {
+  role: 'brand'
+  brand_name?: string | null
+  industry?: string | null
+  company_size?: string | null
+  monthly_marketing_budget?: number | null // NUMERIC
+  target_platforms?: string[] | null // TEXT[]
+  collaboration_goal?: string[] | null // TEXT[]
+}
+
+export type ProfileWithRole = CreatorProfile | BrandProfile

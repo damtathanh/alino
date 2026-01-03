@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getSupabase } from '../lib/supabase'
+
+const GATE_TIMEOUT = 3000 // 3 seconds
 
 export default function AppGate() {
   const { session, loading: authLoading } = useAuth()
@@ -9,43 +11,59 @@ export default function AppGate() {
   const [searchParams] = useSearchParams()
   const supabase = getSupabase()
   const [loading, setLoading] = useState(true)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
+    // a) If not authenticated → do nothing (let other routes handle it)
     if (authLoading) return
+    if (!session) return
 
-    // a) No session → redirect to landing
-    if (!session) {
-      navigate('/', { replace: true })
-      return
-    }
+    // b) If already redirected → do nothing
+    if (hasRedirected.current) return
 
-    // b) Email NOT verified → sign out → redirect to /
+    // c) Email NOT verified → sign out → redirect to /
     if (!session.user.email_confirmed_at) {
+      hasRedirected.current = true
       supabase.auth.signOut().finally(() => {
         navigate('/', { replace: true })
       })
       return
     }
 
-    // c) Fetch profile DIRECTLY from Supabase (no cached hook)
+    // d) Fetch profile DIRECTLY from Supabase (no cached hook)
     runGate()
   }, [authLoading, session, navigate, supabase])
 
   async function runGate() {
     if (!session) return
 
+    // b) If already redirected → do nothing
+    if (hasRedirected.current) return
+
     setLoading(true)
 
+    // Set timeout fallback
+    timeoutRef.current = setTimeout(() => {
+      if (hasRedirected.current) return
+      console.error('AppGate timeout')
+      hasRedirected.current = true
+      navigate('/', { replace: true })
+    }, GATE_TIMEOUT)
+
     try {
-      // Fetch profile directly from Supabase
-      const { data: profile, error } = await supabase
+      // Fetch existing profile
+      const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('id, role, onboarding_completed')
         .eq('id', session.user.id)
         .single()
 
-      // d) If profile does NOT exist → insert profile → redirect /role
-      if (error && error.code === 'PGRST116') {
+      // b) If already redirected → do nothing
+      if (hasRedirected.current) return
+
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -54,38 +72,67 @@ export default function AppGate() {
             onboarding_completed: false,
           })
 
-        if (insertError) throw insertError
+        if (insertError) {
+          throw insertError
+        }
 
-        navigate('/role', { replace: true })
+        // After creating, redirect to role selection
+        if (!hasRedirected.current) {
+          hasRedirected.current = true
+          navigate('/role', { replace: true })
+        }
         return
       }
 
-      if (error) throw error
+      if (fetchError) throw fetchError
 
-      // e) If profile.role is null → redirect /role
-      if (!profile.role) {
-        navigate('/role', { replace: true })
-        return
-      }
+      // b) If already redirected → do nothing
+      if (hasRedirected.current) return
 
-      // f) If onboarding_completed is false → redirect /onboarding
-      if (!profile.onboarding_completed) {
-        navigate('/onboarding', { replace: true })
-        return
-      }
-
-      // g) Else → redirect /dashboard (or next param)
-      const next = searchParams.get('next')
-      if (next === 'projects' || next === 'profile' || next === 'settings') {
-        navigate(`/${next}`, { replace: true })
-      } else {
-        navigate('/dashboard', { replace: true })
+      // Profile exists, handle redirect based on state
+      if (profile) {
+        handleProfileRedirect(profile)
       }
     } catch (error) {
+      // b) If already redirected → do nothing
+      if (hasRedirected.current) return
       console.error('AppGate error:', error)
+      hasRedirected.current = true
       navigate('/', { replace: true })
     } finally {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
       setLoading(false)
+    }
+  }
+
+  function handleProfileRedirect(profile: { role: string | null; onboarding_completed: boolean }) {
+    // b) If already redirected → do nothing
+    if (hasRedirected.current) return
+
+    // d) If no role → redirect to /role
+    if (!profile.role) {
+      hasRedirected.current = true
+      navigate('/role', { replace: true })
+      return
+    }
+
+    // e) If onboarding_completed = false → redirect to /onboarding
+    if (!profile.onboarding_completed) {
+      hasRedirected.current = true
+      navigate('/onboarding', { replace: true })
+      return
+    }
+
+    // f) Else → redirect to /dashboard (or next param)
+    hasRedirected.current = true
+    const next = searchParams.get('next')
+    if (next === 'projects' || next === 'profile' || next === 'settings') {
+      navigate(`/${next}`, { replace: true })
+    } else {
+      navigate('/dashboard', { replace: true })
     }
   }
 
