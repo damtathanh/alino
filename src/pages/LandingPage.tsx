@@ -28,7 +28,7 @@ export default function LandingPage() {
               </div>
             )}
             <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
-              Quản lý hợp tác Creator–Brand
+              Quản lý hợp tác Creator - Brand
             </h1>
             <p className="text-xl text-[#6B7280] mb-8 max-w-2xl mx-auto">
               Nền tảng quản lý hợp tác chuyên nghiệp giữa Creator và Brand
