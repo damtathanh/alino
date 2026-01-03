@@ -11,6 +11,9 @@ import RolePage from './pages/RolePage'
 import OnboardingPage from './pages/OnboardingPage'
 import CreatorDashboard from './pages/CreatorDashboard'
 import BrandDashboard from './pages/BrandDashboard'
+import Dashboard from './pages/Dashboard'
+import DashboardHome from './pages/DashboardHome'
+import ComingSoonPage from './pages/ComingSoonPage'
 import ProfilePage from './pages/ProfilePage'
 import SettingsPage from './pages/SettingsPage'
 
@@ -101,6 +104,36 @@ export function Router() {
       />
 
       <Route
+        path="/dashboard/profile-public"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/services"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/opportunities"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/proposals"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/workspace"
+        element={<DashboardEntry />}
+      />
+
+      <Route
+        path="/dashboard/analytics"
+        element={<DashboardEntry />}
+      />
+
+      <Route
         path="/projects"
         element={<DashboardEntry />}
       />
@@ -167,10 +200,6 @@ function DashboardEntry() {
     )
   }
 
-  // Profile loaded successfully, render dashboard
-  if (profile.role === 'creator') {
-    return <CreatorDashboard />
-  }
-
-  return <BrandDashboard />
+  // Profile loaded successfully, render unified dashboard
+  return <Dashboard />
 }
