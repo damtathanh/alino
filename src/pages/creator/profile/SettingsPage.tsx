@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
-import { getSupabase } from '../lib/supabase'
-import Toast from '../components/Toast'
+import { useAuth } from '../../../hooks/useAuth'
+import { useProfile } from '../../../hooks/useProfile'
+import { getSupabase } from '../../../lib/supabase'
+import Toast from '../../../components/shared/Toast'
 import { FaGoogle, FaFacebook, FaInstagram, FaTiktok, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
 
 export default function SettingsPage() {

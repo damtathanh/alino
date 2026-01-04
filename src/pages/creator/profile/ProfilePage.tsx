@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
-import { getSupabase } from '../lib/supabase'
-import type { Profile, CreatorProfile, BrandProfile } from '../types/profile'
-import AvatarUpload from '../components/AvatarUpload'
-import Toast from '../components/Toast'
+import { useAuth } from '../../../hooks/useAuth'
+import { useProfile } from '../../../hooks/useProfile'
+import { getSupabase } from '../../../lib/supabase'
+import type { Profile, CreatorProfile, BrandProfile } from '../../../types/profile'
+import AvatarUpload from '../../../components/AvatarUpload'
+import Toast from '../../../components/shared/Toast'
 
 export default function ProfilePage() {
   const { session, isAuthenticated } = useAuth()

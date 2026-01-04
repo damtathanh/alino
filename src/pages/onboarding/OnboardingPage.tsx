@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { getSupabase } from '../lib/supabase'
+import { useAuth } from '../../hooks/useAuth'
+import { getSupabase } from '../../lib/supabase'
 
 // Form state interfaces
 interface CreatorFormData {

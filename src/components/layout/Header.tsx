@@ -60,6 +60,7 @@ export default function Header() {
               userEmail={session.user.email || ''}
               displayName={displayName}
               avatarUrl={avatarUrl}
+              role={profile?.role || null}
             />
           ) : (
             <>

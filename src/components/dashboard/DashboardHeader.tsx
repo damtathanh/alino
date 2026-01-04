@@ -4,7 +4,7 @@ import { FaBell } from 'react-icons/fa'
 import { useAuth } from '../../hooks/useAuth'
 import { useProfile } from '../../hooks/useProfile'
 import UserMenu from '../layout/UserMenu'
-import NotificationModal from './NotificationModal'
+import NotificationModal from '../shared/NotificationModal'
 
 /**
  * DashboardHeader
@@ -46,59 +46,102 @@ export default function DashboardHeader() {
   const pathname = location.pathname
 
   const getTitleAndSubtitle = () => {
-    if (pathname === '/dashboard') {
+    if (pathname === '/creator/dashboard') {
+      const displayName = profile?.display_name || session?.user?.user_metadata?.display_name || 'Creator'
       return {
-        title: `Xin chào ${fullName}!`,
-        subtitle: 'Chào mừng bạn quay trở lại 👋',
+        title: `Chào mừng, ${displayName}!`,
+        subtitle: 'Tổng quan tài khoản ALINO của bạn hôm nay.',
       }
     }
 
-    if (pathname.startsWith('/dashboard/profile')) {
+    if (pathname.startsWith('/creator/profile')) {
       return {
         title: 'Hồ sơ cá nhân',
         subtitle: 'Quản lý thông tin hiển thị của bạn với đối tác',
       }
     }
 
-    if (pathname.startsWith('/dashboard/settings')) {
+    if (pathname.startsWith('/creator/settings')) {
       return {
         title: 'Cài đặt',
         subtitle: 'Quản lý cài đặt tài khoản và tùy chọn',
       }
     }
 
-    if (pathname.startsWith('/dashboard/services')) {
+    if (pathname.startsWith('/creator/services')) {
       return {
         title: 'Dịch vụ & Bảng giá',
         subtitle: 'Thiết lập dịch vụ và mức giá bạn cung cấp',
       }
     }
 
-    if (pathname.startsWith('/dashboard/opportunities')) {
+    if (pathname.startsWith('/creator/discovery')) {
       return {
         title: 'Cơ hội hợp tác',
         subtitle: 'Khám phá các cơ hội phù hợp với bạn',
       }
     }
 
-    if (pathname.startsWith('/dashboard/proposals')) {
+    if (pathname.startsWith('/creator/proposals')) {
       return {
         title: 'Đề xuất',
         subtitle: 'Quản lý các đề xuất hợp tác đang diễn ra',
       }
     }
 
-    if (pathname.startsWith('/dashboard/workspace')) {
+    if (pathname.startsWith('/creator/workspace')) {
       return {
         title: 'Trung tâm làm việc',
         subtitle: 'Theo dõi và xử lý các hoạt động hợp tác',
       }
     }
 
-    if (pathname.startsWith('/dashboard/analytics')) {
+    if (pathname.startsWith('/creator/analytics')) {
       return {
         title: 'Phân tích',
         subtitle: 'Theo dõi hiệu suất và tăng trưởng của bạn',
+      }
+    }
+
+    if (pathname === '/brand/dashboard') {
+      return {
+        title: 'Brand Dashboard',
+        subtitle: 'Tổng quan chiến dịch và hiệu suất',
+      }
+    }
+
+    if (pathname.startsWith('/brand/discovery')) {
+      return {
+        title: 'Tìm kiếm Creator',
+        subtitle: 'Khám phá và kết nối với các creator phù hợp',
+      }
+    }
+
+    if (pathname.startsWith('/brand/campaigns')) {
+      return {
+        title: 'Chiến dịch',
+        subtitle: 'Quản lý các chiến dịch marketing của bạn',
+      }
+    }
+
+    if (pathname.startsWith('/brand/proposals')) {
+      return {
+        title: 'Hộp thư đề xuất',
+        subtitle: 'Xem và quản lý các đề xuất từ creator',
+      }
+    }
+
+    if (pathname.startsWith('/brand/workspace')) {
+      return {
+        title: 'Không gian làm việc',
+        subtitle: 'Theo dõi tiến độ và cộng tác với creator',
+      }
+    }
+
+    if (pathname.startsWith('/brand/analytics')) {
+      return {
+        title: 'Phân tích',
+        subtitle: 'Theo dõi hiệu suất chiến dịch và ROI',
       }
     }
 
@@ -159,6 +202,7 @@ export default function DashboardHeader() {
               userEmail={session.user.email || ''}
               displayName={fullName}
               avatarUrl={avatarUrl}
+              role={profile?.role || null}
             />
           </div>
         )}

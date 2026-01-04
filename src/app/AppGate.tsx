@@ -126,13 +126,19 @@ export default function AppGate() {
       return
     }
 
-    // f) Else → redirect to /dashboard (or next param)
+    // f) Else → redirect to role-based dashboard
     hasRedirected.current = true
     const next = searchParams.get('next')
-    if (next === 'projects' || next === 'profile' || next === 'settings') {
-      navigate(`/${next}`, { replace: true })
+    if (profile.role === 'creator') {
+      if (next === 'profile' || next === 'settings') {
+        navigate(`/creator/${next}`, { replace: true })
+      } else {
+        navigate('/creator/dashboard', { replace: true })
+      }
+    } else if (profile.role === 'brand') {
+      navigate('/brand/dashboard', { replace: true })
     } else {
-      navigate('/dashboard', { replace: true })
+      navigate('/', { replace: true })
     }
   }
 

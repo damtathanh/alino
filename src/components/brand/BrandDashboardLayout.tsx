@@ -2,44 +2,41 @@ import { Link, useLocation } from 'react-router-dom'
 import { 
   FaTh, 
   FaUser, 
-  FaDollarSign, 
-  FaLightbulb, 
-  FaFileAlt, 
-  FaCheckCircle, 
+  FaSearch,
+  FaBullhorn,
+  FaEnvelope,
+  FaBriefcase,
   FaChartBar,
   FaCog,
   FaSignOutAlt,
 } from 'react-icons/fa'
 import { useAuth } from '../../hooks/useAuth'
-import DashboardHeader from './DashboardHeader'
+import DashboardHeader from '../dashboard/DashboardHeader'
 
-interface DashboardLayoutProps {
+interface BrandDashboardLayoutProps {
   children: React.ReactNode
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function BrandDashboardLayout({ children }: BrandDashboardLayoutProps) {
   const location = useLocation()
   const { signOut } = useAuth()
 
-  // Main navigation items
   const mainNavItems = [
-    { path: '/dashboard', label: 'Bảng điều khiển', icon: FaTh },
-    { path: '/dashboard/profile', label: 'Hồ sơ cá nhân', icon: FaUser },
-    { path: '/dashboard/services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
-    { path: '/dashboard/opportunities', label: 'Cơ hội', icon: FaLightbulb },
-    { path: '/dashboard/proposals', label: 'Đề xuất', icon: FaFileAlt },
-    { path: '/dashboard/workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
-    { path: '/dashboard/analytics', label: 'Phân tích', icon: FaChartBar },
+    { path: '/brand/dashboard', label: 'Bảng điều khiển', icon: FaTh },
+    { path: '/brand/discovery', label: 'Tìm kiếm Creator', icon: FaSearch },
+    { path: '/brand/campaigns', label: 'Chiến dịch', icon: FaBullhorn },
+    { path: '/brand/proposals', label: 'Hộp thư đề xuất', icon: FaEnvelope },
+    { path: '/brand/workspace', label: 'Không gian làm việc', icon: FaBriefcase },
+    { path: '/brand/analytics', label: 'Phân tích', icon: FaChartBar },
   ]
 
-  // Account section items
   const accountItems = [
-    { path: '/dashboard/settings', label: 'Cài đặt', icon: FaCog },
+    { path: '/brand/settings', label: 'Cài đặt', icon: FaCog },
   ]
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') {
-      return location.pathname === '/dashboard'
+    if (path === '/brand/dashboard') {
+      return location.pathname === '/brand/dashboard'
     }
     return location.pathname.startsWith(path)
   }
@@ -49,10 +46,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <DashboardHeader />
       <div className="min-h-screen bg-gray-50 pt-16">
         <div className="flex">
-          {/* Sidebar */}
           <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto">
             <div className="p-4 h-full flex flex-col">
-              {/* Main Navigation Items */}
               <nav className="space-y-1">
                 {mainNavItems.map((item) => {
                   const Icon = item.icon
@@ -77,7 +72,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 })}
               </nav>
 
-              {/* Account Section - Pinned to Bottom */}
               <div className="mt-auto pt-4 border-t border-gray-200">
                 <nav className="space-y-1">
                   {accountItems.map((item) => {
@@ -114,7 +108,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </aside>
 
-          {/* Main Content */}
           <main className="flex-1 ml-64">
             {children}
           </main>

@@ -1,14 +1,13 @@
 import { BrowserRouter, useLocation } from 'react-router-dom'
-import { Router } from './router'
-import ScrollToTop from './components/ScrollToTop'
+import { Router } from './app/router'
+import ScrollToTop from './components/shared/ScrollToTop'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 
 function AppContent() {
   const location = useLocation()
   
-  // Check if we're in dashboard mode - hide Header and Footer
-  const isDashboardMode = location.pathname.startsWith('/dashboard')
+  const isDashboardMode = location.pathname.startsWith('/creator') || location.pathname.startsWith('/brand')
   
   return (
     <div className="min-h-screen flex flex-col">

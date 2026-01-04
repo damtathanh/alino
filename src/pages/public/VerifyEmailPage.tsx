@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getSupabase } from '../lib/supabase'
+import { getSupabase } from '../../lib/supabase'
 
 export default function VerifyEmailPage() {
   const supabase = getSupabase()
