@@ -28,21 +28,39 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/verify-email`,
         },
       })
-
+      
       if (error) {
         setError(error.message || 'Đăng ký thất bại')
         setLoading(false)
         return
       }
+      
+      if (data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            role: null,
+            onboarding_completed: false,
+            onboarding_data: {},
+          })
+      
+        if (profileError) {
+          setError('Không tạo được hồ sơ người dùng')
+          setLoading(false)
+          return
+        }
+      }
+      
+      navigate('/?signup=success', { replace: true })      
 
-      navigate('/?signup=success', { replace: true })
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)

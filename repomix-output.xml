@@ -50,6 +50,7 @@ src/
     AppGate.tsx
     brandRoutes.tsx
     creatorRoutes.tsx
+    dashboardRoutes.tsx
     router.tsx
   components/
     brand/
@@ -121,10 +122,6 @@ src/
   index.css
   main.tsx
   vite-env.d.ts
-supabase/
-  migrations/
-    001_create_profiles.sql
-    002_create_creator_services.sql
 .env.example
 .gitignore
 index.html
@@ -137,6 +134,171 @@ vite.config.ts
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/app/dashboardRoutes.tsx">
+import { Routes, Route, useParams, Navigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import CreatorDashboardLayout from '../components/creator/CreatorDashboardLayout'
+import BrandDashboardLayout from '../components/brand/BrandDashboardLayout'
+import DashboardHome from '../pages/creator/dashboard/DashboardHome'
+import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
+import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
+import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
+import ProfilePage from '../pages/creator/profile/ProfilePage'
+import SettingsPage from '../pages/creator/profile/SettingsPage'
+import ServicesPage from '../pages/creator/services/ServicesPage'
+import OpportunitiesPage from '../pages/creator/discovery/OpportunitiesPage'
+import SubmitProposalPage from '../pages/creator/proposals/SubmitProposalPage'
+import DealWorkspacePage from '../pages/creator/proposals/DealWorkspacePage'
+import CreatorDiscoveryPage from '../pages/brand/discovery/CreatorDiscoveryPage'
+import CreateCampaignPage from '../pages/brand/campaigns/CreateCampaignPage'
+import CampaignWorkspacePage from '../pages/brand/campaigns/CampaignWorkspacePage'
+import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
+import ComingSoonPage from '../pages/shared/ComingSoonPage'
+
+function DashboardRoutes() {
+  const { role } = useParams<{ role: 'creator' | 'brand' }>()
+  const { session, loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(session?.user?.id, !!session)
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session || !profile) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!role || (role !== 'creator' && role !== 'brand')) {
+    return <Navigate to="/app" replace />
+  }
+
+  if (profile.role !== role) {
+    // Redirect to correct role dashboard
+    if (profile.role === 'creator') {
+      return <Navigate to="/dashboard/creator" replace />
+    } else if (profile.role === 'brand') {
+      return <Navigate to="/dashboard/brand" replace />
+    }
+    return <Navigate to="/app" replace />
+  }
+
+  if (role === 'creator') {
+    return (
+      <Routes>
+        <Route path="" element={
+          <CreatorDashboardLayout>
+            <DashboardHome />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="profile" element={
+          <CreatorDashboardLayout>
+            <ProfilePage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="settings" element={
+          <CreatorDashboardLayout>
+            <SettingsPage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="services" element={
+          <CreatorDashboardLayout>
+            <ServicesPage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="discovery" element={
+          <CreatorDashboardLayout>
+            <OpportunitiesPage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="proposals/new" element={
+          <CreatorDashboardLayout>
+            <SubmitProposalPage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="proposals/*" element={
+          <CreatorDashboardLayout>
+            <ComingSoonPage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="workspace" element={
+          <CreatorDashboardLayout>
+            <DealWorkspacePage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="analytics" element={
+          <CreatorDashboardLayout>
+            <AnalyticsPage />
+          </CreatorDashboardLayout>
+        } />
+        <Route path="*" element={
+          <CreatorDashboardLayout>
+            <ComingSoonPage />
+          </CreatorDashboardLayout>
+        } />
+      </Routes>
+    )
+  }
+
+  // Brand routes
+  return (
+    <Routes>
+      <Route path="" element={
+        <BrandDashboardLayout>
+          <BrandDashboard />
+        </BrandDashboardLayout>
+      } />
+      <Route path="analytics" element={
+        <BrandDashboardLayout>
+          <BrandCampaignAnalyticsPage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="discovery" element={
+        <BrandDashboardLayout>
+          <CreatorDiscoveryPage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="campaigns/new" element={
+        <BrandDashboardLayout>
+          <CreateCampaignPage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="campaigns/*" element={
+        <BrandDashboardLayout>
+          <CampaignWorkspacePage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="proposals/*" element={
+        <BrandDashboardLayout>
+          <ProposalInboxPage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="workspace" element={
+        <BrandDashboardLayout>
+          <ComingSoonPage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="settings" element={
+        <BrandDashboardLayout>
+          <ComingSoonPage />
+        </BrandDashboardLayout>
+      } />
+      <Route path="*" element={
+        <BrandDashboardLayout>
+          <ComingSoonPage />
+        </BrandDashboardLayout>
+      } />
+    </Routes>
+  )
+}
+
+export default DashboardRoutes
+</file>
 
 <file path="migrations/001_cleanup_profiles.sql">
 -- Migration: Clean up profiles table structure
@@ -365,24 +527,19 @@ export default function AppGate() {
       return
     }
 
-    // e) If onboarding_completed = false → redirect to /onboarding
+    // e) If onboarding_completed = false → redirect to /onboarding/{role}
     if (!profile.onboarding_completed) {
       hasRedirected.current = true
-      navigate('/onboarding', { replace: true })
+      navigate(`/onboarding/${profile.role}`, { replace: true })
       return
     }
 
     // f) Else → redirect to role-based dashboard
     hasRedirected.current = true
-    const next = searchParams.get('next')
     if (profile.role === 'creator') {
-      if (next === 'profile' || next === 'settings') {
-        navigate(`/creator/${next}`, { replace: true })
-      } else {
-        navigate('/creator/dashboard', { replace: true })
-      }
+      navigate('/dashboard/creator', { replace: true })
     } else if (profile.role === 'brand') {
-      navigate('/brand/dashboard', { replace: true })
+      navigate('/dashboard/brand', { replace: true })
     } else {
       navigate('/', { replace: true })
     }
@@ -597,6 +754,7 @@ import TermsPage from '../pages/public/TermsPage'
 import PrivacyPage from '../pages/public/PrivacyPage'
 import { CreatorRoutes } from './creatorRoutes'
 import { BrandRoutes } from './brandRoutes'
+import DashboardRoutes from './dashboardRoutes'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -652,9 +810,9 @@ function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode;
 
   if (profile.role !== requiredRole) {
     if (profile.role === 'creator') {
-      return <Navigate to="/creator/dashboard" replace />
+      return <Navigate to="/dashboard/creator" replace />
     } else if (profile.role === 'brand') {
-      return <Navigate to="/brand/dashboard" replace />
+      return <Navigate to="/dashboard/brand" replace />
     }
     return <Navigate to="/app" replace />
   }
@@ -702,10 +860,19 @@ export function Router() {
       />
 
       <Route
-        path="/onboarding"
+        path="/onboarding/:role?"
         element={
           <ProtectedRoute>
             <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/:role/*"
+        element={
+          <ProtectedRoute>
+            <DashboardRoutes />
           </ProtectedRoute>
         }
       />
@@ -4679,962 +4846,6 @@ export default function OpportunitiesPage() {
 }
 </file>
 
-<file path="src/pages/creator/profile/ProfilePage.tsx">
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../hooks/useAuth'
-import { useProfile } from '../../../hooks/useProfile'
-import { getSupabase } from '../../../lib/supabase'
-import type { Profile, CreatorProfile, BrandProfile } from '../../../types/profile'
-import AvatarUpload from '../../../components/AvatarUpload'
-import Toast from '../../../components/shared/Toast'
-
-export default function ProfilePage() {
-  const { session, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading, needsOnboarding } = useProfile(session?.user?.id, isAuthenticated)
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const supabase = getSupabase()
-  
-  // Refs for field focus/scroll
-  const fieldRefs = useRef<Record<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>>({})
-
-  // Form state - matches FINAL schema exactly
-  interface ProfileFormData {
-    // Core fields
-    display_name?: string | null
-    avatar_url?: string | null
-    bio?: string | null
-    birth_year?: number | null
-    country?: string | null
-    city?: string | null
-    // Creator fields
-    creator_platforms?: string[] | null // TEXT[]
-    content_categories?: string[] | null // TEXT[]
-    followers_count?: number | null
-    avg_views?: number | null
-    collaboration_expectation?: string[] | null // TEXT[]
-    // Brand fields
-    brand_name?: string | null
-    industry?: string | null
-    company_size?: string | null
-    monthly_marketing_budget?: number | null // NUMERIC
-    target_platforms?: string[] | null // TEXT[]
-    collaboration_goals?: string[] | null // TEXT[]
-  }
-  const [formData, setFormData] = useState<ProfileFormData>({})
-
-  useEffect(() => {
-    if (profile) {
-      // Load all fields directly from profile columns (matches FINAL schema)
-      setFormData({
-        display_name: profile.display_name || undefined,
-        avatar_url: profile.avatar_url || undefined,
-        bio: profile.bio || undefined,
-        birth_year: profile.birth_year || undefined,
-        country: profile.country || undefined,
-        city: profile.city || undefined,
-        // Creator fields
-        creator_platforms: (profile as any).creator_platforms || undefined,
-        content_categories: (profile as any).content_categories || undefined,
-        followers_count: (profile as any).followers_count || undefined,
-        avg_views: (profile as any).avg_views || undefined,
-        collaboration_expectation: (profile as any).collaboration_expectation || undefined,
-        // Brand fields
-        brand_name: (profile as any).brand_name || undefined,
-        industry: (profile as any).industry || undefined,
-        company_size: (profile as any).company_size || undefined,
-        monthly_marketing_budget: (profile as any).monthly_marketing_budget ? Number((profile as any).monthly_marketing_budget) : undefined,
-        target_platforms: (profile as any).target_platforms || undefined,
-        collaboration_goals: Array.isArray((profile as any).collaboration_goals) ? (profile as any).collaboration_goals : undefined,
-      })
-    }
-  }, [profile])
-
-  // Redirect brand users without profile to onboarding
-  useEffect(() => {
-    if (!profileLoading && needsOnboarding && profile?.role === 'brand') {
-      navigate('/onboarding', { replace: true })
-    }
-  }, [profileLoading, needsOnboarding, profile, navigate])
-
-  if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (!profile) {
-    if (needsOnboarding) {
-      return (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-[#6B7280]">Đang chuyển hướng đến onboarding...</div>
-        </div>
-      )
-    }
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
-      </div>
-    )
-  }
-
-  const role = profile.role || 'creator'
-
-  // Validation function
-  const validateProfile = (): { isValid: boolean; firstInvalidField: string | null } => {
-    const errors: Record<string, string> = {}
-
-    // Core required fields
-    if (!formData.display_name || formData.display_name.trim() === '') {
-      errors.display_name = 'Vui lòng nhập tên hiển thị'
-    }
-    if (!formData.birth_year) {
-      errors.birth_year = 'Vui lòng nhập năm sinh'
-    }
-    if (!formData.country || formData.country.trim() === '') {
-      errors.country = 'Vui lòng nhập quốc gia'
-    }
-    if (!formData.city || formData.city.trim() === '') {
-      errors.city = 'Vui lòng nhập thành phố'
-    }
-
-    if (role === 'creator') {
-      // Creator required fields
-      if (!formData.creator_platforms || formData.creator_platforms.length === 0) {
-        errors.creator_platforms = 'Vui lòng chọn ít nhất một nền tảng'
-      }
-      if (!formData.content_categories || formData.content_categories.length === 0) {
-        errors.content_categories = 'Vui lòng chọn ít nhất một danh mục nội dung'
-      }
-      if (!formData.collaboration_expectation || formData.collaboration_expectation.length === 0) {
-        errors.collaboration_expectation = 'Vui lòng chọn ít nhất một kỳ vọng hợp tác'
-      }
-      if (!formData.followers_count || formData.followers_count <= 0) {
-        errors.followers_count = 'Vui lòng nhập số lượng người theo dõi (lớn hơn 0)'
-      }
-      if (!formData.avg_views || formData.avg_views <= 0) {
-        errors.avg_views = 'Vui lòng nhập lượt xem trung bình (lớn hơn 0)'
-      }
-    } else {
-      // Brand required fields
-      if (!formData.brand_name || formData.brand_name.trim() === '') {
-        errors.brand_name = 'Vui lòng nhập tên công ty'
-      }
-      if (!formData.industry || formData.industry.trim() === '') {
-        errors.industry = 'Vui lòng nhập ngành nghề'
-      }
-      if (!formData.company_size || formData.company_size.trim() === '') {
-        errors.company_size = 'Vui lòng chọn quy mô công ty'
-      }
-      if (!formData.monthly_marketing_budget || formData.monthly_marketing_budget <= 0) {
-        errors.monthly_marketing_budget = 'Vui lòng nhập ngân sách marketing (lớn hơn 0)'
-      }
-      if (!formData.target_platforms || formData.target_platforms.length === 0) {
-        errors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
-      }
-      if (!formData.collaboration_goals || formData.collaboration_goals.length === 0) {
-        errors.collaboration_goals = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
-      }
-    }
-
-    setFieldErrors(errors)
-
-    if (Object.keys(errors).length > 0) {
-      // Find first invalid field for scrolling
-      const fieldOrder = role === 'creator'
-        ? ['display_name', 'birth_year', 'country', 'city', 'creator_platforms', 'content_categories', 'followers_count', 'avg_views', 'collaboration_expectation']
-        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goals']
-      
-      const firstInvalidField = fieldOrder.find(field => errors[field]) || null
-      return { isValid: false, firstInvalidField }
-    }
-
-    return { isValid: true, firstInvalidField: null }
-  }
-
-  const scrollToField = (fieldName: string) => {
-    const field = fieldRefs.current[fieldName]
-    if (field) {
-      field.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      setTimeout(() => field.focus(), 300)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!session || !profile) return
-
-    // Validate before saving
-    const validation = validateProfile()
-    if (!validation.isValid) {
-      setToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'error' })
-      if (validation.firstInvalidField) {
-        scrollToField(validation.firstInvalidField)
-      }
-      return
-    }
-
-    setLoading(true)
-    setFieldErrors({})
-
-    try {
-      // Step 1: Update core profile fields (profiles table)
-      const coreUpdateData: any = {
-        display_name: formData.display_name || null,
-        avatar_url: formData.avatar_url || null,
-        bio: formData.bio || null,
-        birth_year: formData.birth_year || null,
-        country: formData.country || null,
-        city: formData.city || null,
-        updated_at: new Date().toISOString(),
-      }
-      
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(coreUpdateData)
-        .eq('id', session.user.id)
-
-      if (profileError) throw profileError
-
-      // Step 2: Update domain-specific profile
-      if (role === 'creator') {
-        const creatorUpdateData: any = {
-          creator_platforms: formData.creator_platforms || null,
-          content_categories: formData.content_categories || null,
-          followers_count: formData.followers_count || null,
-          avg_views: formData.avg_views || null,
-          collaboration_expectation: formData.collaboration_expectation || null,
-          updated_at: new Date().toISOString(),
-        }
-
-        const { error: creatorError } = await supabase
-          .from('creator_profiles')
-          .update(creatorUpdateData)
-          .eq('user_id', session.user.id)
-
-        if (creatorError) throw creatorError
-      } else if (role === 'brand') {
-        const brandUpdateData: any = {
-          brand_name: formData.brand_name || null,
-          industry: formData.industry || null,
-          company_size: formData.company_size || null,
-          monthly_marketing_budget: formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null,
-          target_platforms: formData.target_platforms || null,
-          collaboration_goals: formData.collaboration_goals || null,
-          updated_at: new Date().toISOString(),
-        }
-
-        const { error: brandError } = await supabase
-          .from('brand_profiles')
-          .update(brandUpdateData)
-          .eq('user_id', session.user.id)
-
-        if (brandError) throw brandError
-      }
-
-      // Sync display_name and avatar_url to auth metadata
-      const metadataUpdate: Record<string, any> = {}
-      if (formData.display_name !== undefined) {
-        metadataUpdate.display_name = formData.display_name
-      }
-      if (formData.avatar_url !== undefined) {
-        metadataUpdate.avatar_url = formData.avatar_url
-      }
-
-      if (Object.keys(metadataUpdate).length > 0) {
-        const { error: authError } = await supabase.auth.updateUser({
-          data: metadataUpdate,
-        })
-        if (authError) {
-          console.warn('Failed to update auth metadata:', authError)
-          // Don't throw - profile update succeeded
-        }
-      }
-
-      setToast({ message: 'Lưu hồ sơ thành công', type: 'success' })
-    } catch (err: any) {
-      console.error('Profile save error:', err)
-      setToast({ message: err.message || 'Có lỗi xảy ra, vui lòng thử lại', type: 'error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAvatarChange = async (url: string) => {
-    // URL is already a public URL from AvatarUpload component (after successful storage upload)
-    if (!session || !profile) {
-      console.error('Cannot save avatar: missing session or profile')
-      return
-    }
-
-    // Optimistically update form state
-    setFormData((prev) => ({ ...prev, avatar_url: url }))
-
-    try {
-      // Update profiles.avatar_url (core field)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          avatar_url: url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id)
-
-      if (profileError) {
-        console.error('Failed to update profiles.avatar_url:', profileError)
-        throw profileError
-      }
-
-      // Sync to auth metadata (secondary, non-blocking)
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { avatar_url: url },
-      })
-      if (authError) {
-        console.warn('Failed to sync avatar_url to auth metadata (non-blocking):', authError)
-        // Don't throw - profile update succeeded
-      }
-
-      setToast({ message: 'Đã lưu avatar thành công', type: 'success' })
-    } catch (error: any) {
-      console.error('Avatar save error:', error)
-      // Revert optimistic update on error
-      setFormData((prev) => ({ ...prev, avatar_url: profile.avatar_url || null }))
-      setToast({ message: error.message || 'Có lỗi xảy ra khi lưu avatar', type: 'error' })
-    }
-  }
-
-  return (
-    <div className="bg-white py-8 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
-
-          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
-            {/* Basic Identity Section */}
-            <div className="border-b pb-6">
-              <h2 className="text-xl font-semibold mb-4">Thông tin cơ bản</h2>
-              
-              {role === 'creator' ? (
-                <>
-                  {/* Top Row: Display Name | Avatar */}
-                  <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
-                    {/* Left: Display Name */}
-                    <div className="flex-1 space-y-4 w-full md:w-auto">
-                      <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-2">
-                          Tên hiển thị *
-                        </label>
-                        <input
-                          ref={(el) => fieldRefs.current.display_name = el}
-                          type="text"
-                          value={formData.display_name || ''}
-                          onChange={(e) => {
-                            setFormData({ ...formData, display_name: e.target.value })
-                            if (fieldErrors.display_name) {
-                              setFieldErrors(prev => {
-                                const next = { ...prev }
-                                delete next.display_name
-                                return next
-                              })
-                            }
-                          }}
-                          className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.display_name ? 'border-red-500' : ''}`}
-                          placeholder="Nhập tên hiển thị"
-                        />
-                        {fieldErrors.display_name && (
-                          <p className="mt-1 text-sm text-red-600">{fieldErrors.display_name}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Avatar */}
-                    <div className="flex-shrink-0">
-                      <AvatarUpload
-                        currentAvatarUrl={formData.avatar_url ?? undefined}
-                        onAvatarChange={handleAvatarChange}
-                        userId={session?.user?.id || ''}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 2-Column Grid: Birth Year | Country + City */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Năm sinh *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.birth_year = el}
-                        type="number"
-                        min="1950"
-                        max={new Date().getFullYear()}
-                        value={formData.birth_year || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })
-                          if (fieldErrors.birth_year) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.birth_year
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.birth_year ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.birth_year && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.birth_year}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Quốc gia *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.country = el}
-                        type="text"
-                        value={formData.country || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, country: e.target.value })
-                          if (fieldErrors.country) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.country
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.country ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.country && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.country}</p>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Thành phố *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.city = el}
-                        type="text"
-                        value={formData.city || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, city: e.target.value })
-                          if (fieldErrors.city) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.city
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.city ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.city && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Top Row: Company Name | Avatar */}
-                  <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
-                    {/* Left: Company Name */}
-                    <div className="flex-1 space-y-4 w-full md:w-auto">
-                      <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-2">
-                          Tên công ty *
-                        </label>
-                        <input
-                          ref={(el) => fieldRefs.current.brand_name = el}
-                          type="text"
-                          value={formData.brand_name || ''}
-                          onChange={(e) => {
-                            setFormData({ ...formData, brand_name: e.target.value })
-                            if (fieldErrors.brand_name) {
-                              setFieldErrors(prev => {
-                                const next = { ...prev }
-                                delete next.brand_name
-                                return next
-                              })
-                            }
-                          }}
-                          className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.brand_name ? 'border-red-500' : ''}`}
-                          placeholder="Nhập tên công ty"
-                        />
-                        {fieldErrors.brand_name && (
-                          <p className="mt-1 text-sm text-red-600">{fieldErrors.brand_name}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Avatar */}
-                    <div className="flex-shrink-0">
-                      <AvatarUpload
-                        currentAvatarUrl={formData.avatar_url ?? undefined}
-                        onAvatarChange={handleAvatarChange}
-                        userId={session?.user?.id || ''}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 2-Column Grid: Industry | Country + City */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Ngành nghề *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.industry = el}
-                        type="text"
-                        value={formData.industry || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, industry: e.target.value })
-                          if (fieldErrors.industry) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.industry
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.industry ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.industry && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.industry}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Quốc gia *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.country = el}
-                        type="text"
-                        value={formData.country || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, country: e.target.value })
-                          if (fieldErrors.country) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.country
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.country ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.country && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.country}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Thành phố *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.city = el}
-                        type="text"
-                        value={formData.city || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, city: e.target.value })
-                          if (fieldErrors.city) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.city
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.city ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.city && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Business/Creator Metrics Section */}
-            {role === 'creator' && (
-              <div className="border-b pb-6">
-                <h2 className="text-xl font-semibold mb-4">Thông tin Creator</h2>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Giới thiệu
-                  </label>
-                  <textarea
-                    value={formData.bio || ''}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2.5 border rounded-lg"
-                    placeholder="Giới thiệu về bản thân..."
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Nền tảng *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
-                      <button
-                        key={platform}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.creator_platforms || []
-                          const updated = current.includes(platform)
-                            ? current.filter((p) => p !== platform)
-                            : [...current, platform]
-                          setFormData({ ...formData, creator_platforms: updated })
-                          if (fieldErrors.creator_platforms && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.creator_platforms
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.creator_platforms?.includes(platform)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {platform}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.creator_platforms && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.creator_platforms}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Số lượng người theo dõi *
-                    </label>
-                    <input
-                      ref={(el) => fieldRefs.current.followers_count = el}
-                      type="number"
-                      min="0"
-                      value={formData.followers_count || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })
-                        if (fieldErrors.followers_count) {
-                          setFieldErrors(prev => {
-                            const next = { ...prev }
-                            delete next.followers_count
-                            return next
-                          })
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.followers_count ? 'border-red-500' : ''}`}
-                    />
-                    {fieldErrors.followers_count && (
-                      <p className="mt-1 text-sm text-red-600">{fieldErrors.followers_count}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Lượt xem trung bình *
-                    </label>
-                    <input
-                      ref={(el) => fieldRefs.current.avg_views = el}
-                      type="number"
-                      min="0"
-                      value={formData.avg_views || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })
-                        if (fieldErrors.avg_views) {
-                          setFieldErrors(prev => {
-                            const next = { ...prev }
-                            delete next.avg_views
-                            return next
-                          })
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.avg_views ? 'border-red-500' : ''}`}
-                    />
-                    {fieldErrors.avg_views && (
-                      <p className="mt-1 text-sm text-red-600">{fieldErrors.avg_views}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Danh mục nội dung *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education'].map((category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.content_categories || []
-                          const updated = current.includes(category)
-                            ? current.filter((c) => c !== category)
-                            : [...current, category]
-                          setFormData({ ...formData, content_categories: updated })
-                          if (fieldErrors.content_categories && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.content_categories
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.content_categories?.includes(category)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.content_categories && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.content_categories}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Brand Info Section */}
-            {role === 'brand' && (
-              <div className="border-b pb-6">
-                <h2 className="text-xl font-semibold mb-4">Thông tin Brand</h2>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Quy mô công ty *
-                  </label>
-                  <select
-                    ref={(el) => fieldRefs.current.company_size = el}
-                    value={formData.company_size || ''}
-                    onChange={(e) => {
-                      setFormData({ ...formData, company_size: e.target.value })
-                      if (fieldErrors.company_size) {
-                        setFieldErrors(prev => {
-                          const next = { ...prev }
-                          delete next.company_size
-                          return next
-                        })
-                      }
-                    }}
-                    className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.company_size ? 'border-red-500' : ''}`}
-                  >
-                    <option value="">Chọn quy mô</option>
-                    <option value="startup">Startup (1-10 nhân viên)</option>
-                    <option value="small">Nhỏ (11-50 nhân viên)</option>
-                    <option value="medium">Vừa (51-200 nhân viên)</option>
-                    <option value="large">Lớn (201-1000 nhân viên)</option>
-                    <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
-                  </select>
-                  {fieldErrors.company_size && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.company_size}</p>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Ngân sách marketing hàng tháng *
-                    </label>
-                    <input
-                      ref={(el) => fieldRefs.current.monthly_marketing_budget = el}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.monthly_marketing_budget || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, monthly_marketing_budget: e.target.value ? parseFloat(e.target.value) : undefined })
-                        if (fieldErrors.monthly_marketing_budget) {
-                          setFieldErrors(prev => {
-                            const next = { ...prev }
-                            delete next.monthly_marketing_budget
-                            return next
-                          })
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.monthly_marketing_budget ? 'border-red-500' : ''}`}
-                      placeholder="Ví dụ: 5000"
-                    />
-                    {fieldErrors.monthly_marketing_budget && (
-                      <p className="mt-1 text-sm text-red-600">{fieldErrors.monthly_marketing_budget}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Nền tảng mục tiêu *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
-                      <button
-                        key={platform}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.target_platforms || []
-                          const updated = current.includes(platform)
-                            ? current.filter((p) => p !== platform)
-                            : [...current, platform]
-                          setFormData({ ...formData, target_platforms: updated })
-                          if (fieldErrors.target_platforms && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.target_platforms
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.target_platforms?.includes(platform)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {platform}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.target_platforms && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.target_platforms}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Collaboration Intent Section */}
-            <div className="pb-6">
-              <h2 className="text-xl font-semibold mb-4">Mục tiêu hợp tác</h2>
-              {role === 'creator' ? (
-                <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Kỳ vọng hợp tác *
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['paid', 'gift', 'affiliate'].map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.collaboration_expectation || []
-                          const updated = current.includes(type)
-                            ? current.filter((t) => t !== type)
-                            : [...current, type]
-                          setFormData({ ...formData, collaboration_expectation: updated })
-                          if (fieldErrors.collaboration_expectation && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.collaboration_expectation
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.collaboration_expectation?.includes(type)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.collaboration_expectation && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_expectation}</p>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Mục tiêu hợp tác *
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['brand_awareness', 'sales', 'engagement', 'lead_generation', 'product_launch', 'community_building'].map((goal) => (
-                      <button
-                        key={goal}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.collaboration_goals || []
-                          const updated = current.includes(goal)
-                            ? current.filter((g) => g !== goal)
-                            : [...current, goal]
-                          setFormData({ ...formData, collaboration_goals: updated })
-                          if (fieldErrors.collaboration_goals && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.collaboration_goals
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.collaboration_goals?.includes(goal)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {goal === 'brand_awareness' ? 'Nhận diện thương hiệu' :
-                         goal === 'sales' ? 'Bán hàng' :
-                         goal === 'engagement' ? 'Tương tác' :
-                         goal === 'lead_generation' ? 'Tạo lead' :
-                         goal === 'product_launch' ? 'Ra mắt sản phẩm' :
-                         'Xây dựng cộng đồng'}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.collaboration_goals && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goals}</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Email (read-only) */}
-            <div className="border-t pt-6">
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={session?.user?.email || ''}
-                disabled
-                className="w-full px-4 py-2.5 border rounded-lg bg-gray-50 text-gray-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-            >
-              {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Toast Notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-    </div>
-  )
-}
-</file>
-
 <file path="src/pages/creator/profile/SettingsPage.tsx">
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -7537,1061 +6748,6 @@ export default function ServicesPage() {
 }
 </file>
 
-<file path="src/pages/onboarding/OnboardingPage.tsx">
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
-import { getSupabase } from '../../lib/supabase'
-
-// Form state interfaces
-interface CreatorFormData {
-  display_name?: string
-  country?: string
-  city?: string
-  birth_year?: number
-  creator_platforms?: string[]
-  followers_count?: number
-  avg_views?: number
-  content_categories?: string[]
-  collaboration_expectation?: ('paid' | 'gift' | 'affiliate')[]
-}
-
-interface BrandFormData {
-  company_name?: string
-  industry?: string
-  country?: string
-  city?: string
-  company_size?: string
-  budget?: number
-  campaign_budget_range?: string
-  target_platforms?: string[]
-  campaign_goal?: string
-  preferred_collaboration_type?: ('paid' | 'gift' | 'affiliate')[]
-}
-
-export default function OnboardingPage() {
-  const { session } = useAuth()
-  const navigate = useNavigate()
-  const supabase = getSupabase()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [role, setRole] = useState<'creator' | 'brand' | null>(null)
-  
-  // Form state - separate for creator and brand
-  const [creatorData, setCreatorData] = useState<CreatorFormData>({})
-  const [brandData, setBrandData] = useState<BrandFormData>({})
-
-  useEffect(() => {
-    if (!session) return
-    checkOnboardingStatus()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session])
-
-  async function checkOnboardingStatus() {
-    if (!session) return
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, role, onboarding_data')
-        .eq('id', session.user.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') throw error
-
-      // Let AppGate handle redirects - don't redirect here
-      if (data?.role) {
-        setRole(data.role)
-        loadExistingData(data.role, data.onboarding_data)
-      }
-    } catch (err) {
-      console.error('Error checking onboarding:', err)
-    }
-  }
-
-  async function loadExistingData(userRole: 'creator' | 'brand', onboardingData: any) {
-    if (!session) return
-
-    try {
-      // Read from onboarding_data JSON, not profile columns
-      const data = onboardingData || {}
-
-      if (userRole === 'creator') {
-        const step2 = data.step2 || {}
-        const step3 = data.step3 || {}
-        const step4 = data.step4 || {}
-        
-        const cd: CreatorFormData = {
-          display_name: step2.display_name || undefined,
-          country: step2.country || undefined,
-          city: step2.city || undefined,
-          birth_year: step2.birth_year || undefined,
-          creator_platforms: step3.creator_platforms || undefined,
-          followers_count: step3.followers_count || undefined,
-          avg_views: step3.avg_views || undefined,
-          content_categories: step3.content_categories || undefined,
-          collaboration_expectation: step4.collaboration_expectation || undefined,
-        }
-        setCreatorData(cd)
-
-        // Determine current step based on onboarding_data
-        if (!step2.display_name) {
-          setCurrentStep(2)
-        } else if (!step3.creator_platforms || step3.creator_platforms.length === 0) {
-          setCurrentStep(3)
-        } else if (!step4.collaboration_expectation || step4.collaboration_expectation.length === 0) {
-          setCurrentStep(4)
-        } else {
-          setCurrentStep(5)
-        }
-      } else {
-        const step2 = data.step2 || {}
-        const step3 = data.step3 || {}
-        const step4 = data.step4 || {}
-        
-        const bd: BrandFormData = {
-          company_name: step2.company_name || undefined,
-          industry: step2.industry || undefined,
-          country: step2.country || undefined,
-          city: step2.city || undefined,
-          company_size: step3.company_size || undefined,
-          budget: step3.budget || undefined,
-          campaign_budget_range: step3.campaign_budget_range || undefined,
-          target_platforms: step3.target_platforms || undefined,
-          campaign_goal: step4.campaign_goal || undefined,
-          preferred_collaboration_type: step4.preferred_collaboration_type || undefined,
-        }
-        setBrandData(bd)
-
-        // Determine current step based on onboarding_data
-        if (!step2.company_name) {
-          setCurrentStep(2)
-        } else if (!step3.company_size) {
-          setCurrentStep(3)
-        } else if (!step4.campaign_goal) {
-          setCurrentStep(4)
-        } else {
-          setCurrentStep(5)
-        }
-      }
-    } catch (err) {
-      console.error('Error loading existing data:', err)
-    }
-  }
-
-  // Helper to merge onboarding_data JSON
-  async function mergeOnboardingData(stepKey: string, stepData: any) {
-    if (!session) return null
-
-    // Fetch current onboarding_data
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('onboarding_data')
-      .eq('id', session.user.id)
-      .single()
-
-    if (fetchError) throw fetchError
-
-    // Merge new step data into existing onboarding_data
-    const currentData = profile?.onboarding_data || {}
-    const mergedData = {
-      ...currentData,
-      [stepKey]: stepData,
-    }
-
-    // Update only onboarding_data column
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        onboarding_data: mergedData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', session.user.id)
-
-    if (updateError) throw updateError
-
-    return mergedData
-  }
-
-  async function saveStep(stepData: CreatorFormData | BrandFormData, nextStep?: number) {
-    if (!session || !role) return
-
-    setLoading(true)
-    setError('')
-
-    try {
-      // Determine step key based on current step
-      const stepKey = `step${currentStep}`
-
-      // Update local state
-      if (role === 'creator') {
-        const cd = { ...creatorData, ...stepData } as CreatorFormData
-        setCreatorData(cd)
-      } else {
-        const bd = { ...brandData, ...stepData } as BrandFormData
-        setBrandData(bd)
-      }
-
-      // Save to onboarding_data JSON (merge)
-      await mergeOnboardingData(stepKey, stepData)
-
-      if (nextStep) {
-        setCurrentStep(nextStep)
-      }
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi lưu dữ liệu')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleComplete() {
-    if (!session || !role) return
-
-    setLoading(true)
-    setError('')
-
-    try {
-      // Fetch onboarding_data
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('onboarding_data')
-        .eq('id', session.user.id)
-        .single()
-
-      if (fetchError) throw fetchError
-
-      const onboardingData = profile?.onboarding_data || {}
-
-      // Step 1: Update core profile fields (profiles table)
-      const coreUpdateData: any = {
-        onboarding_completed: true,
-        updated_at: new Date().toISOString(),
-      }
-
-      if (role === 'creator') {
-        const step2 = onboardingData.step2 || {}
-        coreUpdateData.display_name = step2.display_name || null
-        coreUpdateData.country = step2.country || null
-        coreUpdateData.city = step2.city || null
-        coreUpdateData.birth_year = step2.birth_year || null
-      } else {
-        const step2 = onboardingData.step2 || {}
-        coreUpdateData.country = step2.country || null
-        coreUpdateData.city = step2.city || null
-      }
-
-      // Update core profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(coreUpdateData)
-        .eq('id', session.user.id)
-
-      if (profileError) throw profileError
-
-      // Step 2: Create or update domain-specific profile
-      if (role === 'creator') {
-        const step2 = onboardingData.step2 || {}
-        const step3 = onboardingData.step3 || {}
-        const step4 = onboardingData.step4 || {}
-
-        const creatorProfileData: any = {
-          user_id: session.user.id,
-          creator_platforms: step3.creator_platforms || null,
-          followers_count: step3.followers_count || null,
-          avg_views: step3.avg_views || null,
-          content_categories: step3.content_categories || null,
-          collaboration_expectation: step4.collaboration_expectation || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-
-        // Upsert creator profile
-        const { error: creatorError } = await supabase
-          .from('creator_profiles')
-          .upsert(creatorProfileData, { onConflict: 'user_id' })
-
-        if (creatorError) throw creatorError
-      } else {
-        const step2 = onboardingData.step2 || {}
-        const step3 = onboardingData.step3 || {}
-        const step4 = onboardingData.step4 || {}
-
-        const brandProfileData: any = {
-          user_id: session.user.id,
-          brand_name: step2.company_name || null,
-          industry: step2.industry || null,
-          company_size: step3.company_size || null,
-          monthly_marketing_budget: (() => {
-            const budgetValue = step3.budget || step3.campaign_budget_range
-            return budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
-          })(),
-          target_platforms: step3.target_platforms || null,
-          collaboration_goals: (() => {
-            const goalValue = step4.campaign_goal || step4.collaboration_goal
-            return Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
-          })(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-
-        // Insert brand profile (if already exists, do nothing)
-        const { error: brandError } = await supabase
-          .from('brand_profiles')
-          .insert(brandProfileData)
-
-        // Ignore duplicate key error (if profile already exists)
-        if (brandError && brandError.code !== '23505') {
-          throw brandError
-        }
-      }
-
-      // Insert consent record
-      const { error: consentError } = await supabase
-        .from('user_consents')
-        .insert({
-          user_id: session.user.id,
-          policy_version: 'v1.0',
-          accepted_via: 'onboarding',
-          accepted_at: new Date().toISOString(),
-        })
-
-      if (consentError) {
-        console.error('Error inserting consent:', consentError)
-        // Don't block onboarding if consent insert fails
-      }
-
-      // Redirect to /app - AppGate will handle routing
-      navigate('/app', { replace: true })
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
-      setLoading(false)
-    }
-  }
-
-  if (!role) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
-          {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-[#6B7280]">
-                Bước {currentStep} / 5
-              </span>
-              <span className="text-sm text-[#6B7280]">
-                {Math.round((currentStep / 5) * 100)}%
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] h-2 rounded-full transition-all"
-                style={{ width: `${(currentStep / 5) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Step 2: Basic Identity */}
-          {currentStep === 2 && (
-            <Step2BasicIdentity
-              role={role}
-              creatorData={creatorData}
-              brandData={brandData}
-              onSave={(data) => saveStep(data, 3)}
-              loading={loading}
-            />
-          )}
-
-          {/* Step 3: Business/Creator Metrics */}
-          {currentStep === 3 && (
-            <Step3Metrics
-              role={role}
-              creatorData={creatorData}
-              brandData={brandData}
-              onSave={(data) => saveStep(data, 4)}
-              loading={loading}
-            />
-          )}
-
-          {/* Step 4: Collaboration Intent */}
-          {currentStep === 4 && (
-            <Step4Collaboration
-              role={role}
-              creatorData={creatorData}
-              brandData={brandData}
-              onSave={(data) => saveStep(data, 5)}
-              loading={loading}
-            />
-          )}
-
-          {/* Step 5: Finalize */}
-          {currentStep === 5 && (
-            <Step5Finalize
-              role={role}
-              creatorData={creatorData}
-              brandData={brandData}
-              onComplete={handleComplete}
-              loading={loading}
-            />
-          )}
-
-          {/* Navigation buttons */}
-          {currentStep > 2 && (
-            <div className="mt-6 flex justify-between">
-              <button
-                onClick={() => setCurrentStep(currentStep - 1)}
-                disabled={loading}
-                className="px-6 py-2.5 rounded-xl font-medium text-[#6B7280] border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Quay lại
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Step 2: Basic Identity
-function Step2BasicIdentity({
-  role,
-  creatorData,
-  brandData,
-  onSave,
-  loading,
-}: {
-  role: 'creator' | 'brand'
-  creatorData: CreatorFormData
-  brandData: BrandFormData
-  onSave: (data: CreatorFormData | BrandFormData) => void
-  loading: boolean
-}) {
-  const [localData, setLocalData] = useState(
-    role === 'creator'
-      ? {
-          display_name: creatorData.display_name || '',
-          country: creatorData.country || '',
-          city: creatorData.city || '',
-          birth_year: creatorData.birth_year || undefined,
-        }
-      : {
-          company_name: brandData.company_name || '',
-          industry: brandData.industry || '',
-          country: brandData.country || '',
-          city: brandData.city || '',
-        }
-  )
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (role === 'creator') {
-      onSave({
-        display_name: localData.display_name,
-        country: localData.country,
-        city: localData.city,
-        birth_year: localData.birth_year,
-      } as CreatorFormData)
-    } else {
-      onSave({
-        company_name: localData.company_name,
-        industry: localData.industry,
-        country: localData.country,
-        city: localData.city,
-      } as BrandFormData)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <h1 className="text-3xl font-semibold tracking-tight mb-4">
-        Thông tin cơ bản
-      </h1>
-      <p className="text-[#6B7280] mb-8">
-        {role === 'creator' ? 'Hãy cho chúng tôi biết về bạn' : 'Hãy cho chúng tôi biết về thương hiệu của bạn'}
-      </p>
-
-      <div className="space-y-4">
-        {role === 'creator' ? (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Tên hiển thị *
-              </label>
-              <input
-                type="text"
-                value={localData.display_name}
-                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Quốc gia *
-              </label>
-              <input
-                type="text"
-                value={localData.country}
-                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Thành phố *
-              </label>
-              <input
-                type="text"
-                value={localData.city}
-                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Năm sinh
-              </label>
-              <input
-                type="number"
-                min="1950"
-                max={new Date().getFullYear()}
-                value={localData.birth_year || ''}
-                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Tên công ty *
-              </label>
-              <input
-                type="text"
-                value={localData.company_name}
-                onChange={(e) => setLocalData({ ...localData, company_name: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Ngành nghề *
-              </label>
-              <input
-                type="text"
-                value={localData.industry}
-                onChange={(e) => setLocalData({ ...localData, industry: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Quốc gia *
-              </label>
-              <input
-                type="text"
-                value={localData.country}
-                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Thành phố *
-              </label>
-              <input
-                type="text"
-                value={localData.city}
-                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-          </>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-        >
-          {loading ? 'Đang lưu...' : 'Tiếp tục'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-// Step 3: Business/Creator Metrics
-function Step3Metrics({
-  role,
-  creatorData,
-  brandData,
-  onSave,
-  loading,
-}: {
-  role: 'creator' | 'brand'
-  creatorData: CreatorFormData
-  brandData: BrandFormData
-  onSave: (data: CreatorFormData | BrandFormData) => void
-  loading: boolean
-}) {
-  const platforms = ['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn']
-  
-  const [localData, setLocalData] = useState(
-    role === 'creator'
-      ? {
-          creator_platforms: creatorData.creator_platforms || [],
-          followers_count: creatorData.followers_count || undefined,
-          avg_views: creatorData.avg_views || undefined,
-          content_categories: creatorData.content_categories || [],
-        }
-      : {
-          company_size: brandData.company_size || '',
-          budget: brandData.budget || undefined,
-          campaign_budget_range: brandData.campaign_budget_range || '',
-          target_platforms: brandData.target_platforms || [],
-        }
-  )
-
-  const togglePlatform = (platform: string, type: 'creator' | 'target') => {
-    if (type === 'creator') {
-      const current = localData.creator_platforms || []
-      const updated = current.includes(platform)
-        ? current.filter((p) => p !== platform)
-        : [...current, platform]
-      setLocalData({ ...localData, creator_platforms: updated } as any)
-    } else {
-      const current = localData.target_platforms || []
-      const updated = current.includes(platform)
-        ? current.filter((p) => p !== platform)
-        : [...current, platform]
-      setLocalData({ ...localData, target_platforms: updated } as any)
-    }
-  }
-
-  const toggleCategory = (category: string) => {
-    const current = localData.content_categories || []
-    const updated = current.includes(category)
-      ? current.filter((c) => c !== category)
-      : [...current, category]
-      setLocalData({ ...localData, content_categories: updated } as any)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (role === 'creator') {
-      onSave({
-        creator_platforms: localData.creator_platforms,
-        followers_count: localData.followers_count,
-        avg_views: localData.avg_views,
-        content_categories: localData.content_categories,
-      } as CreatorFormData)
-    } else {
-      onSave({
-        company_size: localData.company_size,
-        budget: localData.budget,
-        campaign_budget_range: localData.campaign_budget_range,
-        target_platforms: localData.target_platforms,
-      } as BrandFormData)
-    }
-  }
-
-  const categories = ['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education']
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <h1 className="text-3xl font-semibold tracking-tight mb-4">
-        {role === 'creator' ? 'Thông tin Creator' : 'Thông tin Brand'}
-      </h1>
-      <p className="text-[#6B7280] mb-8">
-        {role === 'creator' ? 'Chia sẻ về kênh và nội dung của bạn' : 'Chia sẻ về quy mô và ngân sách marketing'}
-      </p>
-
-      <div className="space-y-4">
-        {role === 'creator' ? (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Nền tảng bạn sử dụng *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {platforms.map((platform) => (
-                  <button
-                    key={platform}
-                    type="button"
-                    onClick={() => togglePlatform(platform, 'creator')}
-                    className={`px-4 py-2 rounded-lg border text-sm ${
-                      localData.creator_platforms?.includes(platform)
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {platform}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Số lượng người theo dõi
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={localData.followers_count || ''}
-                onChange={(e) => setLocalData({ ...localData, followers_count: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: 100000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Lượt xem trung bình
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={localData.avg_views || ''}
-                onChange={(e) => setLocalData({ ...localData, avg_views: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: 50000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Danh mục nội dung
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => toggleCategory(category)}
-                    className={`px-4 py-2 rounded-lg border text-sm ${
-                      localData.content_categories?.includes(category)
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Quy mô công ty *
-              </label>
-              <select
-                value={localData.company_size}
-                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              >
-                <option value="">Chọn quy mô</option>
-                <option value="startup">Startup (1-10 nhân viên)</option>
-                <option value="small">Nhỏ (11-50 nhân viên)</option>
-                <option value="medium">Vừa (51-200 nhân viên)</option>
-                <option value="large">Lớn (201-1000 nhân viên)</option>
-                <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Ngân sách marketing (USD)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={localData.budget || ''}
-                onChange={(e) => setLocalData({ ...localData, budget: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: 5000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Khoảng ngân sách chiến dịch
-              </label>
-              <input
-                type="text"
-                value={localData.campaign_budget_range}
-                onChange={(e) => setLocalData({ ...localData, campaign_budget_range: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: $1000 - $5000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Nền tảng mục tiêu *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {platforms.map((platform) => (
-                  <button
-                    key={platform}
-                    type="button"
-                    onClick={() => togglePlatform(platform, 'target')}
-                    className={`px-4 py-2 rounded-lg border text-sm ${
-                      localData.target_platforms?.includes(platform)
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {platform}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-        >
-          {loading ? 'Đang lưu...' : 'Tiếp tục'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-// Step 4: Collaboration Intent
-function Step4Collaboration({
-  role,
-  creatorData,
-  brandData,
-  onSave,
-  loading,
-}: {
-  role: 'creator' | 'brand'
-  creatorData: CreatorFormData
-  brandData: BrandFormData
-  onSave: (data: CreatorFormData | BrandFormData) => void
-  loading: boolean
-}) {
-  const collaborationTypes: ('paid' | 'gift' | 'affiliate')[] = ['paid', 'gift', 'affiliate']
-  
-  const [localData, setLocalData] = useState(
-    role === 'creator'
-      ? {
-          collaboration_expectation: creatorData.collaboration_expectation || [],
-        }
-      : {
-          campaign_goal: brandData.campaign_goal || '',
-          preferred_collaboration_type: brandData.preferred_collaboration_type || [],
-        }
-  )
-
-  const toggleCollaborationType = (type: 'paid' | 'gift' | 'affiliate') => {
-    if (role === 'creator') {
-      const current = localData.collaboration_expectation || []
-      const updated = current.includes(type)
-        ? current.filter((t) => t !== type)
-        : [...current, type]
-      setLocalData({ ...localData, collaboration_expectation: updated } as any)
-    } else {
-      const current = localData.preferred_collaboration_type || []
-      const updated = current.includes(type)
-        ? current.filter((t) => t !== type)
-        : [...current, type]
-      setLocalData({ ...localData, preferred_collaboration_type: updated } as any)
-    }
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (role === 'creator') {
-      onSave({
-        collaboration_expectation: localData.collaboration_expectation,
-      } as CreatorFormData)
-    } else {
-      onSave({
-        campaign_goal: localData.campaign_goal,
-        preferred_collaboration_type: localData.preferred_collaboration_type,
-      } as BrandFormData)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <h1 className="text-3xl font-semibold tracking-tight mb-4">
-        Mục tiêu hợp tác
-      </h1>
-      <p className="text-[#6B7280] mb-8">
-        {role === 'creator' ? 'Bạn mong đợi gì từ các hợp tác?' : 'Mục tiêu hợp tác của thương hiệu là gì?'}
-      </p>
-
-      <div className="space-y-4">
-        {role === 'creator' ? (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Loại hợp tác mong muốn *
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {collaborationTypes.map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => toggleCollaborationType(type)}
-                    className={`px-4 py-2 rounded-lg border text-sm ${
-                      localData.collaboration_expectation?.includes(type)
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Mục tiêu chiến dịch *
-              </label>
-              <textarea
-                value={localData.campaign_goal}
-                onChange={(e) => setLocalData({ ...localData, campaign_goal: e.target.value } as any)}
-                rows={5}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Mô tả mục tiêu hợp tác của thương hiệu..."
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Loại hợp tác ưa thích *
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {collaborationTypes.map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => toggleCollaborationType(type)}
-                    className={`px-4 py-2 rounded-lg border text-sm ${
-                      localData.preferred_collaboration_type?.includes(type)
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-        >
-          {loading ? 'Đang lưu...' : 'Tiếp tục'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-// Step 5: Finalize
-function Step5Finalize({
-  role,
-  creatorData,
-  brandData,
-  onComplete,
-  loading,
-}: {
-  role: 'creator' | 'brand'
-  creatorData: CreatorFormData
-  brandData: BrandFormData
-  onComplete: () => void
-  loading: boolean
-}) {
-  return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight mb-4">
-        Hoàn tất thiết lập
-      </h1>
-      <p className="text-[#6B7280] mb-8">
-        Bạn đã hoàn thành tất cả các bước thiết lập. Nhấn "Hoàn tất" để bắt đầu sử dụng ALINO.
-      </p>
-
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <h3 className="font-medium mb-2">Tóm tắt thông tin:</h3>
-        <ul className="text-sm text-[#6B7280] space-y-1">
-          {role === 'creator' && (
-            <>
-              <li>• Tên: {creatorData.display_name || 'Chưa có'}</li>
-              <li>• Địa điểm: {creatorData.city && creatorData.country ? `${creatorData.city}, ${creatorData.country}` : 'Chưa có'}</li>
-              <li>• Nền tảng: {creatorData.creator_platforms?.length || 0} nền tảng</li>
-            </>
-          )}
-          {role === 'brand' && (
-            <>
-              <li>• Công ty: {brandData.company_name || 'Chưa có'}</li>
-              <li>• Ngành: {brandData.industry || 'Chưa có'}</li>
-              <li>• Quy mô: {brandData.company_size || 'Chưa có'}</li>
-            </>
-          )}
-        </ul>
-      </div>
-
-      <p className="text-sm text-gray-600 mb-6 text-center">
-        By clicking Continue, you agree to ALINO's{' '}
-        <Link to="/terms" className="text-[#6366F1] hover:underline">
-          Terms of Service
-        </Link>
-        {' '}and{' '}
-        <Link to="/privacy" className="text-[#6366F1] hover:underline">
-          Privacy Policy
-        </Link>
-        .
-      </p>
-
-      <button
-        onClick={onComplete}
-        disabled={loading}
-        className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-      >
-        {loading ? 'Đang xử lý...' : 'Hoàn tất'}
-      </button>
-    </div>
-  )
-}
-</file>
-
 <file path="src/pages/onboarding/RolePage.tsx">
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9047,21 +7203,39 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/verify-email`,
         },
       })
-
+      
       if (error) {
         setError(error.message || 'Đăng ký thất bại')
         setLoading(false)
         return
       }
+      
+      if (data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            role: null,
+            onboarding_completed: false,
+            onboarding_data: {},
+          })
+      
+        if (profileError) {
+          setError('Không tạo được hồ sơ người dùng')
+          setLoading(false)
+          return
+        }
+      }
+      
+      navigate('/?signup=success', { replace: true })      
 
-      navigate('/?signup=success', { replace: true })
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -9421,163 +7595,6 @@ function createImage(url: string): Promise<HTMLImageElement> {
     image.src = url
   })
 }
-</file>
-
-<file path="supabase/migrations/001_create_profiles.sql">
--- Create profiles table
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT CHECK (role IN ('creator', 'brand')),
-  onboarding_completed BOOLEAN DEFAULT FALSE,
-  onboarding_data JSONB DEFAULT '{}'::jsonb,
-  
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- RLS Policy: Users can read their own profile
-CREATE POLICY "Users can read their own profile"
-  ON public.profiles
-  FOR SELECT
-  USING (auth.uid() = id);
-
--- RLS Policy: Users can update their own profile
-CREATE POLICY "Users can update their own profile"
-  ON public.profiles
-  FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
-
--- RLS Policy: Users can insert their own profile
-CREATE POLICY "Users can insert their own profile"
-  ON public.profiles
-  FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- RLS Policy: Admin users (email ends with @alino.net) can read all profiles
-CREATE POLICY "Admin users can read all profiles"
-  ON public.profiles
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  );
-
--- RLS Policy: Admin users can update all profiles
-CREATE POLICY "Admin users can update all profiles"
-  ON public.profiles
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  );
-
--- Function to automatically update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to update updated_at on profile updates
-CREATE TRIGGER set_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
-
--- Create index on role for faster queries
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
-
--- Create index on onboarding_completed for faster queries
-CREATE INDEX IF NOT EXISTS idx_profiles_onboarding_completed ON public.profiles(onboarding_completed);
-</file>
-
-<file path="supabase/migrations/002_create_creator_services.sql">
--- Create creator_services table
-CREATE TABLE IF NOT EXISTS creator_services (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  price INTEGER NOT NULL CHECK (price >= 1 AND price <= 999999),
-  description TEXT NOT NULL,
-  deliverables TEXT[] NOT NULL,
-  estimated_timeline TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('active', 'draft', 'hidden')) DEFAULT 'draft',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create index on user_id for faster queries
-CREATE INDEX IF NOT EXISTS idx_creator_services_user_id ON creator_services(user_id);
-
--- Create index on status for filtering
-CREATE INDEX IF NOT EXISTS idx_creator_services_status ON creator_services(status);
-
--- Enable RLS
-ALTER TABLE creator_services ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can read their own services
-CREATE POLICY "Users can read their own services"
-  ON creator_services
-  FOR SELECT
-  USING (auth.uid() = user_id);
-
--- Policy: Users can insert their own services
-CREATE POLICY "Users can insert their own services"
-  ON creator_services
-  FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Policy: Users can update their own services
-CREATE POLICY "Users can update their own services"
-  ON creator_services
-  FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- Policy: Users can delete their own services
-CREATE POLICY "Users can delete their own services"
-  ON creator_services
-  FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Policy: Public can read active services (for public profile viewing)
-CREATE POLICY "Public can read active services"
-  ON creator_services
-  FOR SELECT
-  USING (status = 'active');
-
--- Trigger to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_creator_services_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_creator_services_updated_at
-  BEFORE UPDATE ON creator_services
-  FOR EACH ROW
-  EXECUTE FUNCTION update_creator_services_updated_at();
 </file>
 
 <file path="postcss.config.cjs">
@@ -10319,6 +8336,2028 @@ export function useAuth() {
 }
 </file>
 
+<file path="src/pages/creator/profile/ProfilePage.tsx">
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../hooks/useAuth'
+import { useProfile } from '../../../hooks/useProfile'
+import { getSupabase } from '../../../lib/supabase'
+import type { Profile, CreatorProfile, BrandProfile } from '../../../types/profile'
+import AvatarUpload from '../../../components/AvatarUpload'
+import Toast from '../../../components/shared/Toast'
+
+export default function ProfilePage() {
+  const { session, isAuthenticated } = useAuth()
+  const { profile, loading: profileLoading, needsOnboarding } = useProfile(session?.user?.id, isAuthenticated)
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const supabase = getSupabase()
+  
+  // Refs for field focus/scroll
+  const fieldRefs = useRef<Record<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>>({})
+
+  // Form state - matches FINAL schema exactly
+  interface ProfileFormData {
+    // Core fields
+    display_name?: string | null
+    avatar_url?: string | null
+    bio?: string | null
+    birth_year?: number | null
+    country?: string | null
+    city?: string | null
+    // Creator fields
+    creator_platforms?: string[] | null // TEXT[]
+    content_categories?: string[] | null // TEXT[]
+    followers_count?: number | null
+    avg_views?: number | null
+    collaboration_expectation?: string[] | null // TEXT[]
+    // Brand fields
+    brand_name?: string | null
+    industry?: string | null
+    company_size?: string | null
+    monthly_marketing_budget?: number | null // NUMERIC
+    target_platforms?: string[] | null // TEXT[]
+    collaboration_goals?: string[] | null // TEXT[]
+  }
+  const [formData, setFormData] = useState<ProfileFormData>({})
+
+  useEffect(() => {
+    if (profile) {
+      // Load all fields directly from profile columns (matches FINAL schema)
+      setFormData({
+        display_name: profile.display_name || undefined,
+        avatar_url: profile.avatar_url || undefined,
+        bio: profile.bio || undefined,
+        birth_year: profile.birth_year || undefined,
+        country: profile.country || undefined,
+        city: profile.city || undefined,
+        // Creator fields
+        creator_platforms: (profile as any).creator_platforms || undefined,
+        content_categories: (profile as any).content_categories || undefined,
+        followers_count: (profile as any).followers_count || undefined,
+        avg_views: (profile as any).avg_views || undefined,
+        collaboration_expectation: (profile as any).collaboration_expectation || undefined,
+        // Brand fields
+        brand_name: (profile as any).brand_name || undefined,
+        industry: (profile as any).industry || undefined,
+        company_size: (profile as any).company_size || undefined,
+        monthly_marketing_budget: (profile as any).monthly_marketing_budget ? Number((profile as any).monthly_marketing_budget) : undefined,
+        target_platforms: (profile as any).target_platforms || undefined,
+        collaboration_goals: Array.isArray((profile as any).collaboration_goals) ? (profile as any).collaboration_goals : undefined,
+      })
+    }
+  }, [profile])
+
+  // Redirect brand users without profile to onboarding
+  useEffect(() => {
+    if (!profileLoading && needsOnboarding && profile?.role === 'brand') {
+      navigate('/onboarding', { replace: true })
+    }
+  }, [profileLoading, needsOnboarding, profile, navigate])
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    if (needsOnboarding) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-[#6B7280]">Đang chuyển hướng đến onboarding...</div>
+        </div>
+      )
+    }
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
+      </div>
+    )
+  }
+
+  const role = profile.role || 'creator'
+
+  // Validation function
+  const validateProfile = (): { isValid: boolean; firstInvalidField: string | null } => {
+    const errors: Record<string, string> = {}
+
+    // Core required fields
+    if (!formData.display_name || formData.display_name.trim() === '') {
+      errors.display_name = 'Vui lòng nhập tên hiển thị'
+    }
+    if (!formData.birth_year) {
+      errors.birth_year = 'Vui lòng nhập năm sinh'
+    }
+    if (!formData.country || formData.country.trim() === '') {
+      errors.country = 'Vui lòng nhập quốc gia'
+    }
+    if (!formData.city || formData.city.trim() === '') {
+      errors.city = 'Vui lòng nhập thành phố'
+    }
+
+    if (role === 'creator') {
+      // Creator required fields
+      if (!formData.creator_platforms || formData.creator_platforms.length === 0) {
+        errors.creator_platforms = 'Vui lòng chọn ít nhất một nền tảng'
+      }
+      if (!formData.content_categories || formData.content_categories.length === 0) {
+        errors.content_categories = 'Vui lòng chọn ít nhất một danh mục nội dung'
+      }
+      if (!formData.collaboration_expectation || formData.collaboration_expectation.length === 0) {
+        errors.collaboration_expectation = 'Vui lòng chọn ít nhất một kỳ vọng hợp tác'
+      }
+      if (!formData.followers_count || formData.followers_count <= 0) {
+        errors.followers_count = 'Vui lòng nhập số lượng người theo dõi (lớn hơn 0)'
+      }
+      if (!formData.avg_views || formData.avg_views <= 0) {
+        errors.avg_views = 'Vui lòng nhập lượt xem trung bình (lớn hơn 0)'
+      }
+    } else {
+      // Brand required fields
+      if (!formData.brand_name || formData.brand_name.trim() === '') {
+        errors.brand_name = 'Vui lòng nhập tên công ty'
+      }
+      if (!formData.industry || formData.industry.trim() === '') {
+        errors.industry = 'Vui lòng nhập ngành nghề'
+      }
+      if (!formData.company_size || formData.company_size.trim() === '') {
+        errors.company_size = 'Vui lòng chọn quy mô công ty'
+      }
+      if (!formData.monthly_marketing_budget || formData.monthly_marketing_budget <= 0) {
+        errors.monthly_marketing_budget = 'Vui lòng nhập ngân sách marketing (lớn hơn 0)'
+      }
+      if (!formData.target_platforms || formData.target_platforms.length === 0) {
+        errors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
+      }
+      if (!formData.collaboration_goals || formData.collaboration_goals.length === 0) {
+        errors.collaboration_goals = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
+      }
+    }
+
+    setFieldErrors(errors)
+
+    if (Object.keys(errors).length > 0) {
+      // Find first invalid field for scrolling
+      const fieldOrder = role === 'creator'
+        ? ['display_name', 'birth_year', 'country', 'city', 'creator_platforms', 'content_categories', 'followers_count', 'avg_views', 'collaboration_expectation']
+        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goals']
+      
+      const firstInvalidField = fieldOrder.find(field => errors[field]) || null
+      return { isValid: false, firstInvalidField }
+    }
+
+    return { isValid: true, firstInvalidField: null }
+  }
+
+  const scrollToField = (fieldName: string) => {
+    const field = fieldRefs.current[fieldName]
+    if (field) {
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => field.focus(), 300)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!session || !profile) return
+
+    // Validate before saving
+    const validation = validateProfile()
+    if (!validation.isValid) {
+      setToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'error' })
+      if (validation.firstInvalidField) {
+        scrollToField(validation.firstInvalidField)
+      }
+      return
+    }
+
+    setLoading(true)
+    setFieldErrors({})
+
+    try {
+      // Step 1: Update core profile fields (profiles table)
+      const coreUpdateData: any = {
+        display_name: formData.display_name || null,
+        avatar_url: formData.avatar_url || null,
+        bio: formData.bio || null,
+        birth_year: formData.birth_year || null,
+        country: formData.country || null,
+        city: formData.city || null,
+        updated_at: new Date().toISOString(),
+      }
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(coreUpdateData)
+        .eq('id', session.user.id)
+
+      if (profileError) throw profileError
+
+      // Step 2: Update domain-specific profile
+      if (role === 'creator') {
+        const creatorUpdateData: any = {
+          creator_platforms: formData.creator_platforms || null,
+          content_categories: formData.content_categories || null,
+          followers_count: formData.followers_count || null,
+          avg_views: formData.avg_views || null,
+          collaboration_expectation: formData.collaboration_expectation || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .update(creatorUpdateData)
+          .eq('user_id', session.user.id)
+
+        if (creatorError) throw creatorError
+      } else if (role === 'brand') {
+        const brandUpdateData: any = {
+          brand_name: formData.brand_name || null,
+          industry: formData.industry || null,
+          company_size: formData.company_size || null,
+          monthly_marketing_budget: formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null,
+          target_platforms: formData.target_platforms || null,
+          collaboration_goals: formData.collaboration_goals || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .update(brandUpdateData)
+          .eq('user_id', session.user.id)
+
+        if (brandError) throw brandError
+      }
+
+      // Sync display_name and avatar_url to auth metadata
+      const metadataUpdate: Record<string, any> = {}
+      if (formData.display_name !== undefined) {
+        metadataUpdate.display_name = formData.display_name
+      }
+      if (formData.avatar_url !== undefined) {
+        metadataUpdate.avatar_url = formData.avatar_url
+      }
+
+      if (Object.keys(metadataUpdate).length > 0) {
+        const { error: authError } = await supabase.auth.updateUser({
+          data: metadataUpdate,
+        })
+        if (authError) {
+          console.warn('Failed to update auth metadata:', authError)
+          // Don't throw - profile update succeeded
+        }
+      }
+
+      setToast({ message: 'Lưu hồ sơ thành công', type: 'success' })
+    } catch (err: any) {
+      console.error('Profile save error:', err)
+      setToast({ message: err.message || 'Có lỗi xảy ra, vui lòng thử lại', type: 'error' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAvatarChange = async (url: string) => {
+    // URL is already a public URL from AvatarUpload component (after successful storage upload)
+    if (!session || !profile) {
+      console.error('Cannot save avatar: missing session or profile')
+      return
+    }
+
+    // Optimistically update form state
+    setFormData((prev) => ({ ...prev, avatar_url: url }))
+
+    try {
+      // Update profiles.avatar_url (core field)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session.user.id)
+
+      if (profileError) {
+        console.error('Failed to update profiles.avatar_url:', profileError)
+        throw profileError
+      }
+
+      // Sync to auth metadata (secondary, non-blocking)
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { avatar_url: url },
+      })
+      if (authError) {
+        console.warn('Failed to sync avatar_url to auth metadata (non-blocking):', authError)
+        // Don't throw - profile update succeeded
+      }
+
+      setToast({ message: 'Đã lưu avatar thành công', type: 'success' })
+    } catch (error: any) {
+      console.error('Avatar save error:', error)
+      // Revert optimistic update on error
+      setFormData((prev) => ({ ...prev, avatar_url: profile.avatar_url || null }))
+      setToast({ message: error.message || 'Có lỗi xảy ra khi lưu avatar', type: 'error' })
+    }
+  }
+
+  return (
+    <div className="bg-white py-8 px-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
+
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
+            {/* Basic Identity Section */}
+            <div className="border-b pb-6">
+              <h2 className="text-xl font-semibold mb-4">Thông tin cơ bản</h2>
+              
+              {role === 'creator' ? (
+                <>
+                  {/* Top Row: Display Name | Avatar */}
+                  <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
+                    {/* Left: Display Name */}
+                    <div className="flex-1 space-y-4 w-full md:w-auto">
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-2">
+                          Tên hiển thị *
+                        </label>
+                        <input
+                          ref={(el) => fieldRefs.current.display_name = el}
+                          type="text"
+                          value={formData.display_name || ''}
+                          onChange={(e) => {
+                            setFormData({ ...formData, display_name: e.target.value })
+                            if (fieldErrors.display_name) {
+                              setFieldErrors(prev => {
+                                const next = { ...prev }
+                                delete next.display_name
+                                return next
+                              })
+                            }
+                          }}
+                          className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.display_name ? 'border-red-500' : ''}`}
+                          placeholder="Nhập tên hiển thị"
+                        />
+                        {fieldErrors.display_name && (
+                          <p className="mt-1 text-sm text-red-600">{fieldErrors.display_name}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Avatar */}
+                    <div className="flex-shrink-0">
+                      <AvatarUpload
+                        currentAvatarUrl={formData.avatar_url ?? undefined}
+                        onAvatarChange={handleAvatarChange}
+                        userId={session?.user?.id || ''}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2-Column Grid: Birth Year | Country + City */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Năm sinh *
+                      </label>
+                      <input
+                        ref={(el) => fieldRefs.current.birth_year = el}
+                        type="number"
+                        min="1950"
+                        max={new Date().getFullYear()}
+                        value={formData.birth_year || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })
+                          if (fieldErrors.birth_year) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.birth_year
+                              return next
+                            })
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.birth_year ? 'border-red-500' : ''}`}
+                      />
+                      {fieldErrors.birth_year && (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.birth_year}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Quốc gia *
+                      </label>
+                      <input
+                        ref={(el) => fieldRefs.current.country = el}
+                        type="text"
+                        value={formData.country || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, country: e.target.value })
+                          if (fieldErrors.country) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.country
+                              return next
+                            })
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.country ? 'border-red-500' : ''}`}
+                      />
+                      {fieldErrors.country && (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.country}</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thành phố *
+                      </label>
+                      <input
+                        ref={(el) => fieldRefs.current.city = el}
+                        type="text"
+                        value={formData.city || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, city: e.target.value })
+                          if (fieldErrors.city) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.city
+                              return next
+                            })
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.city ? 'border-red-500' : ''}`}
+                      />
+                      {fieldErrors.city && (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Top Row: Company Name | Avatar */}
+                  <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
+                    {/* Left: Company Name */}
+                    <div className="flex-1 space-y-4 w-full md:w-auto">
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-2">
+                          Tên công ty *
+                        </label>
+                        <input
+                          ref={(el) => fieldRefs.current.brand_name = el}
+                          type="text"
+                          value={formData.brand_name || ''}
+                          onChange={(e) => {
+                            setFormData({ ...formData, brand_name: e.target.value })
+                            if (fieldErrors.brand_name) {
+                              setFieldErrors(prev => {
+                                const next = { ...prev }
+                                delete next.brand_name
+                                return next
+                              })
+                            }
+                          }}
+                          className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.brand_name ? 'border-red-500' : ''}`}
+                          placeholder="Nhập tên công ty"
+                        />
+                        {fieldErrors.brand_name && (
+                          <p className="mt-1 text-sm text-red-600">{fieldErrors.brand_name}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Avatar */}
+                    <div className="flex-shrink-0">
+                      <AvatarUpload
+                        currentAvatarUrl={formData.avatar_url ?? undefined}
+                        onAvatarChange={handleAvatarChange}
+                        userId={session?.user?.id || ''}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2-Column Grid: Industry | Country + City */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Ngành nghề *
+                      </label>
+                      <input
+                        ref={(el) => fieldRefs.current.industry = el}
+                        type="text"
+                        value={formData.industry || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, industry: e.target.value })
+                          if (fieldErrors.industry) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.industry
+                              return next
+                            })
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.industry ? 'border-red-500' : ''}`}
+                      />
+                      {fieldErrors.industry && (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.industry}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Quốc gia *
+                      </label>
+                      <input
+                        ref={(el) => fieldRefs.current.country = el}
+                        type="text"
+                        value={formData.country || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, country: e.target.value })
+                          if (fieldErrors.country) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.country
+                              return next
+                            })
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.country ? 'border-red-500' : ''}`}
+                      />
+                      {fieldErrors.country && (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.country}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-2">
+                        Thành phố *
+                      </label>
+                      <input
+                        ref={(el) => fieldRefs.current.city = el}
+                        type="text"
+                        value={formData.city || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, city: e.target.value })
+                          if (fieldErrors.city) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.city
+                              return next
+                            })
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.city ? 'border-red-500' : ''}`}
+                      />
+                      {fieldErrors.city && (
+                        <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Business/Creator Metrics Section */}
+            {role === 'creator' && (
+              <div className="border-b pb-6">
+                <h2 className="text-xl font-semibold mb-4">Thông tin Creator</h2>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Giới thiệu
+                  </label>
+                  <textarea
+                    value={formData.bio || ''}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border rounded-lg"
+                    placeholder="Giới thiệu về bản thân..."
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Nền tảng *
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.creator_platforms || []
+                          const updated = current.includes(platform)
+                            ? current.filter((p) => p !== platform)
+                            : [...current, platform]
+                          setFormData({ ...formData, creator_platforms: updated })
+                          if (fieldErrors.creator_platforms && updated.length > 0) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.creator_platforms
+                              return next
+                            })
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
+                          formData.creator_platforms?.includes(platform)
+                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                        }`}
+                      >
+                        {platform}
+                      </button>
+                    ))}
+                  </div>
+                  {fieldErrors.creator_platforms && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.creator_platforms}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Số lượng người theo dõi *
+                    </label>
+                    <input
+                      ref={(el) => fieldRefs.current.followers_count = el}
+                      type="number"
+                      min="0"
+                      value={formData.followers_count || ''}
+                      onChange={(e) => {
+                        setFormData({ ...formData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })
+                        if (fieldErrors.followers_count) {
+                          setFieldErrors(prev => {
+                            const next = { ...prev }
+                            delete next.followers_count
+                            return next
+                          })
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.followers_count ? 'border-red-500' : ''}`}
+                    />
+                    {fieldErrors.followers_count && (
+                      <p className="mt-1 text-sm text-red-600">{fieldErrors.followers_count}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Lượt xem trung bình *
+                    </label>
+                    <input
+                      ref={(el) => fieldRefs.current.avg_views = el}
+                      type="number"
+                      min="0"
+                      value={formData.avg_views || ''}
+                      onChange={(e) => {
+                        setFormData({ ...formData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })
+                        if (fieldErrors.avg_views) {
+                          setFieldErrors(prev => {
+                            const next = { ...prev }
+                            delete next.avg_views
+                            return next
+                          })
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.avg_views ? 'border-red-500' : ''}`}
+                    />
+                    {fieldErrors.avg_views && (
+                      <p className="mt-1 text-sm text-red-600">{fieldErrors.avg_views}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Danh mục nội dung *
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education'].map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.content_categories || []
+                          const updated = current.includes(category)
+                            ? current.filter((c) => c !== category)
+                            : [...current, category]
+                          setFormData({ ...formData, content_categories: updated })
+                          if (fieldErrors.content_categories && updated.length > 0) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.content_categories
+                              return next
+                            })
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
+                          formData.content_categories?.includes(category)
+                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  {fieldErrors.content_categories && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.content_categories}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Brand Info Section */}
+            {role === 'brand' && (
+              <div className="border-b pb-6">
+                <h2 className="text-xl font-semibold mb-4">Thông tin Brand</h2>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Quy mô công ty *
+                  </label>
+                  <select
+                    ref={(el) => fieldRefs.current.company_size = el}
+                    value={formData.company_size || ''}
+                    onChange={(e) => {
+                      setFormData({ ...formData, company_size: e.target.value })
+                      if (fieldErrors.company_size) {
+                        setFieldErrors(prev => {
+                          const next = { ...prev }
+                          delete next.company_size
+                          return next
+                        })
+                      }
+                    }}
+                    className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.company_size ? 'border-red-500' : ''}`}
+                  >
+                    <option value="">Chọn quy mô</option>
+                    <option value="startup">Startup (1-10 nhân viên)</option>
+                    <option value="small">Nhỏ (11-50 nhân viên)</option>
+                    <option value="medium">Vừa (51-200 nhân viên)</option>
+                    <option value="large">Lớn (201-1000 nhân viên)</option>
+                    <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+                  </select>
+                  {fieldErrors.company_size && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.company_size}</p>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      Ngân sách marketing hàng tháng *
+                    </label>
+                    <input
+                      ref={(el) => fieldRefs.current.monthly_marketing_budget = el}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.monthly_marketing_budget || ''}
+                      onChange={(e) => {
+                        setFormData({ ...formData, monthly_marketing_budget: e.target.value ? parseFloat(e.target.value) : undefined })
+                        if (fieldErrors.monthly_marketing_budget) {
+                          setFieldErrors(prev => {
+                            const next = { ...prev }
+                            delete next.monthly_marketing_budget
+                            return next
+                          })
+                        }
+                      }}
+                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.monthly_marketing_budget ? 'border-red-500' : ''}`}
+                      placeholder="Ví dụ: 5000"
+                    />
+                    {fieldErrors.monthly_marketing_budget && (
+                      <p className="mt-1 text-sm text-red-600">{fieldErrors.monthly_marketing_budget}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Nền tảng mục tiêu *
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.target_platforms || []
+                          const updated = current.includes(platform)
+                            ? current.filter((p) => p !== platform)
+                            : [...current, platform]
+                          setFormData({ ...formData, target_platforms: updated })
+                          if (fieldErrors.target_platforms && updated.length > 0) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.target_platforms
+                              return next
+                            })
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
+                          formData.target_platforms?.includes(platform)
+                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                        }`}
+                      >
+                        {platform}
+                      </button>
+                    ))}
+                  </div>
+                  {fieldErrors.target_platforms && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.target_platforms}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Collaboration Intent Section */}
+            <div className="pb-6">
+              <h2 className="text-xl font-semibold mb-4">Mục tiêu hợp tác</h2>
+              {role === 'creator' ? (
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Kỳ vọng hợp tác *
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['paid', 'gift', 'affiliate'].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.collaboration_expectation || []
+                          const updated = current.includes(type)
+                            ? current.filter((t) => t !== type)
+                            : [...current, type]
+                          setFormData({ ...formData, collaboration_expectation: updated })
+                          if (fieldErrors.collaboration_expectation && updated.length > 0) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.collaboration_expectation
+                              return next
+                            })
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
+                          formData.collaboration_expectation?.includes(type)
+                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                        }`}
+                      >
+                        {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
+                      </button>
+                    ))}
+                  </div>
+                  {fieldErrors.collaboration_expectation && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_expectation}</p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">
+                    Mục tiêu hợp tác *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['brand_awareness', 'sales', 'engagement', 'lead_generation', 'product_launch', 'community_building'].map((goal) => (
+                      <button
+                        key={goal}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.collaboration_goals || []
+                          const updated = current.includes(goal)
+                            ? current.filter((g) => g !== goal)
+                            : [...current, goal]
+                          setFormData({ ...formData, collaboration_goals: updated })
+                          if (fieldErrors.collaboration_goals && updated.length > 0) {
+                            setFieldErrors(prev => {
+                              const next = { ...prev }
+                              delete next.collaboration_goals
+                              return next
+                            })
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
+                          formData.collaboration_goals?.includes(goal)
+                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                        }`}
+                      >
+                        {goal === 'brand_awareness' ? 'Nhận diện thương hiệu' :
+                         goal === 'sales' ? 'Bán hàng' :
+                         goal === 'engagement' ? 'Tương tác' :
+                         goal === 'lead_generation' ? 'Tạo lead' :
+                         goal === 'product_launch' ? 'Ra mắt sản phẩm' :
+                         'Xây dựng cộng đồng'}
+                      </button>
+                    ))}
+                  </div>
+                  {fieldErrors.collaboration_goals && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goals}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Email (read-only) */}
+            <div className="border-t pt-6">
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={session?.user?.email || ''}
+                disabled
+                className="w-full px-4 py-2.5 border rounded-lg bg-gray-50 text-gray-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+            >
+              {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/onboarding/OnboardingPage.tsx">
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useParams } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { getSupabase } from '../../lib/supabase'
+
+// Form state interfaces
+interface CreatorFormData {
+  display_name?: string
+  country?: string
+  city?: string
+  birth_year?: number
+  creator_platforms?: string[]
+  followers_count?: number
+  avg_views?: number
+  content_categories?: string[]
+  collaboration_expectation?: ('paid' | 'gift' | 'affiliate')[]
+}
+
+interface BrandFormData {
+  company_name?: string
+  industry?: string
+  country?: string
+  city?: string
+  company_size?: string
+  budget?: number
+  campaign_budget_range?: string
+  target_platforms?: string[]
+  campaign_goal?: string
+  preferred_collaboration_type?: ('paid' | 'gift' | 'affiliate')[]
+}
+
+export default function OnboardingPage() {
+  const { session, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const { role: roleParam } = useParams<{ role?: 'creator' | 'brand' }>()
+  const supabase = getSupabase()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [role, setRole] = useState<'creator' | 'brand' | null>(roleParam || null)
+  
+  // Form state - separate for creator and brand
+  const [creatorData, setCreatorData] = useState<CreatorFormData>({})
+  const [brandData, setBrandData] = useState<BrandFormData>({})
+
+  // Guard: Must be authenticated before any onboarding logic runs
+  useEffect(() => {
+    if (authLoading) return
+    if (!session) {
+      navigate('/login', { replace: true })
+      return
+    }
+    checkOnboardingStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, authLoading, navigate])
+
+  async function checkOnboardingStatus() {
+    if (!session) return
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, role, onboarding_data')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+
+      // Let AppGate handle redirects - don't redirect here
+      if (data?.role) {
+        setRole(data.role)
+        loadExistingData(data.role, data.onboarding_data)
+      }
+    } catch (err) {
+      console.error('Error checking onboarding:', err)
+    }
+  }
+
+  async function loadExistingData(userRole: 'creator' | 'brand', onboardingData: any) {
+    if (!session) return
+
+    try {
+      // Read from onboarding_data JSON, not profile columns
+      const data = onboardingData || {}
+
+      if (userRole === 'creator') {
+        const step2 = data.step2 || {}
+        const step3 = data.step3 || {}
+        const step4 = data.step4 || {}
+        
+        const cd: CreatorFormData = {
+          display_name: step2.display_name || undefined,
+          country: step2.country || undefined,
+          city: step2.city || undefined,
+          birth_year: step2.birth_year || undefined,
+          creator_platforms: step3.creator_platforms || undefined,
+          followers_count: step3.followers_count || undefined,
+          avg_views: step3.avg_views || undefined,
+          content_categories: step3.content_categories || undefined,
+          collaboration_expectation: step4.collaboration_expectation || undefined,
+        }
+        setCreatorData(cd)
+
+        // Determine current step based on onboarding_data
+        if (!step2.display_name) {
+          setCurrentStep(2)
+        } else if (!step3.creator_platforms || step3.creator_platforms.length === 0) {
+          setCurrentStep(3)
+        } else if (!step4.collaboration_expectation || step4.collaboration_expectation.length === 0) {
+          setCurrentStep(4)
+        } else {
+          setCurrentStep(5)
+        }
+      } else {
+        const step2 = data.step2 || {}
+        const step3 = data.step3 || {}
+        const step4 = data.step4 || {}
+        
+        const bd: BrandFormData = {
+          company_name: step2.company_name || undefined,
+          industry: step2.industry || undefined,
+          country: step2.country || undefined,
+          city: step2.city || undefined,
+          company_size: step3.company_size || undefined,
+          budget: step3.budget || undefined,
+          campaign_budget_range: step3.campaign_budget_range || undefined,
+          target_platforms: step3.target_platforms || undefined,
+          campaign_goal: step4.campaign_goal || undefined,
+          preferred_collaboration_type: step4.preferred_collaboration_type || undefined,
+        }
+        setBrandData(bd)
+
+        // Determine current step based on onboarding_data
+        if (!step2.company_name) {
+          setCurrentStep(2)
+        } else if (!step3.company_size) {
+          setCurrentStep(3)
+        } else if (!step4.campaign_goal) {
+          setCurrentStep(4)
+        } else {
+          setCurrentStep(5)
+        }
+      }
+    } catch (err) {
+      console.error('Error loading existing data:', err)
+    }
+  }
+
+  // Helper to merge onboarding_data JSON
+  async function mergeOnboardingData(stepKey: string, stepData: any) {
+    if (!session) return null
+
+    // Fetch current onboarding_data
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('onboarding_data')
+      .eq('id', session.user.id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    // Merge new step data into existing onboarding_data
+    const currentData = profile?.onboarding_data || {}
+    const mergedData = {
+      ...currentData,
+      [stepKey]: stepData,
+    }
+
+    // Update only onboarding_data column
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        onboarding_data: mergedData,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', session.user.id)
+
+    if (updateError) throw updateError
+
+    return mergedData
+  }
+
+  async function saveStep(stepData: CreatorFormData | BrandFormData, nextStep?: number) {
+    if (!session || !role) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      // Determine step key based on current step
+      const stepKey = `step${currentStep}`
+
+      // Update local state
+      if (role === 'creator') {
+        const cd = { ...creatorData, ...stepData } as CreatorFormData
+        setCreatorData(cd)
+      } else {
+        const bd = { ...brandData, ...stepData } as BrandFormData
+        setBrandData(bd)
+      }
+
+      // Save to onboarding_data JSON (merge)
+      await mergeOnboardingData(stepKey, stepData)
+
+      if (nextStep) {
+        setCurrentStep(nextStep)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi lưu dữ liệu')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleComplete() {
+    // Guard: Must have session and role
+    if (!session || !role) {
+      setError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      // Fetch onboarding_data
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('onboarding_data')
+        .eq('id', session.user.id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const onboardingData = profile?.onboarding_data || {}
+
+      // Step 1: Create or update domain-specific profile FIRST
+      if (role === 'creator') {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+
+        const creatorProfileData: any = {
+          user_id: session.user.id,
+          creator_platforms: step3.creator_platforms || null,
+          followers_count: step3.followers_count || null,
+          avg_views: step3.avg_views || null,
+          content_categories: step3.content_categories || null,
+          collaboration_expectation: step4.collaboration_expectation || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        // Insert creator profile (if already exists, ignore duplicate)
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .insert(creatorProfileData)
+
+        // Ignore duplicate key error (if profile already exists)
+        if (creatorError && creatorError.code !== '23505') {
+          throw creatorError
+        }
+      } else {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+
+        const brandProfileData: any = {
+          user_id: session.user.id,
+          brand_name: step2.company_name || null,
+          industry: step2.industry || null,
+          company_size: step3.company_size || null,
+          monthly_marketing_budget: (() => {
+            const budgetValue = step3.budget || step3.campaign_budget_range
+            return budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
+          })(),
+          target_platforms: step3.target_platforms || null,
+          collaboration_goals: (() => {
+            const goalValue = step4.campaign_goal || step4.collaboration_goal
+            return Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+          })(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        // Insert brand profile (if already exists, do nothing)
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .insert(brandProfileData)
+
+        // Ignore duplicate key error (if profile already exists)
+        if (brandError && brandError.code !== '23505') {
+          throw brandError
+        }
+      }
+
+      // Step 2: Update profiles.onboarding_completed AFTER domain profile is created
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session.user.id)
+
+      if (profileError) throw profileError
+
+      // Insert consent record
+      const { error: consentError } = await supabase
+        .from('user_consents')
+        .insert({
+          user_id: session.user.id,
+          policy_version: 'v1.0',
+          accepted_via: 'onboarding',
+          accepted_at: new Date().toISOString(),
+        })
+
+      if (consentError) {
+        console.error('Error inserting consent:', consentError)
+        // Don't block onboarding if consent insert fails
+      }
+
+      // Redirect to /app - AppGate will handle routing to /dashboard/{role}
+      navigate('/app', { replace: true })
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
+      setLoading(false)
+    }
+  }
+
+  // Show loading while checking auth or fetching role
+  if (authLoading || !session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải thông tin...</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
+          {/* Progress indicator */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-[#6B7280]">
+                Bước {currentStep} / 5
+              </span>
+              <span className="text-sm text-[#6B7280]">
+                {Math.round((currentStep / 5) * 100)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-[#6366F1] to-[#EC4899] h-2 rounded-full transition-all"
+                style={{ width: `${(currentStep / 5) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Step 2: Basic Identity */}
+          {currentStep === 2 && (
+            <Step2BasicIdentity
+              role={role}
+              creatorData={creatorData}
+              brandData={brandData}
+              onSave={(data) => saveStep(data, 3)}
+              loading={loading}
+            />
+          )}
+
+          {/* Step 3: Business/Creator Metrics */}
+          {currentStep === 3 && (
+            <Step3Metrics
+              role={role}
+              creatorData={creatorData}
+              brandData={brandData}
+              onSave={(data) => saveStep(data, 4)}
+              loading={loading}
+            />
+          )}
+
+          {/* Step 4: Collaboration Intent */}
+          {currentStep === 4 && (
+            <Step4Collaboration
+              role={role}
+              creatorData={creatorData}
+              brandData={brandData}
+              onSave={(data) => saveStep(data, 5)}
+              loading={loading}
+            />
+          )}
+
+          {/* Step 5: Finalize */}
+          {currentStep === 5 && (
+            <Step5Finalize
+              role={role}
+              creatorData={creatorData}
+              brandData={brandData}
+              onComplete={handleComplete}
+              loading={loading}
+            />
+          )}
+
+          {/* Navigation buttons */}
+          {currentStep > 2 && (
+            <div className="mt-6 flex justify-between">
+              <button
+                onClick={() => setCurrentStep(currentStep - 1)}
+                disabled={loading}
+                className="px-6 py-2.5 rounded-xl font-medium text-[#6B7280] border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Quay lại
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Step 2: Basic Identity
+function Step2BasicIdentity({
+  role,
+  creatorData,
+  brandData,
+  onSave,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onSave: (data: CreatorFormData | BrandFormData) => void
+  loading: boolean
+}) {
+  const [localData, setLocalData] = useState(
+    role === 'creator'
+      ? {
+          display_name: creatorData.display_name || '',
+          country: creatorData.country || '',
+          city: creatorData.city || '',
+          birth_year: creatorData.birth_year || undefined,
+        }
+      : {
+          company_name: brandData.company_name || '',
+          industry: brandData.industry || '',
+          country: brandData.country || '',
+          city: brandData.city || '',
+        }
+  )
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (role === 'creator') {
+      onSave({
+        display_name: localData.display_name,
+        country: localData.country,
+        city: localData.city,
+        birth_year: localData.birth_year,
+      } as CreatorFormData)
+    } else {
+      onSave({
+        company_name: localData.company_name,
+        industry: localData.industry,
+        country: localData.country,
+        city: localData.city,
+      } as BrandFormData)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        Thông tin cơ bản
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        {role === 'creator' ? 'Hãy cho chúng tôi biết về bạn' : 'Hãy cho chúng tôi biết về thương hiệu của bạn'}
+      </p>
+
+      <div className="space-y-4">
+        {role === 'creator' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Tên hiển thị *
+              </label>
+              <input
+                type="text"
+                value={localData.display_name}
+                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Quốc gia *
+              </label>
+              <input
+                type="text"
+                value={localData.country}
+                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Thành phố *
+              </label>
+              <input
+                type="text"
+                value={localData.city}
+                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Năm sinh
+              </label>
+              <input
+                type="number"
+                min="1950"
+                max={new Date().getFullYear()}
+                value={localData.birth_year || ''}
+                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Tên công ty *
+              </label>
+              <input
+                type="text"
+                value={localData.company_name}
+                onChange={(e) => setLocalData({ ...localData, company_name: e.target.value } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Ngành nghề *
+              </label>
+              <input
+                type="text"
+                value={localData.industry}
+                onChange={(e) => setLocalData({ ...localData, industry: e.target.value } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Quốc gia *
+              </label>
+              <input
+                type="text"
+                value={localData.country}
+                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Thành phố *
+              </label>
+              <input
+                type="text"
+                value={localData.city}
+                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              />
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+        >
+          {loading ? 'Đang lưu...' : 'Tiếp tục'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Step 3: Business/Creator Metrics
+function Step3Metrics({
+  role,
+  creatorData,
+  brandData,
+  onSave,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onSave: (data: CreatorFormData | BrandFormData) => void
+  loading: boolean
+}) {
+  const platforms = ['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn']
+  
+  const [localData, setLocalData] = useState(
+    role === 'creator'
+      ? {
+          creator_platforms: creatorData.creator_platforms || [],
+          followers_count: creatorData.followers_count || undefined,
+          avg_views: creatorData.avg_views || undefined,
+          content_categories: creatorData.content_categories || [],
+        }
+      : {
+          company_size: brandData.company_size || '',
+          budget: brandData.budget || undefined,
+          campaign_budget_range: brandData.campaign_budget_range || '',
+          target_platforms: brandData.target_platforms || [],
+        }
+  )
+
+  const togglePlatform = (platform: string, type: 'creator' | 'target') => {
+    if (type === 'creator') {
+      const current = localData.creator_platforms || []
+      const updated = current.includes(platform)
+        ? current.filter((p) => p !== platform)
+        : [...current, platform]
+      setLocalData({ ...localData, creator_platforms: updated } as any)
+    } else {
+      const current = localData.target_platforms || []
+      const updated = current.includes(platform)
+        ? current.filter((p) => p !== platform)
+        : [...current, platform]
+      setLocalData({ ...localData, target_platforms: updated } as any)
+    }
+  }
+
+  const toggleCategory = (category: string) => {
+    const current = localData.content_categories || []
+    const updated = current.includes(category)
+      ? current.filter((c) => c !== category)
+      : [...current, category]
+      setLocalData({ ...localData, content_categories: updated } as any)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (role === 'creator') {
+      onSave({
+        creator_platforms: localData.creator_platforms,
+        followers_count: localData.followers_count,
+        avg_views: localData.avg_views,
+        content_categories: localData.content_categories,
+      } as CreatorFormData)
+    } else {
+      onSave({
+        company_size: localData.company_size,
+        budget: localData.budget,
+        campaign_budget_range: localData.campaign_budget_range,
+        target_platforms: localData.target_platforms,
+      } as BrandFormData)
+    }
+  }
+
+  const categories = ['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education']
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        {role === 'creator' ? 'Thông tin Creator' : 'Thông tin Brand'}
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        {role === 'creator' ? 'Chia sẻ về kênh và nội dung của bạn' : 'Chia sẻ về quy mô và ngân sách marketing'}
+      </p>
+
+      <div className="space-y-4">
+        {role === 'creator' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Nền tảng bạn sử dụng *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {platforms.map((platform) => (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => togglePlatform(platform, 'creator')}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.creator_platforms?.includes(platform)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Số lượng người theo dõi
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={localData.followers_count || ''}
+                onChange={(e) => setLocalData({ ...localData, followers_count: e.target.value ? parseInt(e.target.value) : undefined } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 100000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Lượt xem trung bình
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={localData.avg_views || ''}
+                onChange={(e) => setLocalData({ ...localData, avg_views: e.target.value ? parseInt(e.target.value) : undefined } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 50000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Danh mục nội dung
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.content_categories?.includes(category)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Quy mô công ty *
+              </label>
+              <select
+                value={localData.company_size}
+                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                required
+              >
+                <option value="">Chọn quy mô</option>
+                <option value="startup">Startup (1-10 nhân viên)</option>
+                <option value="small">Nhỏ (11-50 nhân viên)</option>
+                <option value="medium">Vừa (51-200 nhân viên)</option>
+                <option value="large">Lớn (201-1000 nhân viên)</option>
+                <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Ngân sách marketing (USD)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={localData.budget || ''}
+                onChange={(e) => setLocalData({ ...localData, budget: e.target.value ? parseInt(e.target.value) : undefined } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: 5000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Khoảng ngân sách chiến dịch
+              </label>
+              <input
+                type="text"
+                value={localData.campaign_budget_range}
+                onChange={(e) => setLocalData({ ...localData, campaign_budget_range: e.target.value } as any)}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Ví dụ: $1000 - $5000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Nền tảng mục tiêu *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {platforms.map((platform) => (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => togglePlatform(platform, 'target')}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.target_platforms?.includes(platform)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+        >
+          {loading ? 'Đang lưu...' : 'Tiếp tục'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Step 4: Collaboration Intent
+function Step4Collaboration({
+  role,
+  creatorData,
+  brandData,
+  onSave,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onSave: (data: CreatorFormData | BrandFormData) => void
+  loading: boolean
+}) {
+  const collaborationTypes: ('paid' | 'gift' | 'affiliate')[] = ['paid', 'gift', 'affiliate']
+  
+  const [localData, setLocalData] = useState(
+    role === 'creator'
+      ? {
+          collaboration_expectation: creatorData.collaboration_expectation || [],
+        }
+      : {
+          campaign_goal: brandData.campaign_goal || '',
+          preferred_collaboration_type: brandData.preferred_collaboration_type || [],
+        }
+  )
+
+  const toggleCollaborationType = (type: 'paid' | 'gift' | 'affiliate') => {
+    if (role === 'creator') {
+      const current = localData.collaboration_expectation || []
+      const updated = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type]
+      setLocalData({ ...localData, collaboration_expectation: updated } as any)
+    } else {
+      const current = localData.preferred_collaboration_type || []
+      const updated = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type]
+      setLocalData({ ...localData, preferred_collaboration_type: updated } as any)
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (role === 'creator') {
+      onSave({
+        collaboration_expectation: localData.collaboration_expectation,
+      } as CreatorFormData)
+    } else {
+      onSave({
+        campaign_goal: localData.campaign_goal,
+        preferred_collaboration_type: localData.preferred_collaboration_type,
+      } as BrandFormData)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        Mục tiêu hợp tác
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        {role === 'creator' ? 'Bạn mong đợi gì từ các hợp tác?' : 'Mục tiêu hợp tác của thương hiệu là gì?'}
+      </p>
+
+      <div className="space-y-4">
+        {role === 'creator' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Loại hợp tác mong muốn *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {collaborationTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleCollaborationType(type)}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.collaboration_expectation?.includes(type)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Mục tiêu chiến dịch *
+              </label>
+              <textarea
+                value={localData.campaign_goal}
+                onChange={(e) => setLocalData({ ...localData, campaign_goal: e.target.value } as any)}
+                rows={5}
+                className="w-full px-4 py-2.5 border rounded-lg"
+                placeholder="Mô tả mục tiêu hợp tác của thương hiệu..."
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Loại hợp tác ưa thích *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {collaborationTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleCollaborationType(type)}
+                    className={`px-4 py-2 rounded-lg border text-sm ${
+                      localData.preferred_collaboration_type?.includes(type)
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+        >
+          {loading ? 'Đang lưu...' : 'Tiếp tục'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Step 5: Finalize
+function Step5Finalize({
+  role,
+  creatorData,
+  brandData,
+  onComplete,
+  loading,
+}: {
+  role: 'creator' | 'brand'
+  creatorData: CreatorFormData
+  brandData: BrandFormData
+  onComplete: () => void
+  loading: boolean
+}) {
+  return (
+    <div>
+      <h1 className="text-3xl font-semibold tracking-tight mb-4">
+        Hoàn tất thiết lập
+      </h1>
+      <p className="text-[#6B7280] mb-8">
+        Bạn đã hoàn thành tất cả các bước thiết lập. Nhấn "Hoàn tất" để bắt đầu sử dụng ALINO.
+      </p>
+
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h3 className="font-medium mb-2">Tóm tắt thông tin:</h3>
+        <ul className="text-sm text-[#6B7280] space-y-1">
+          {role === 'creator' && (
+            <>
+              <li>• Tên: {creatorData.display_name || 'Chưa có'}</li>
+              <li>• Địa điểm: {creatorData.city && creatorData.country ? `${creatorData.city}, ${creatorData.country}` : 'Chưa có'}</li>
+              <li>• Nền tảng: {creatorData.creator_platforms?.length || 0} nền tảng</li>
+            </>
+          )}
+          {role === 'brand' && (
+            <>
+              <li>• Công ty: {brandData.company_name || 'Chưa có'}</li>
+              <li>• Ngành: {brandData.industry || 'Chưa có'}</li>
+              <li>• Quy mô: {brandData.company_size || 'Chưa có'}</li>
+            </>
+          )}
+        </ul>
+      </div>
+
+      <p className="text-sm text-gray-600 mb-6 text-center">
+        By clicking Continue, you agree to ALINO's{' '}
+        <Link to="/terms" className="text-[#6366F1] hover:underline">
+          Terms of Service
+        </Link>
+        {' '}and{' '}
+        <Link to="/privacy" className="text-[#6366F1] hover:underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+
+      <button
+        onClick={onComplete}
+        disabled={loading}
+        className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+      >
+        {loading ? 'Đang xử lý...' : 'Hoàn tất'}
+      </button>
+    </div>
+  )
+}
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
 <file path="src/types/profile.ts">
 // Core profile fields (matches FINAL schema)
 export interface Profile {
@@ -10361,8 +10400,146 @@ export interface BrandProfile extends Profile {
 export type ProfileWithRole = CreatorProfile | BrandProfile
 </file>
 
-<file path="src/vite-env.d.ts">
-/// <reference types="vite/client" />
+<file path="src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALINO - Quản lý hợp tác Creator–Brand</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#0A0A0A',
+        border: '#E5E7EB',
+      },
+    },
+  },
+  plugins: [],
+}
+</file>
+
+<file path="src/components/layout/UserMenu.tsx">
+import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+
+interface UserMenuProps {
+  userEmail: string
+  displayName?: string
+  avatarUrl?: string | null
+  role?: string | null
+}
+
+export default function UserMenu({ userEmail, displayName, avatarUrl, role }: UserMenuProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  const handleLogout = async () => {
+    setIsOpen(false)
+    await signOut()
+  }
+
+  const nameToShow = displayName || userEmail.split('@')[0]
+
+  return (
+    <div
+      className="relative"
+      ref={menuRef}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-0 py-0 text-[#6B7280] hover:text-[#6366F1] transition-colors group"
+      >
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt={nameToShow}
+            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
+            {nameToShow.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span className="text-sm whitespace-nowrap">
+          {nameToShow}
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full pt-2 w-56 z-50">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
+            <Link
+              to={role === 'brand' ? '/brand/dashboard' : '/creator/dashboard'}
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
+            >
+              Quản lý dự án
+            </Link>
+            <div className="border-t border-gray-200 my-1" />
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+            >
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 </file>
 
 <file path="src/hooks/useProfile.ts">
@@ -10521,148 +10698,6 @@ export function useProfile(
   
 
   return { profile, loading, error, needsOnboarding }
-}
-</file>
-
-<file path="src/main.tsx">
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ALINO - Quản lý hợp tác Creator–Brand</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-</file>
-
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      colors: {
-        background: '#FFFFFF',
-        foreground: '#0A0A0A',
-        border: '#E5E7EB',
-      },
-    },
-  },
-  plugins: [],
-}
-</file>
-
-<file path="src/components/layout/UserMenu.tsx">
-import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
-
-interface UserMenuProps {
-  userEmail: string
-  displayName?: string
-  avatarUrl?: string | null
-  role?: string | null
-}
-
-export default function UserMenu({ userEmail, displayName, avatarUrl, role }: UserMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
-  const { signOut } = useAuth()
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen])
-
-  const handleLogout = async () => {
-    setIsOpen(false)
-    await signOut()
-  }
-
-  const nameToShow = displayName || userEmail.split('@')[0]
-
-  return (
-    <div
-      className="relative"
-      ref={menuRef}
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-0 py-0 text-[#6B7280] hover:text-[#6366F1] transition-colors group"
-      >
-        {avatarUrl ? (
-          <img 
-            src={avatarUrl} 
-            alt={nameToShow}
-            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
-            {nameToShow.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <span className="text-sm whitespace-nowrap">
-          {nameToShow}
-        </span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full pt-2 w-56 z-50">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
-            <Link
-              to={role === 'brand' ? '/brand/dashboard' : '/creator/dashboard'}
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
-            >
-              Quản lý dự án
-            </Link>
-            <div className="border-t border-gray-200 my-1" />
-            <button
-              onClick={handleLogout}
-              className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition-colors"
-            >
-              Đăng xuất
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 </file>
 

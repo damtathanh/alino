@@ -119,24 +119,19 @@ export default function AppGate() {
       return
     }
 
-    // e) If onboarding_completed = false → redirect to /onboarding
+    // e) If onboarding_completed = false → redirect to /onboarding/{role}
     if (!profile.onboarding_completed) {
       hasRedirected.current = true
-      navigate('/onboarding', { replace: true })
+      navigate(`/onboarding/${profile.role}`, { replace: true })
       return
     }
 
     // f) Else → redirect to role-based dashboard
     hasRedirected.current = true
-    const next = searchParams.get('next')
     if (profile.role === 'creator') {
-      if (next === 'profile' || next === 'settings') {
-        navigate(`/creator/${next}`, { replace: true })
-      } else {
-        navigate('/creator/dashboard', { replace: true })
-      }
+      navigate('/dashboard/creator', { replace: true })
     } else if (profile.role === 'brand') {
-      navigate('/brand/dashboard', { replace: true })
+      navigate('/dashboard/brand', { replace: true })
     } else {
       navigate('/', { replace: true })
     }

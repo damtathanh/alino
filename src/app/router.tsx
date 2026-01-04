@@ -12,6 +12,7 @@ import TermsPage from '../pages/public/TermsPage'
 import PrivacyPage from '../pages/public/PrivacyPage'
 import { CreatorRoutes } from './creatorRoutes'
 import { BrandRoutes } from './brandRoutes'
+import DashboardRoutes from './dashboardRoutes'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -67,9 +68,9 @@ function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode;
 
   if (profile.role !== requiredRole) {
     if (profile.role === 'creator') {
-      return <Navigate to="/creator/dashboard" replace />
+      return <Navigate to="/dashboard/creator" replace />
     } else if (profile.role === 'brand') {
-      return <Navigate to="/brand/dashboard" replace />
+      return <Navigate to="/dashboard/brand" replace />
     }
     return <Navigate to="/app" replace />
   }
@@ -117,10 +118,19 @@ export function Router() {
       />
 
       <Route
-        path="/onboarding"
+        path="/onboarding/:role?"
         element={
           <ProtectedRoute>
             <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/:role/*"
+        element={
+          <ProtectedRoute>
+            <DashboardRoutes />
           </ProtectedRoute>
         }
       />

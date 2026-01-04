@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getSupabase } from '../../lib/supabase'
 
@@ -30,23 +30,29 @@ interface BrandFormData {
 }
 
 export default function OnboardingPage() {
-  const { session } = useAuth()
+  const { session, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+  const { role: roleParam } = useParams<{ role?: 'creator' | 'brand' }>()
   const supabase = getSupabase()
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [role, setRole] = useState<'creator' | 'brand' | null>(null)
+  const [role, setRole] = useState<'creator' | 'brand' | null>(roleParam || null)
   
   // Form state - separate for creator and brand
   const [creatorData, setCreatorData] = useState<CreatorFormData>({})
   const [brandData, setBrandData] = useState<BrandFormData>({})
 
+  // Guard: Must be authenticated before any onboarding logic runs
   useEffect(() => {
-    if (!session) return
+    if (authLoading) return
+    if (!session) {
+      navigate('/login', { replace: true })
+      return
+    }
     checkOnboardingStatus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session])
+  }, [session, authLoading, navigate])
 
   async function checkOnboardingStatus() {
     if (!session) return
@@ -207,7 +213,11 @@ export default function OnboardingPage() {
   }
 
   async function handleComplete() {
-    if (!session || !role) return
+    // Guard: Must have session and role
+    if (!session || !role) {
+      setError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.')
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -224,33 +234,7 @@ export default function OnboardingPage() {
 
       const onboardingData = profile?.onboarding_data || {}
 
-      // Step 1: Update core profile fields (profiles table)
-      const coreUpdateData: any = {
-        onboarding_completed: true,
-        updated_at: new Date().toISOString(),
-      }
-
-      if (role === 'creator') {
-        const step2 = onboardingData.step2 || {}
-        coreUpdateData.display_name = step2.display_name || null
-        coreUpdateData.country = step2.country || null
-        coreUpdateData.city = step2.city || null
-        coreUpdateData.birth_year = step2.birth_year || null
-      } else {
-        const step2 = onboardingData.step2 || {}
-        coreUpdateData.country = step2.country || null
-        coreUpdateData.city = step2.city || null
-      }
-
-      // Update core profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(coreUpdateData)
-        .eq('id', session.user.id)
-
-      if (profileError) throw profileError
-
-      // Step 2: Create or update domain-specific profile
+      // Step 1: Create or update domain-specific profile FIRST
       if (role === 'creator') {
         const step2 = onboardingData.step2 || {}
         const step3 = onboardingData.step3 || {}
@@ -267,12 +251,15 @@ export default function OnboardingPage() {
           updated_at: new Date().toISOString(),
         }
 
-        // Upsert creator profile
+        // Insert creator profile (if already exists, ignore duplicate)
         const { error: creatorError } = await supabase
           .from('creator_profiles')
-          .upsert(creatorProfileData, { onConflict: 'user_id' })
+          .insert(creatorProfileData)
 
-        if (creatorError) throw creatorError
+        // Ignore duplicate key error (if profile already exists)
+        if (creatorError && creatorError.code !== '23505') {
+          throw creatorError
+        }
       } else {
         const step2 = onboardingData.step2 || {}
         const step3 = onboardingData.step3 || {}
@@ -307,6 +294,17 @@ export default function OnboardingPage() {
         }
       }
 
+      // Step 2: Update profiles.onboarding_completed AFTER domain profile is created
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session.user.id)
+
+      if (profileError) throw profileError
+
       // Insert consent record
       const { error: consentError } = await supabase
         .from('user_consents')
@@ -322,7 +320,7 @@ export default function OnboardingPage() {
         // Don't block onboarding if consent insert fails
       }
 
-      // Redirect to /app - AppGate will handle routing
+      // Redirect to /app - AppGate will handle routing to /dashboard/{role}
       navigate('/app', { replace: true })
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
@@ -330,10 +328,19 @@ export default function OnboardingPage() {
     }
   }
 
-  if (!role) {
+  // Show loading while checking auth or fetching role
+  if (authLoading || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải thông tin...</div>
       </div>
     )
   }
