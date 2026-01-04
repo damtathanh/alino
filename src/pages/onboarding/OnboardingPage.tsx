@@ -224,52 +224,88 @@ export default function OnboardingPage() {
 
       const onboardingData = profile?.onboarding_data || {}
 
-      // Map onboarding_data to profile columns
-      const updateData: any = {
+      // Step 1: Update core profile fields (profiles table)
+      const coreUpdateData: any = {
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       }
 
       if (role === 'creator') {
         const step2 = onboardingData.step2 || {}
+        coreUpdateData.display_name = step2.display_name || null
+        coreUpdateData.country = step2.country || null
+        coreUpdateData.city = step2.city || null
+        coreUpdateData.birth_year = step2.birth_year || null
+      } else {
+        const step2 = onboardingData.step2 || {}
+        coreUpdateData.country = step2.country || null
+        coreUpdateData.city = step2.city || null
+      }
+
+      // Update core profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(coreUpdateData)
+        .eq('id', session.user.id)
+
+      if (profileError) throw profileError
+
+      // Step 2: Create or update domain-specific profile
+      if (role === 'creator') {
+        const step2 = onboardingData.step2 || {}
         const step3 = onboardingData.step3 || {}
         const step4 = onboardingData.step4 || {}
 
-        updateData.display_name = step2.display_name || null
-        updateData.country = step2.country || null
-        updateData.city = step2.city || null
-        updateData.birth_year = step2.birth_year || null
-        updateData.creator_platforms = step3.creator_platforms || null
-        updateData.followers_count = step3.followers_count || null
-        updateData.avg_views = step3.avg_views || null
-        updateData.content_categories = step3.content_categories || null
-        updateData.collaboration_expectation = step4.collaboration_expectation || null
+        const creatorProfileData: any = {
+          user_id: session.user.id,
+          creator_platforms: step3.creator_platforms || null,
+          followers_count: step3.followers_count || null,
+          avg_views: step3.avg_views || null,
+          content_categories: step3.content_categories || null,
+          collaboration_expectation: step4.collaboration_expectation || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        // Upsert creator profile
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .upsert(creatorProfileData, { onConflict: 'user_id' })
+
+        if (creatorError) throw creatorError
       } else {
         const step2 = onboardingData.step2 || {}
         const step3 = onboardingData.step3 || {}
         const step4 = onboardingData.step4 || {}
 
-        updateData.brand_name = step2.company_name || null
-        updateData.industry = step2.industry || null
-        updateData.country = step2.country || null
-        updateData.city = step2.city || null
-        updateData.company_size = step3.company_size || null
-        // monthly_marketing_budget must be NUMERIC (convert to number)
-        const budgetValue = step3.budget || step3.campaign_budget_range
-        updateData.monthly_marketing_budget = budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
-        updateData.target_platforms = step3.target_platforms || null
-        // collaboration_goal must be TEXT[] (array), convert string to array if needed
-        const goalValue = step4.campaign_goal || step4.collaboration_goal
-        updateData.collaboration_goal = Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+        const brandProfileData: any = {
+          user_id: session.user.id,
+          brand_name: step2.company_name || null,
+          industry: step2.industry || null,
+          company_size: step3.company_size || null,
+          monthly_marketing_budget: (() => {
+            const budgetValue = step3.budget || step3.campaign_budget_range
+            return budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
+          })(),
+          target_platforms: step3.target_platforms || null,
+          collaboration_goals: (() => {
+            const goalValue = step4.campaign_goal || step4.collaboration_goal
+            return Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+          })(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        // Insert brand profile (if already exists, do nothing)
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .insert(brandProfileData)
+
+        // Ignore duplicate key error (if profile already exists)
+        if (brandError && brandError.code !== '23505') {
+          throw brandError
+        }
       }
-
-      // Update profile columns and set onboarding_completed = true
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', session.user.id)
-
-      if (error) throw error
 
       // Insert consent record
       const { error: consentError } = await supabase

@@ -138,6 +138,111 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
+<file path="migrations/001_cleanup_profiles.sql">
+-- Migration: Clean up profiles table structure
+-- Remove unused columns and ensure proper schema
+
+-- Step 1: Remove unused columns
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS role_selected_at,
+  DROP COLUMN IF EXISTS onboarding_completed_at;
+
+-- Step 2: Ensure all required columns exist with correct types
+-- Core fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS display_name TEXT,
+  ADD COLUMN IF NOT EXISTS avatar_url TEXT,
+  ADD COLUMN IF NOT EXISTS country TEXT,
+  ADD COLUMN IF NOT EXISTS city TEXT,
+  ADD COLUMN IF NOT EXISTS birth_year INTEGER,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Creator fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS bio TEXT,
+  ADD COLUMN IF NOT EXISTS creator_platforms JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS followers_count INTEGER,
+  ADD COLUMN IF NOT EXISTS avg_views INTEGER,
+  ADD COLUMN IF NOT EXISTS content_categories JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS success_collaboration_rate INTEGER CHECK (success_collaboration_rate >= 0 AND success_collaboration_rate <= 100),
+  ADD COLUMN IF NOT EXISTS preferred_collaboration_type JSONB DEFAULT '[]'::jsonb;
+
+-- Brand fields
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS company_name TEXT,
+  ADD COLUMN IF NOT EXISTS website TEXT,
+  ADD COLUMN IF NOT EXISTS industry TEXT,
+  ADD COLUMN IF NOT EXISTS company_size TEXT,
+  ADD COLUMN IF NOT EXISTS campaign_budget_range TEXT,
+  ADD COLUMN IF NOT EXISTS campaign_goal TEXT,
+  ADD COLUMN IF NOT EXISTS target_platforms JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS target_creator_size TEXT,
+  ADD COLUMN IF NOT EXISTS contact_person_name TEXT,
+  ADD COLUMN IF NOT EXISTS contact_person_phone TEXT;
+
+-- Step 3: Remove old columns that are no longer needed
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS collaboration_expectation,
+  DROP COLUMN IF EXISTS collaboration_success_rate,
+  DROP COLUMN IF EXISTS budget,
+  DROP COLUMN IF EXISTS contact_person_email;
+
+-- Step 4: Create function to upsert profile on first login
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, role, onboarding_completed)
+  VALUES (NEW.id, NULL, false)
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Step 5: Create trigger (if not exists)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- Step 6: Update RLS policies
+-- Users can read their own profile
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+CREATE POLICY "Users can read own profile"
+  ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = id);
+
+-- Users can update their own profile
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id);
+
+-- Users can insert their own profile
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Step 7: Ensure updated_at is updated on change
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+</file>
+
 <file path="src/app/AppGate.tsx">
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -1542,6 +1647,34 @@ export default function UpgradePlanModal({ isOpen, onClose, currentPlan = 'free'
       </div>
     </div>
   )
+}
+</file>
+
+<file path="src/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
+
+let supabaseClient: SupabaseClient | null = null
+
+export function getSupabase() {
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  }
+
+  return supabaseClient
 }
 </file>
 
@@ -4548,6 +4681,7 @@ export default function OpportunitiesPage() {
 
 <file path="src/pages/creator/profile/ProfilePage.tsx">
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../hooks/useAuth'
 import { useProfile } from '../../../hooks/useProfile'
 import { getSupabase } from '../../../lib/supabase'
@@ -4557,7 +4691,8 @@ import Toast from '../../../components/shared/Toast'
 
 export default function ProfilePage() {
   const { session, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id, isAuthenticated)
+  const { profile, loading: profileLoading, needsOnboarding } = useProfile(session?.user?.id, isAuthenticated)
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -4587,7 +4722,7 @@ export default function ProfilePage() {
     company_size?: string | null
     monthly_marketing_budget?: number | null // NUMERIC
     target_platforms?: string[] | null // TEXT[]
-    collaboration_goal?: string[] | null // TEXT[]
+    collaboration_goals?: string[] | null // TEXT[]
   }
   const [formData, setFormData] = useState<ProfileFormData>({})
 
@@ -4613,10 +4748,17 @@ export default function ProfilePage() {
         company_size: (profile as any).company_size || undefined,
         monthly_marketing_budget: (profile as any).monthly_marketing_budget ? Number((profile as any).monthly_marketing_budget) : undefined,
         target_platforms: (profile as any).target_platforms || undefined,
-        collaboration_goal: Array.isArray((profile as any).collaboration_goal) ? (profile as any).collaboration_goal : undefined,
+        collaboration_goals: Array.isArray((profile as any).collaboration_goals) ? (profile as any).collaboration_goals : undefined,
       })
     }
   }, [profile])
+
+  // Redirect brand users without profile to onboarding
+  useEffect(() => {
+    if (!profileLoading && needsOnboarding && profile?.role === 'brand') {
+      navigate('/onboarding', { replace: true })
+    }
+  }, [profileLoading, needsOnboarding, profile, navigate])
 
   if (profileLoading) {
     return (
@@ -4627,6 +4769,13 @@ export default function ProfilePage() {
   }
 
   if (!profile) {
+    if (needsOnboarding) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-[#6B7280]">Đang chuyển hướng đến onboarding...</div>
+        </div>
+      )
+    }
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
@@ -4688,8 +4837,8 @@ export default function ProfilePage() {
       if (!formData.target_platforms || formData.target_platforms.length === 0) {
         errors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
       }
-      if (!formData.collaboration_goal || formData.collaboration_goal.length === 0) {
-        errors.collaboration_goal = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
+      if (!formData.collaboration_goals || formData.collaboration_goals.length === 0) {
+        errors.collaboration_goals = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
       }
     }
 
@@ -4699,7 +4848,7 @@ export default function ProfilePage() {
       // Find first invalid field for scrolling
       const fieldOrder = role === 'creator'
         ? ['display_name', 'birth_year', 'country', 'city', 'creator_platforms', 'content_categories', 'followers_count', 'avg_views', 'collaboration_expectation']
-        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goal']
+        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goals']
       
       const firstInvalidField = fieldOrder.find(field => errors[field]) || null
       return { isValid: false, firstInvalidField }
@@ -4733,56 +4882,59 @@ export default function ProfilePage() {
     setFieldErrors({})
 
     try {
-      // Build update object with only columns (no onboarding_data)
-      const updateData: any = {}
-
-      // Core fields (matches FINAL schema)
-      updateData.display_name = formData.display_name || null
-      updateData.avatar_url = formData.avatar_url || null
-      updateData.bio = formData.bio || null
-      updateData.birth_year = formData.birth_year || null
-      updateData.country = formData.country || null
-      updateData.city = formData.city || null
-
-      if (role === 'creator') {
-        // Creator-specific fields (matches FINAL schema - TEXT[] are arrays)
-        updateData.creator_platforms = formData.creator_platforms || null
-        updateData.content_categories = formData.content_categories || null
-        updateData.followers_count = formData.followers_count || null
-        updateData.avg_views = formData.avg_views || null
-        updateData.collaboration_expectation = formData.collaboration_expectation || null
-      } else {
-        // Brand-specific fields (matches FINAL schema)
-        updateData.brand_name = formData.brand_name || null
-        updateData.industry = formData.industry || null
-        updateData.company_size = formData.company_size || null
-        updateData.monthly_marketing_budget = formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null // NUMERIC
-        updateData.target_platforms = formData.target_platforms || null
-        updateData.collaboration_goal = formData.collaboration_goal || null // TEXT[]
+      // Step 1: Update core profile fields (profiles table)
+      const coreUpdateData: any = {
+        display_name: formData.display_name || null,
+        avatar_url: formData.avatar_url || null,
+        bio: formData.bio || null,
+        birth_year: formData.birth_year || null,
+        country: formData.country || null,
+        city: formData.city || null,
+        updated_at: new Date().toISOString(),
       }
-
-      // Explicitly remove any invalid columns (safety check)
-      // These columns do NOT exist in the database schema
-      const {
-        preferred_collaboration_type,
-        success_collaboration_rate,
-        company_name,
-        website,
-        campaign_budget_range,
-        campaign_goal,
-        target_creator_size,
-        contact_person_name,
-        contact_person_phone,
-        ...safeUpdateData
-      } = updateData as any
       
-      // Update profile (only with valid columns)
       const { error: profileError } = await supabase
         .from('profiles')
-        .update(safeUpdateData)
+        .update(coreUpdateData)
         .eq('id', session.user.id)
 
       if (profileError) throw profileError
+
+      // Step 2: Update domain-specific profile
+      if (role === 'creator') {
+        const creatorUpdateData: any = {
+          creator_platforms: formData.creator_platforms || null,
+          content_categories: formData.content_categories || null,
+          followers_count: formData.followers_count || null,
+          avg_views: formData.avg_views || null,
+          collaboration_expectation: formData.collaboration_expectation || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .update(creatorUpdateData)
+          .eq('user_id', session.user.id)
+
+        if (creatorError) throw creatorError
+      } else if (role === 'brand') {
+        const brandUpdateData: any = {
+          brand_name: formData.brand_name || null,
+          industry: formData.industry || null,
+          company_size: formData.company_size || null,
+          monthly_marketing_budget: formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null,
+          target_platforms: formData.target_platforms || null,
+          collaboration_goals: formData.collaboration_goals || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .update(brandUpdateData)
+          .eq('user_id', session.user.id)
+
+        if (brandError) throw brandError
+      }
 
       // Sync display_name and avatar_url to auth metadata
       const metadataUpdate: Record<string, any> = {}
@@ -4823,7 +4975,7 @@ export default function ProfilePage() {
     setFormData((prev) => ({ ...prev, avatar_url: url }))
 
     try {
-      // Update profiles.avatar_url with public URL (primary source)
+      // Update profiles.avatar_url (core field)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -5411,21 +5563,21 @@ export default function ProfilePage() {
                         key={goal}
                         type="button"
                         onClick={() => {
-                          const current = formData.collaboration_goal || []
+                          const current = formData.collaboration_goals || []
                           const updated = current.includes(goal)
                             ? current.filter((g) => g !== goal)
                             : [...current, goal]
-                          setFormData({ ...formData, collaboration_goal: updated })
-                          if (fieldErrors.collaboration_goal && updated.length > 0) {
+                          setFormData({ ...formData, collaboration_goals: updated })
+                          if (fieldErrors.collaboration_goals && updated.length > 0) {
                             setFieldErrors(prev => {
                               const next = { ...prev }
-                              delete next.collaboration_goal
+                              delete next.collaboration_goals
                               return next
                             })
                           }
                         }}
                         className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.collaboration_goal?.includes(goal)
+                          formData.collaboration_goals?.includes(goal)
                             ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
                             : 'border-gray-300 hover:border-gray-400 text-gray-700'
                         }`}
@@ -5439,8 +5591,8 @@ export default function ProfilePage() {
                       </button>
                     ))}
                   </div>
-                  {fieldErrors.collaboration_goal && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goal}</p>
+                  {fieldErrors.collaboration_goals && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goals}</p>
                   )}
                 </div>
               )}
@@ -7612,52 +7764,88 @@ export default function OnboardingPage() {
 
       const onboardingData = profile?.onboarding_data || {}
 
-      // Map onboarding_data to profile columns
-      const updateData: any = {
+      // Step 1: Update core profile fields (profiles table)
+      const coreUpdateData: any = {
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       }
 
       if (role === 'creator') {
         const step2 = onboardingData.step2 || {}
+        coreUpdateData.display_name = step2.display_name || null
+        coreUpdateData.country = step2.country || null
+        coreUpdateData.city = step2.city || null
+        coreUpdateData.birth_year = step2.birth_year || null
+      } else {
+        const step2 = onboardingData.step2 || {}
+        coreUpdateData.country = step2.country || null
+        coreUpdateData.city = step2.city || null
+      }
+
+      // Update core profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(coreUpdateData)
+        .eq('id', session.user.id)
+
+      if (profileError) throw profileError
+
+      // Step 2: Create or update domain-specific profile
+      if (role === 'creator') {
+        const step2 = onboardingData.step2 || {}
         const step3 = onboardingData.step3 || {}
         const step4 = onboardingData.step4 || {}
 
-        updateData.display_name = step2.display_name || null
-        updateData.country = step2.country || null
-        updateData.city = step2.city || null
-        updateData.birth_year = step2.birth_year || null
-        updateData.creator_platforms = step3.creator_platforms || null
-        updateData.followers_count = step3.followers_count || null
-        updateData.avg_views = step3.avg_views || null
-        updateData.content_categories = step3.content_categories || null
-        updateData.collaboration_expectation = step4.collaboration_expectation || null
+        const creatorProfileData: any = {
+          user_id: session.user.id,
+          creator_platforms: step3.creator_platforms || null,
+          followers_count: step3.followers_count || null,
+          avg_views: step3.avg_views || null,
+          content_categories: step3.content_categories || null,
+          collaboration_expectation: step4.collaboration_expectation || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        // Upsert creator profile
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .upsert(creatorProfileData, { onConflict: 'user_id' })
+
+        if (creatorError) throw creatorError
       } else {
         const step2 = onboardingData.step2 || {}
         const step3 = onboardingData.step3 || {}
         const step4 = onboardingData.step4 || {}
 
-        updateData.brand_name = step2.company_name || null
-        updateData.industry = step2.industry || null
-        updateData.country = step2.country || null
-        updateData.city = step2.city || null
-        updateData.company_size = step3.company_size || null
-        // monthly_marketing_budget must be NUMERIC (convert to number)
-        const budgetValue = step3.budget || step3.campaign_budget_range
-        updateData.monthly_marketing_budget = budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
-        updateData.target_platforms = step3.target_platforms || null
-        // collaboration_goal must be TEXT[] (array), convert string to array if needed
-        const goalValue = step4.campaign_goal || step4.collaboration_goal
-        updateData.collaboration_goal = Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+        const brandProfileData: any = {
+          user_id: session.user.id,
+          brand_name: step2.company_name || null,
+          industry: step2.industry || null,
+          company_size: step3.company_size || null,
+          monthly_marketing_budget: (() => {
+            const budgetValue = step3.budget || step3.campaign_budget_range
+            return budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
+          })(),
+          target_platforms: step3.target_platforms || null,
+          collaboration_goals: (() => {
+            const goalValue = step4.campaign_goal || step4.collaboration_goal
+            return Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+          })(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        // Insert brand profile (if already exists, do nothing)
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .insert(brandProfileData)
+
+        // Ignore duplicate key error (if profile already exists)
+        if (brandError && brandError.code !== '23505') {
+          throw brandError
+        }
       }
-
-      // Update profile columns and set onboarding_completed = true
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', session.user.id)
-
-      if (error) throw error
 
       // Insert consent record
       const { error: consentError } = await supabase
@@ -9169,6 +9357,159 @@ export default function ComingSoonPage() {
 }
 </file>
 
+<file path="src/utils/cropImage.ts">
+import { Area } from 'react-easy-crop'
+
+export async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area
+): Promise<Blob> {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) {
+    throw new Error('No 2d context')
+  }
+
+  // Set canvas size to output size (circular crop)
+  const outputSize = 400
+  canvas.width = outputSize
+  canvas.height = outputSize
+
+  // Draw circular crop
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2)
+  ctx.clip()
+
+  // Draw cropped image
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    outputSize,
+    outputSize
+  )
+
+  ctx.restore()
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Canvas is empty'))
+          return
+        }
+        resolve(blob)
+      },
+      'image/jpeg',
+      0.9
+    )
+  })
+}
+
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', (error) => reject(error))
+    image.src = url
+  })
+}
+</file>
+
+<file path="supabase/migrations/001_create_profiles.sql">
+-- Create profiles table
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('creator', 'brand')),
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  onboarding_data JSONB DEFAULT '{}'::jsonb,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policy: Users can read their own profile
+CREATE POLICY "Users can read their own profile"
+  ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = id);
+
+-- RLS Policy: Users can update their own profile
+CREATE POLICY "Users can update their own profile"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- RLS Policy: Users can insert their own profile
+CREATE POLICY "Users can insert their own profile"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- RLS Policy: Admin users (email ends with @alino.net) can read all profiles
+CREATE POLICY "Admin users can read all profiles"
+  ON public.profiles
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE auth.users.id = auth.uid()
+      AND auth.users.email LIKE '%@alino.net'
+    )
+  );
+
+-- RLS Policy: Admin users can update all profiles
+CREATE POLICY "Admin users can update all profiles"
+  ON public.profiles
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE auth.users.id = auth.uid()
+      AND auth.users.email LIKE '%@alino.net'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE auth.users.id = auth.uid()
+      AND auth.users.email LIKE '%@alino.net'
+    )
+  );
+
+-- Function to automatically update updated_at timestamp
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update updated_at on profile updates
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- Create index on role for faster queries
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+
+-- Create index on onboarding_completed for faster queries
+CREATE INDEX IF NOT EXISTS idx_profiles_onboarding_completed ON public.profiles(onboarding_completed);
+</file>
+
 <file path="supabase/migrations/002_create_creator_services.sql">
 -- Create creator_services table
 CREATE TABLE IF NOT EXISTS creator_services (
@@ -9239,109 +9580,13 @@ CREATE TRIGGER update_creator_services_updated_at
   EXECUTE FUNCTION update_creator_services_updated_at();
 </file>
 
-<file path="migrations/001_cleanup_profiles.sql">
--- Migration: Clean up profiles table structure
--- Remove unused columns and ensure proper schema
-
--- Step 1: Remove unused columns
-ALTER TABLE public.profiles
-  DROP COLUMN IF EXISTS role_selected_at,
-  DROP COLUMN IF EXISTS onboarding_completed_at;
-
--- Step 2: Ensure all required columns exist with correct types
--- Core fields
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS display_name TEXT,
-  ADD COLUMN IF NOT EXISTS avatar_url TEXT,
-  ADD COLUMN IF NOT EXISTS country TEXT,
-  ADD COLUMN IF NOT EXISTS city TEXT,
-  ADD COLUMN IF NOT EXISTS birth_year INTEGER,
-  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
--- Creator fields
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS bio TEXT,
-  ADD COLUMN IF NOT EXISTS creator_platforms JSONB DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS followers_count INTEGER,
-  ADD COLUMN IF NOT EXISTS avg_views INTEGER,
-  ADD COLUMN IF NOT EXISTS content_categories JSONB DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS success_collaboration_rate INTEGER CHECK (success_collaboration_rate >= 0 AND success_collaboration_rate <= 100),
-  ADD COLUMN IF NOT EXISTS preferred_collaboration_type JSONB DEFAULT '[]'::jsonb;
-
--- Brand fields
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS company_name TEXT,
-  ADD COLUMN IF NOT EXISTS website TEXT,
-  ADD COLUMN IF NOT EXISTS industry TEXT,
-  ADD COLUMN IF NOT EXISTS company_size TEXT,
-  ADD COLUMN IF NOT EXISTS campaign_budget_range TEXT,
-  ADD COLUMN IF NOT EXISTS campaign_goal TEXT,
-  ADD COLUMN IF NOT EXISTS target_platforms JSONB DEFAULT '[]'::jsonb,
-  ADD COLUMN IF NOT EXISTS target_creator_size TEXT,
-  ADD COLUMN IF NOT EXISTS contact_person_name TEXT,
-  ADD COLUMN IF NOT EXISTS contact_person_phone TEXT;
-
--- Step 3: Remove old columns that are no longer needed
-ALTER TABLE public.profiles
-  DROP COLUMN IF EXISTS collaboration_expectation,
-  DROP COLUMN IF EXISTS collaboration_success_rate,
-  DROP COLUMN IF EXISTS budget,
-  DROP COLUMN IF EXISTS contact_person_email;
-
--- Step 4: Create function to upsert profile on first login
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, role, onboarding_completed)
-  VALUES (NEW.id, NULL, false)
-  ON CONFLICT (id) DO NOTHING;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Step 5: Create trigger (if not exists)
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user();
-
--- Step 6: Update RLS policies
--- Users can read their own profile
-DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
-CREATE POLICY "Users can read own profile"
-  ON public.profiles
-  FOR SELECT
-  USING (auth.uid() = id);
-
--- Users can update their own profile
-DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-CREATE POLICY "Users can update own profile"
-  ON public.profiles
-  FOR UPDATE
-  USING (auth.uid() = id);
-
--- Users can insert their own profile
-DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
-CREATE POLICY "Users can insert own profile"
-  ON public.profiles
-  FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- Step 7: Ensure updated_at is updated on change
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
-CREATE TRIGGER update_profiles_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+<file path="postcss.config.cjs">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
 </file>
 
 <file path="src/components/dashboard/DashboardHeader.tsx">
@@ -9564,196 +9809,6 @@ export default function DashboardHeader() {
       />
     </>
   )
-}
-</file>
-
-<file path="src/lib/supabase.ts">
-import { createClient } from '@supabase/supabase-js'
-import type { SupabaseClient } from '@supabase/supabase-js'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-let supabaseClient: SupabaseClient | null = null
-
-export function getSupabase() {
-  if (!supabaseClient) {
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    })
-  }
-
-  return supabaseClient
-}
-</file>
-
-<file path="src/utils/cropImage.ts">
-import { Area } from 'react-easy-crop'
-
-export async function getCroppedImg(
-  imageSrc: string,
-  pixelCrop: Area
-): Promise<Blob> {
-  const image = await createImage(imageSrc)
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-
-  if (!ctx) {
-    throw new Error('No 2d context')
-  }
-
-  // Set canvas size to output size (circular crop)
-  const outputSize = 400
-  canvas.width = outputSize
-  canvas.height = outputSize
-
-  // Draw circular crop
-  ctx.save()
-  ctx.beginPath()
-  ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2)
-  ctx.clip()
-
-  // Draw cropped image
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    outputSize,
-    outputSize
-  )
-
-  ctx.restore()
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error('Canvas is empty'))
-          return
-        }
-        resolve(blob)
-      },
-      'image/jpeg',
-      0.9
-    )
-  })
-}
-
-function createImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    image.addEventListener('load', () => resolve(image))
-    image.addEventListener('error', (error) => reject(error))
-    image.src = url
-  })
-}
-</file>
-
-<file path="supabase/migrations/001_create_profiles.sql">
--- Create profiles table
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT CHECK (role IN ('creator', 'brand')),
-  onboarding_completed BOOLEAN DEFAULT FALSE,
-  onboarding_data JSONB DEFAULT '{}'::jsonb,
-  
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- RLS Policy: Users can read their own profile
-CREATE POLICY "Users can read their own profile"
-  ON public.profiles
-  FOR SELECT
-  USING (auth.uid() = id);
-
--- RLS Policy: Users can update their own profile
-CREATE POLICY "Users can update their own profile"
-  ON public.profiles
-  FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
-
--- RLS Policy: Users can insert their own profile
-CREATE POLICY "Users can insert their own profile"
-  ON public.profiles
-  FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- RLS Policy: Admin users (email ends with @alino.net) can read all profiles
-CREATE POLICY "Admin users can read all profiles"
-  ON public.profiles
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  );
-
--- RLS Policy: Admin users can update all profiles
-CREATE POLICY "Admin users can update all profiles"
-  ON public.profiles
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.email LIKE '%@alino.net'
-    )
-  );
-
--- Function to automatically update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to update updated_at on profile updates
-CREATE TRIGGER set_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
-
--- Create index on role for faster queries
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
-
--- Create index on onboarding_completed for faster queries
-CREATE INDEX IF NOT EXISTS idx_profiles_onboarding_completed ON public.profiles(onboarding_completed);
-</file>
-
-<file path="postcss.config.cjs">
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
 }
 </file>
 
@@ -10300,7 +10355,7 @@ export interface BrandProfile extends Profile {
   company_size?: string | null
   monthly_marketing_budget?: number | null // NUMERIC
   target_platforms?: string[] | null // TEXT[]
-  collaboration_goal?: string[] | null // TEXT[]
+  collaboration_goals?: string[] | null // TEXT[]
 }
 
 export type ProfileWithRole = CreatorProfile | BrandProfile
@@ -10308,6 +10363,214 @@ export type ProfileWithRole = CreatorProfile | BrandProfile
 
 <file path="src/vite-env.d.ts">
 /// <reference types="vite/client" />
+</file>
+
+<file path="src/hooks/useProfile.ts">
+import { useEffect, useState, useRef } from 'react'
+import { getSupabase } from '../lib/supabase'
+import type { Profile, CreatorProfile, BrandProfile } from '../types/profile'
+
+const PROFILE_FETCH_TIMEOUT = 3000 // 3 seconds
+
+export function useProfile(
+  userId: string | undefined,
+  enabled: boolean
+) {
+  const [profile, setProfile] = useState<Profile | CreatorProfile | BrandProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false)
+  const supabase = getSupabase()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!enabled || !userId) {
+      setProfile(null)
+      setLoading(false)
+      setError(null)
+      setNeedsOnboarding(false)
+      return
+    }
+  
+    let mounted = true
+  
+    async function fetchProfile() {
+      setLoading(true)
+      setError(null)
+      setNeedsOnboarding(false)
+  
+      timeoutRef.current = setTimeout(() => {
+        if (mounted) {
+          setLoading(false)
+          setError('Timeout loading profile')
+        }
+      }, PROFILE_FETCH_TIMEOUT)
+  
+      try {
+        // Step 1: Fetch core profile (role, onboarding flags)
+        const { data: coreProfile, error: coreError } = await supabase
+          .from('profiles')
+          .select('id, role, onboarding_completed, created_at, updated_at')
+          .eq('id', userId)
+          .single()
+  
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+          timeoutRef.current = null
+        }
+  
+        if (coreError) {
+          if (mounted) {
+            setError(coreError.message)
+            setLoading(false)
+          }
+          return
+        }
+  
+        if (!coreProfile) {
+          if (mounted) {
+            setError('Profile not found')
+            setLoading(false)
+          }
+          return
+        }
+  
+        // Step 2: Fetch domain-specific profile based on role
+        if (coreProfile.role === 'creator') {
+          const { data: creatorProfile, error: creatorError } = await supabase
+            .from('creator_profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .single()
+  
+          if (creatorError) {
+            if (mounted) {
+              setError(creatorError.message)
+              setLoading(false)
+            }
+            return
+          }
+  
+          if (mounted && creatorProfile) {
+            // Merge core profile with creator profile
+            setProfile({
+              ...coreProfile,
+              ...creatorProfile,
+              role: 'creator',
+            } as CreatorProfile)
+            setLoading(false)
+          }
+        } else if (coreProfile.role === 'brand') {
+          const { data: brandProfile, error: brandError } = await supabase
+            .from('brand_profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .single()
+  
+          if (brandError && brandError.code === 'PGRST116') {
+            // Brand profile not found - needs onboarding
+            if (mounted) {
+              setProfile(null)
+              setNeedsOnboarding(true)
+              setLoading(false)
+            }
+            return
+          }
+  
+          if (brandError) {
+            if (mounted) {
+              setError(brandError.message)
+              setLoading(false)
+            }
+            return
+          }
+  
+          if (mounted && brandProfile) {
+            // Merge core profile with brand profile
+            setProfile({
+              ...coreProfile,
+              ...brandProfile,
+              role: 'brand',
+            } as BrandProfile)
+            setLoading(false)
+          }
+        } else {
+          // No role set yet
+          if (mounted) {
+            setProfile(coreProfile)
+            setLoading(false)
+          }
+        }
+      } catch (err: any) {
+        if (mounted) {
+          setError(err.message || 'Failed to load profile')
+          setLoading(false)
+        }
+      }
+    }
+  
+    fetchProfile()
+  
+    return () => {
+      mounted = false
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [userId, enabled, supabase])
+  
+
+  return { profile, loading, error, needsOnboarding }
+}
+</file>
+
+<file path="src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALINO - Quản lý hợp tác Creator–Brand</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#0A0A0A',
+        border: '#E5E7EB',
+      },
+    },
+  },
+  plugins: [],
+}
 </file>
 
 <file path="src/components/layout/UserMenu.tsx">
@@ -10403,161 +10666,23 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
 }
 </file>
 
-<file path="src/hooks/useProfile.ts">
-import { useEffect, useState, useRef } from 'react'
-import { getSupabase } from '../lib/supabase'
-import type { Profile } from '../types/profile'
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
-const PROFILE_FETCH_TIMEOUT = 3000 // 3 seconds
-
-export function useProfile(
-  userId: string | undefined,
-  enabled: boolean
-) {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const supabase = getSupabase()
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (!enabled || !userId) {
-      setProfile(null)
-      setLoading(false)
-      setError(null)
-      return
-    }
-  
-    let mounted = true
-  
-    async function fetchProfile() {
-      setLoading(true)
-      setError(null)
-  
-      timeoutRef.current = setTimeout(() => {
-        if (mounted) {
-          setLoading(false)
-          setError('Timeout loading profile')
-        }
-      }, PROFILE_FETCH_TIMEOUT)
-  
-      try {
-        const { data, error: fetchError } = await supabase
-  .from('profiles')
-  .select(`
-    id,
-    role,
-    onboarding_completed,
-    avatar_url,
-    display_name,
-    bio,
-    birth_year,
-    country,
-    city,
-    followers_count,
-    avg_views,
-    creator_platforms,
-    content_categories,
-    collaboration_expectation,
-    brand_name,
-    industry,
-    company_size,
-    monthly_marketing_budget,
-    target_platforms,
-    collaboration_goal,
-    created_at,
-    updated_at
-  `)
-  .eq('id', userId)
-  .single()
-  
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current)
-          timeoutRef.current = null
-        }
-  
-        if (fetchError) {
-          if (mounted) {
-            setError(fetchError.message)
-            setLoading(false)
-          }
-          return
-        }
-  
-        if (mounted && data) {
-          setProfile(data)
-          setLoading(false)
-        }
-      } catch (err: any) {
-        if (mounted) {
-          setError(err.message || 'Failed to load profile')
-          setLoading(false)
-        }
-      }
-    }
-  
-    fetchProfile()
-  
-    return () => {
-      mounted = false
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [userId, enabled, supabase])
-  
-
-  return { profile, loading, error }
-}
-</file>
-
-<file path="src/main.tsx">
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ALINO - Quản lý hợp tác Creator–Brand</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-</file>
-
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      colors: {
-        background: '#FFFFFF',
-        foreground: '#0A0A0A',
-        border: '#E5E7EB',
-      },
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
   },
-  plugins: [],
-}
+  server: {
+    host: true,
+    port: 3000,
+  },
+})
 </file>
 
 <file path="src/components/layout/Header.tsx">
@@ -10641,25 +10766,6 @@ export default function Header() {
     </header>
   )
 }
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  server: {
-    host: true,
-    port: 3000,
-  },
-})
 </file>
 
 <file path="tsconfig.json">

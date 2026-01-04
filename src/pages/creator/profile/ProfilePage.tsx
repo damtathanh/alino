@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../hooks/useAuth'
 import { useProfile } from '../../../hooks/useProfile'
 import { getSupabase } from '../../../lib/supabase'
@@ -8,7 +9,8 @@ import Toast from '../../../components/shared/Toast'
 
 export default function ProfilePage() {
   const { session, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id, isAuthenticated)
+  const { profile, loading: profileLoading, needsOnboarding } = useProfile(session?.user?.id, isAuthenticated)
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -38,7 +40,7 @@ export default function ProfilePage() {
     company_size?: string | null
     monthly_marketing_budget?: number | null // NUMERIC
     target_platforms?: string[] | null // TEXT[]
-    collaboration_goal?: string[] | null // TEXT[]
+    collaboration_goals?: string[] | null // TEXT[]
   }
   const [formData, setFormData] = useState<ProfileFormData>({})
 
@@ -64,10 +66,17 @@ export default function ProfilePage() {
         company_size: (profile as any).company_size || undefined,
         monthly_marketing_budget: (profile as any).monthly_marketing_budget ? Number((profile as any).monthly_marketing_budget) : undefined,
         target_platforms: (profile as any).target_platforms || undefined,
-        collaboration_goal: Array.isArray((profile as any).collaboration_goal) ? (profile as any).collaboration_goal : undefined,
+        collaboration_goals: Array.isArray((profile as any).collaboration_goals) ? (profile as any).collaboration_goals : undefined,
       })
     }
   }, [profile])
+
+  // Redirect brand users without profile to onboarding
+  useEffect(() => {
+    if (!profileLoading && needsOnboarding && profile?.role === 'brand') {
+      navigate('/onboarding', { replace: true })
+    }
+  }, [profileLoading, needsOnboarding, profile, navigate])
 
   if (profileLoading) {
     return (
@@ -78,6 +87,13 @@ export default function ProfilePage() {
   }
 
   if (!profile) {
+    if (needsOnboarding) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-[#6B7280]">Đang chuyển hướng đến onboarding...</div>
+        </div>
+      )
+    }
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
@@ -139,8 +155,8 @@ export default function ProfilePage() {
       if (!formData.target_platforms || formData.target_platforms.length === 0) {
         errors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
       }
-      if (!formData.collaboration_goal || formData.collaboration_goal.length === 0) {
-        errors.collaboration_goal = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
+      if (!formData.collaboration_goals || formData.collaboration_goals.length === 0) {
+        errors.collaboration_goals = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
       }
     }
 
@@ -150,7 +166,7 @@ export default function ProfilePage() {
       // Find first invalid field for scrolling
       const fieldOrder = role === 'creator'
         ? ['display_name', 'birth_year', 'country', 'city', 'creator_platforms', 'content_categories', 'followers_count', 'avg_views', 'collaboration_expectation']
-        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goal']
+        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goals']
       
       const firstInvalidField = fieldOrder.find(field => errors[field]) || null
       return { isValid: false, firstInvalidField }
@@ -184,56 +200,59 @@ export default function ProfilePage() {
     setFieldErrors({})
 
     try {
-      // Build update object with only columns (no onboarding_data)
-      const updateData: any = {}
-
-      // Core fields (matches FINAL schema)
-      updateData.display_name = formData.display_name || null
-      updateData.avatar_url = formData.avatar_url || null
-      updateData.bio = formData.bio || null
-      updateData.birth_year = formData.birth_year || null
-      updateData.country = formData.country || null
-      updateData.city = formData.city || null
-
-      if (role === 'creator') {
-        // Creator-specific fields (matches FINAL schema - TEXT[] are arrays)
-        updateData.creator_platforms = formData.creator_platforms || null
-        updateData.content_categories = formData.content_categories || null
-        updateData.followers_count = formData.followers_count || null
-        updateData.avg_views = formData.avg_views || null
-        updateData.collaboration_expectation = formData.collaboration_expectation || null
-      } else {
-        // Brand-specific fields (matches FINAL schema)
-        updateData.brand_name = formData.brand_name || null
-        updateData.industry = formData.industry || null
-        updateData.company_size = formData.company_size || null
-        updateData.monthly_marketing_budget = formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null // NUMERIC
-        updateData.target_platforms = formData.target_platforms || null
-        updateData.collaboration_goal = formData.collaboration_goal || null // TEXT[]
+      // Step 1: Update core profile fields (profiles table)
+      const coreUpdateData: any = {
+        display_name: formData.display_name || null,
+        avatar_url: formData.avatar_url || null,
+        bio: formData.bio || null,
+        birth_year: formData.birth_year || null,
+        country: formData.country || null,
+        city: formData.city || null,
+        updated_at: new Date().toISOString(),
       }
-
-      // Explicitly remove any invalid columns (safety check)
-      // These columns do NOT exist in the database schema
-      const {
-        preferred_collaboration_type,
-        success_collaboration_rate,
-        company_name,
-        website,
-        campaign_budget_range,
-        campaign_goal,
-        target_creator_size,
-        contact_person_name,
-        contact_person_phone,
-        ...safeUpdateData
-      } = updateData as any
       
-      // Update profile (only with valid columns)
       const { error: profileError } = await supabase
         .from('profiles')
-        .update(safeUpdateData)
+        .update(coreUpdateData)
         .eq('id', session.user.id)
 
       if (profileError) throw profileError
+
+      // Step 2: Update domain-specific profile
+      if (role === 'creator') {
+        const creatorUpdateData: any = {
+          creator_platforms: formData.creator_platforms || null,
+          content_categories: formData.content_categories || null,
+          followers_count: formData.followers_count || null,
+          avg_views: formData.avg_views || null,
+          collaboration_expectation: formData.collaboration_expectation || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .update(creatorUpdateData)
+          .eq('user_id', session.user.id)
+
+        if (creatorError) throw creatorError
+      } else if (role === 'brand') {
+        const brandUpdateData: any = {
+          brand_name: formData.brand_name || null,
+          industry: formData.industry || null,
+          company_size: formData.company_size || null,
+          monthly_marketing_budget: formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null,
+          target_platforms: formData.target_platforms || null,
+          collaboration_goals: formData.collaboration_goals || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error: brandError } = await supabase
+          .from('brand_profiles')
+          .update(brandUpdateData)
+          .eq('user_id', session.user.id)
+
+        if (brandError) throw brandError
+      }
 
       // Sync display_name and avatar_url to auth metadata
       const metadataUpdate: Record<string, any> = {}
@@ -274,7 +293,7 @@ export default function ProfilePage() {
     setFormData((prev) => ({ ...prev, avatar_url: url }))
 
     try {
-      // Update profiles.avatar_url with public URL (primary source)
+      // Update profiles.avatar_url (core field)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -862,21 +881,21 @@ export default function ProfilePage() {
                         key={goal}
                         type="button"
                         onClick={() => {
-                          const current = formData.collaboration_goal || []
+                          const current = formData.collaboration_goals || []
                           const updated = current.includes(goal)
                             ? current.filter((g) => g !== goal)
                             : [...current, goal]
-                          setFormData({ ...formData, collaboration_goal: updated })
-                          if (fieldErrors.collaboration_goal && updated.length > 0) {
+                          setFormData({ ...formData, collaboration_goals: updated })
+                          if (fieldErrors.collaboration_goals && updated.length > 0) {
                             setFieldErrors(prev => {
                               const next = { ...prev }
-                              delete next.collaboration_goal
+                              delete next.collaboration_goals
                               return next
                             })
                           }
                         }}
                         className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.collaboration_goal?.includes(goal)
+                          formData.collaboration_goals?.includes(goal)
                             ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
                             : 'border-gray-300 hover:border-gray-400 text-gray-700'
                         }`}
@@ -890,8 +909,8 @@ export default function ProfilePage() {
                       </button>
                     ))}
                   </div>
-                  {fieldErrors.collaboration_goal && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goal}</p>
+                  {fieldErrors.collaboration_goals && (
+                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goals}</p>
                   )}
                 </div>
               )}

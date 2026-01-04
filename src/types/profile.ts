@@ -33,7 +33,7 @@ export interface BrandProfile extends Profile {
   company_size?: string | null
   monthly_marketing_budget?: number | null // NUMERIC
   target_platforms?: string[] | null // TEXT[]
-  collaboration_goal?: string[] | null // TEXT[]
+  collaboration_goals?: string[] | null // TEXT[]
 }
 
 export type ProfileWithRole = CreatorProfile | BrandProfile
