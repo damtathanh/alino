@@ -12,7 +12,6 @@ export function useProfile(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
-  const supabase = getSupabase()
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -27,6 +26,19 @@ export function useProfile(
     let mounted = true
   
     async function fetchProfile() {
+      const supabaseInstance = getSupabase()
+      const { data: { session } } = await supabaseInstance.auth.getSession()
+      
+      if (!session || !session.access_token || !session.user.email_confirmed_at) {
+        if (mounted) {
+          setProfile(null)
+          setLoading(false)
+          setError(null)
+          setNeedsOnboarding(false)
+        }
+        return
+      }
+
       setLoading(true)
       setError(null)
       setNeedsOnboarding(false)
@@ -40,7 +52,7 @@ export function useProfile(
   
       try {
         // Step 1: Fetch core profile (role, onboarding flags)
-        const { data: coreProfile, error: coreError } = await supabase
+        const { data: coreProfile, error: coreError } = await supabaseInstance
           .from('profiles')
           .select('id, role, onboarding_completed, created_at, updated_at')
           .eq('id', userId)
@@ -53,6 +65,10 @@ export function useProfile(
   
         if (coreError) {
           if (mounted) {
+            if (coreError.code === '42501' || coreError.code === 'PGRST301') {
+              setLoading(false)
+              return
+            }
             setError(coreError.message)
             setLoading(false)
           }
@@ -69,7 +85,7 @@ export function useProfile(
   
         // Step 2: Fetch domain-specific profile based on role
         if (coreProfile.role === 'creator') {
-          const { data: creatorProfile, error: creatorError } = await supabase
+          const { data: creatorProfile, error: creatorError } = await supabaseInstance
             .from('creator_profiles')
             .select('*')
             .eq('user_id', userId)
@@ -77,6 +93,16 @@ export function useProfile(
   
           if (creatorError) {
             if (mounted) {
+              if (creatorError.code === 'PGRST116') {
+                setProfile(null)
+                setNeedsOnboarding(true)
+                setLoading(false)
+                return
+              }
+              if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
+                setLoading(false)
+                return
+              }
               setError(creatorError.message)
               setLoading(false)
             }
@@ -93,7 +119,7 @@ export function useProfile(
             setLoading(false)
           }
         } else if (coreProfile.role === 'brand') {
-          const { data: brandProfile, error: brandError } = await supabase
+          const { data: brandProfile, error: brandError } = await supabaseInstance
             .from('brand_profiles')
             .select('*')
             .eq('user_id', userId)
@@ -111,6 +137,10 @@ export function useProfile(
   
           if (brandError) {
             if (mounted) {
+              if (brandError.code === '42501' || brandError.code === 'PGRST301') {
+                setLoading(false)
+                return
+              }
               setError(brandError.message)
               setLoading(false)
             }
@@ -149,7 +179,7 @@ export function useProfile(
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [userId, enabled, supabase])
+  }, [userId, enabled])
   
 
   return { profile, loading, error, needsOnboarding }

@@ -16,23 +16,31 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-
+      
       if (error) {
-        // Map error messages to Vietnamese
         if (error.message === 'Email not confirmed') {
-          setError('Tài khoản chưa được xác thực')
+          setError('Tài khoản chưa được xác thực. Vui lòng kiểm tra email.')
         } else {
           setError('Email hoặc mật khẩu không đúng')
         }
         setLoading(false)
         return
       }
-
-      navigate('/app')
+      
+      if (!data.user?.email_confirmed_at) {
+        setError('Tài khoản chưa được xác thực. Vui lòng kiểm tra email.')
+        await supabase.auth.signOut()
+        setLoading(false)
+        return
+      }
+      
+      // After login, redirect to landing page
+      // User must explicitly click "Quản lý dự án" to go to /app
+      navigate('/')      
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -43,7 +51,8 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/app`,
+        // Redirect to landing page after OAuth - user must click "Quản lý dự án" to go to /app
+        redirectTo: `${window.location.origin}/`,
       },
     })
 

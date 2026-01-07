@@ -68,8 +68,9 @@ src/
       ScrollToTop.tsx
       Toast.tsx
       UpgradePlanModal.tsx
-    AuthGate.tsx
     AvatarUpload.tsx
+  contexts/
+    AuthContext.tsx
   hooks/
     useAuth.ts
     useProfile.ts
@@ -127,6 +128,7 @@ src/
 index.html
 package.json
 postcss.config.cjs
+src.zip
 tailwind.config.js
 tsconfig.json
 vite.config.ts
@@ -135,169 +137,92 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
-<file path="src/app/dashboardRoutes.tsx">
-import { Routes, Route, useParams, Navigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
-import CreatorDashboardLayout from '../components/creator/CreatorDashboardLayout'
-import BrandDashboardLayout from '../components/brand/BrandDashboardLayout'
-import DashboardHome from '../pages/creator/dashboard/DashboardHome'
-import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
-import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
-import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
-import ProfilePage from '../pages/creator/profile/ProfilePage'
-import SettingsPage from '../pages/creator/profile/SettingsPage'
-import ServicesPage from '../pages/creator/services/ServicesPage'
-import OpportunitiesPage from '../pages/creator/discovery/OpportunitiesPage'
-import SubmitProposalPage from '../pages/creator/proposals/SubmitProposalPage'
-import DealWorkspacePage from '../pages/creator/proposals/DealWorkspacePage'
-import CreatorDiscoveryPage from '../pages/brand/discovery/CreatorDiscoveryPage'
-import CreateCampaignPage from '../pages/brand/campaigns/CreateCampaignPage'
-import CampaignWorkspacePage from '../pages/brand/campaigns/CampaignWorkspacePage'
-import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
-import ComingSoonPage from '../pages/shared/ComingSoonPage'
+<file path="src/contexts/AuthContext.tsx">
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { getSupabase } from '../lib/supabase'
 
-function DashboardRoutes() {
-  const { role } = useParams<{ role: 'creator' | 'brand' }>()
-  const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id, !!session)
-
-  if (authLoading || profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (!session || !profile) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (!role || (role !== 'creator' && role !== 'brand')) {
-    return <Navigate to="/app" replace />
-  }
-
-  if (profile.role !== role) {
-    // Redirect to correct role dashboard
-    if (profile.role === 'creator') {
-      return <Navigate to="/dashboard/creator" replace />
-    } else if (profile.role === 'brand') {
-      return <Navigate to="/dashboard/brand" replace />
-    }
-    return <Navigate to="/app" replace />
-  }
-
-  if (role === 'creator') {
-    return (
-      <Routes>
-        <Route path="" element={
-          <CreatorDashboardLayout>
-            <DashboardHome />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="profile" element={
-          <CreatorDashboardLayout>
-            <ProfilePage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="settings" element={
-          <CreatorDashboardLayout>
-            <SettingsPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="services" element={
-          <CreatorDashboardLayout>
-            <ServicesPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="discovery" element={
-          <CreatorDashboardLayout>
-            <OpportunitiesPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="proposals/new" element={
-          <CreatorDashboardLayout>
-            <SubmitProposalPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="proposals/*" element={
-          <CreatorDashboardLayout>
-            <ComingSoonPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="workspace" element={
-          <CreatorDashboardLayout>
-            <DealWorkspacePage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="analytics" element={
-          <CreatorDashboardLayout>
-            <AnalyticsPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="*" element={
-          <CreatorDashboardLayout>
-            <ComingSoonPage />
-          </CreatorDashboardLayout>
-        } />
-      </Routes>
-    )
-  }
-
-  // Brand routes
-  return (
-    <Routes>
-      <Route path="" element={
-        <BrandDashboardLayout>
-          <BrandDashboard />
-        </BrandDashboardLayout>
-      } />
-      <Route path="analytics" element={
-        <BrandDashboardLayout>
-          <BrandCampaignAnalyticsPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="discovery" element={
-        <BrandDashboardLayout>
-          <CreatorDiscoveryPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="campaigns/new" element={
-        <BrandDashboardLayout>
-          <CreateCampaignPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="campaigns/*" element={
-        <BrandDashboardLayout>
-          <CampaignWorkspacePage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="proposals/*" element={
-        <BrandDashboardLayout>
-          <ProposalInboxPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="workspace" element={
-        <BrandDashboardLayout>
-          <ComingSoonPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="settings" element={
-        <BrandDashboardLayout>
-          <ComingSoonPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="*" element={
-        <BrandDashboardLayout>
-          <ComingSoonPage />
-        </BrandDashboardLayout>
-      } />
-    </Routes>
-  )
+interface AuthContextType {
+  session: Session | null
+  user: Session['user'] | null
+  loading: boolean
+  isAuthenticated: boolean
+  signOut: () => Promise<void>
 }
 
-export default DashboardRoutes
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+/**
+ * AuthProvider: Single source of truth for authentication state
+ * 
+ * Responsibilities:
+ * - Fetches initial session on mount
+ * - Listens to auth state changes from Supabase
+ * - Provides stable session state to all components
+ * - Does NOT handle routing/navigation (that's handled by components)
+ */
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = getSupabase()
+
+  useEffect(() => {
+    let mounted = true
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      setSession(session)
+      setLoading(false)
+    })
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+      setSession(session)
+      setLoading(false)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    // Session will be cleared by onAuthStateChange listener
+  }
+
+  const value: AuthContextType = {
+    session,
+    user: session?.user ?? null,
+    loading,
+    isAuthenticated: !!session,
+    signOut,
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+/**
+ * useAuth: Hook to access auth context
+ * 
+ * Rules:
+ * - ONLY reads from AuthContext
+ * - NEVER manages its own state
+ * - NEVER calls useNavigate() or handles routing
+ * - Returns stable session state from context
+ */
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
 </file>
 
 <file path="migrations/001_cleanup_profiles.sql">
@@ -405,160 +330,8 @@ CREATE TRIGGER update_profiles_updated_at
   EXECUTE FUNCTION public.update_updated_at_column();
 </file>
 
-<file path="src/app/AppGate.tsx">
-import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { getSupabase } from '../lib/supabase'
-
-const GATE_TIMEOUT = 3000 // 3 seconds
-
-export default function AppGate() {
-  const { session, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const supabase = getSupabase()
-  const [loading, setLoading] = useState(true)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasRedirected = useRef(false)
-
-  useEffect(() => {
-    // a) If not authenticated → do nothing (let other routes handle it)
-    if (authLoading) return
-    if (!session) return
-
-    // b) If already redirected → do nothing
-    if (hasRedirected.current) return
-
-    // c) Email NOT verified → sign out → redirect to /
-    if (!session.user.email_confirmed_at) {
-      hasRedirected.current = true
-      supabase.auth.signOut().finally(() => {
-        navigate('/', { replace: true })
-      })
-      return
-    }
-
-    // d) Fetch profile DIRECTLY from Supabase (no cached hook)
-    runGate()
-  }, [authLoading, session, navigate, supabase])
-
-  async function runGate() {
-    if (!session) return
-
-    // b) If already redirected → do nothing
-    if (hasRedirected.current) return
-
-    setLoading(true)
-
-    // Set timeout fallback
-    timeoutRef.current = setTimeout(() => {
-      if (hasRedirected.current) return
-      console.error('AppGate timeout')
-      hasRedirected.current = true
-      navigate('/', { replace: true })
-    }, GATE_TIMEOUT)
-
-    try {
-      // Fetch existing profile
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('id, role, onboarding_completed')
-        .eq('id', session.user.id)
-        .single()
-
-      // b) If already redirected → do nothing
-      if (hasRedirected.current) return
-
-      if (fetchError && fetchError.code === 'PGRST116') {
-        // Profile doesn't exist, create it
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            role: null,
-            onboarding_completed: false,
-          })
-
-        if (insertError) {
-          throw insertError
-        }
-
-        // After creating, redirect to role selection
-        if (!hasRedirected.current) {
-          hasRedirected.current = true
-          navigate('/role', { replace: true })
-        }
-        return
-      }
-
-      if (fetchError) throw fetchError
-
-      // b) If already redirected → do nothing
-      if (hasRedirected.current) return
-
-      // Profile exists, handle redirect based on state
-      if (profile) {
-        handleProfileRedirect(profile)
-      }
-    } catch (error) {
-      // b) If already redirected → do nothing
-      if (hasRedirected.current) return
-      console.error('AppGate error:', error)
-      hasRedirected.current = true
-      navigate('/', { replace: true })
-    } finally {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-      setLoading(false)
-    }
-  }
-
-  function handleProfileRedirect(profile: { role: string | null; onboarding_completed: boolean }) {
-    // b) If already redirected → do nothing
-    if (hasRedirected.current) return
-
-    // d) If no role → redirect to /role
-    if (!profile.role) {
-      hasRedirected.current = true
-      navigate('/role', { replace: true })
-      return
-    }
-
-    // e) If onboarding_completed = false → redirect to /onboarding/{role}
-    if (!profile.onboarding_completed) {
-      hasRedirected.current = true
-      navigate(`/onboarding/${profile.role}`, { replace: true })
-      return
-    }
-
-    // f) Else → redirect to role-based dashboard
-    hasRedirected.current = true
-    if (profile.role === 'creator') {
-      navigate('/dashboard/creator', { replace: true })
-    } else if (profile.role === 'brand') {
-      navigate('/dashboard/brand', { replace: true })
-    } else {
-      navigate('/', { replace: true })
-    }
-  }
-
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  return null
-}
-</file>
-
 <file path="src/app/brandRoutes.tsx">
-import { useLocation } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 import BrandDashboardLayout from '../components/brand/BrandDashboardLayout'
 import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
 import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
@@ -570,6 +343,9 @@ import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
 export function BrandRoutes() {
   const location = useLocation()
+  
+  // Guard: All old /brand/* routes must go through AppGate
+  return <Navigate to="/app" replace />
 
   if (location.pathname === '/brand/dashboard') {
     return (
@@ -644,7 +420,7 @@ export function BrandRoutes() {
 </file>
 
 <file path="src/app/creatorRoutes.tsx">
-import { useLocation } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 import CreatorDashboardLayout from '../components/creator/CreatorDashboardLayout'
 import DashboardHome from '../pages/creator/dashboard/DashboardHome'
 import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
@@ -658,6 +434,9 @@ import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
 export function CreatorRoutes() {
   const location = useLocation()
+  
+  // Guard: All old /creator/* routes must go through AppGate
+  return <Navigate to="/app" replace />
 
   if (location.pathname === '/creator/dashboard') {
     return (
@@ -739,62 +518,51 @@ export function CreatorRoutes() {
 }
 </file>
 
-<file path="src/app/router.tsx">
-import { Routes, Route, Navigate } from 'react-router-dom'
+<file path="src/app/dashboardRoutes.tsx">
+import { Routes, Route, useParams, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
-import LandingPage from '../pages/public/LandingPage'
-import LoginPage from '../pages/public/LoginPage'
-import SignupPage from '../pages/public/SignupPage'
-import VerifyEmailPage from '../pages/public/VerifyEmailPage'
-import AppGate from './AppGate'
-import RolePage from '../pages/onboarding/RolePage'
-import OnboardingPage from '../pages/onboarding/OnboardingPage'
-import TermsPage from '../pages/public/TermsPage'
-import PrivacyPage from '../pages/public/PrivacyPage'
-import { CreatorRoutes } from './creatorRoutes'
-import { BrandRoutes } from './brandRoutes'
-import DashboardRoutes from './dashboardRoutes'
+import CreatorDashboardLayout from '../components/creator/CreatorDashboardLayout'
+import BrandDashboardLayout from '../components/brand/BrandDashboardLayout'
+import DashboardHome from '../pages/creator/dashboard/DashboardHome'
+import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
+import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
+import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
+import ProfilePage from '../pages/creator/profile/ProfilePage'
+import SettingsPage from '../pages/creator/profile/SettingsPage'
+import ServicesPage from '../pages/creator/services/ServicesPage'
+import OpportunitiesPage from '../pages/creator/discovery/OpportunitiesPage'
+import SubmitProposalPage from '../pages/creator/proposals/SubmitProposalPage'
+import DealWorkspacePage from '../pages/creator/proposals/DealWorkspacePage'
+import CreatorDiscoveryPage from '../pages/brand/discovery/CreatorDiscoveryPage'
+import CreateCampaignPage from '../pages/brand/campaigns/CreateCampaignPage'
+import CampaignWorkspacePage from '../pages/brand/campaigns/CampaignWorkspacePage'
+import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
+import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />
-  }
-
-  return <>{children}</>
-}
-
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
-  }
-
-  if (session) {
-    return <Navigate to="/app" replace />
-  }
-
-  return <>{children}</>
-}
-
-function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole: 'creator' | 'brand' }) {
+/**
+ * DashboardRoutes: Stable final destination routes
+ * 
+ * IMPORTANT: These routes are OUTSIDE AppGate and should NEVER redirect.
+ * They are the final destination after onboarding is completed.
+ * 
+ * If user needs to complete onboarding or select role, they should go through /app
+ * (which is handled by AppGate), not through dashboard redirects.
+ * 
+ * This component only:
+ * 1. Checks authentication (redirects to login if not authenticated)
+ * 2. Validates role matches URL
+ * 3. Renders the appropriate dashboard
+ * 
+ * No onboarding checks, no role selection redirects - those are handled by AppGate at /app
+ */
+function DashboardRoutes() {
+  const { role } = useParams<{ role: 'creator' | 'brand' }>()
   const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id, !!session)
+  const { profile, loading: profileLoading } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
 
   if (authLoading || profileLoading) {
     return (
@@ -804,105 +572,59 @@ function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode;
     )
   }
 
+  // Basic auth check - if not authenticated, redirect to login
   if (!session || !profile) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Validate role in URL matches profile role
+  // If mismatch, redirect to /app (AppGate will handle routing to correct dashboard)
+  if (!role || (role !== 'creator' && role !== 'brand') || profile.role !== role) {
     return <Navigate to="/app" replace />
   }
 
-  if (profile.role !== requiredRole) {
-    if (profile.role === 'creator') {
-      return <Navigate to="/dashboard/creator" replace />
-    } else if (profile.role === 'brand') {
-      return <Navigate to="/dashboard/brand" replace />
-    }
-    return <Navigate to="/app" replace />
+  if (role === 'creator') {
+    return (
+      <Routes>
+        <Route element={<CreatorDashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="services" element={<ServicesPage />} />
+          <Route path="discovery" element={<OpportunitiesPage />} />
+          <Route path="proposals/new" element={<SubmitProposalPage />} />
+          <Route path="proposals/*" element={<ComingSoonPage />} />
+          <Route path="workspace" element={<DealWorkspacePage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="*" element={<ComingSoonPage />} />
+        </Route>
+      </Routes>
+    )
   }
 
-  return <>{children}</>
-}
-
-export function Router() {
+  // Brand routes
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      
-      <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <SignupPage />
-          </PublicRoute>
-        }
-      />
-      
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-
-      <Route path="/terms" element={<TermsPage />} />
-      <Route path="/privacy" element={<PrivacyPage />} />
-
-      <Route path="/app" element={<AppGate />} />
-
-      <Route
-        path="/role"
-        element={
-          <ProtectedRoute>
-            <RolePage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/onboarding/:role?"
-        element={
-          <ProtectedRoute>
-            <OnboardingPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/dashboard/:role/*"
-        element={
-          <ProtectedRoute>
-            <DashboardRoutes />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/creator/*"
-        element={
-          <RoleBasedRoute requiredRole="creator">
-            <CreatorRoutes />
-          </RoleBasedRoute>
-        }
-      />
-
-      <Route
-        path="/brand/*"
-        element={
-          <RoleBasedRoute requiredRole="brand">
-            <BrandRoutes />
-          </RoleBasedRoute>
-        }
-      />
-
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<BrandDashboardLayout />}>
+        <Route index element={<BrandDashboard />} />
+        <Route path="analytics" element={<BrandCampaignAnalyticsPage />} />
+        <Route path="discovery" element={<CreatorDiscoveryPage />} />
+        <Route path="campaigns/new" element={<CreateCampaignPage />} />
+        <Route path="campaigns/*" element={<CampaignWorkspacePage />} />
+        <Route path="proposals/*" element={<ProposalInboxPage />} />
+        <Route path="workspace" element={<ComingSoonPage />} />
+        <Route path="settings" element={<ComingSoonPage />} />
+        <Route path="*" element={<ComingSoonPage />} />
+      </Route>
     </Routes>
   )
 }
+
+export default DashboardRoutes
 </file>
 
 <file path="src/components/brand/BrandDashboardLayout.tsx">
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { 
   FaTh, 
   FaUser, 
@@ -917,32 +639,31 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import DashboardHeader from '../dashboard/DashboardHeader'
 
-interface BrandDashboardLayoutProps {
-  children: React.ReactNode
-}
-
-export default function BrandDashboardLayout({ children }: BrandDashboardLayoutProps) {
+export default function BrandDashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { signOut } = useAuth()
 
   const mainNavItems = [
-    { path: '/brand/dashboard', label: 'Bảng điều khiển', icon: FaTh },
-    { path: '/brand/discovery', label: 'Tìm kiếm Creator', icon: FaSearch },
-    { path: '/brand/campaigns', label: 'Chiến dịch', icon: FaBullhorn },
-    { path: '/brand/proposals', label: 'Hộp thư đề xuất', icon: FaEnvelope },
-    { path: '/brand/workspace', label: 'Không gian làm việc', icon: FaBriefcase },
-    { path: '/brand/analytics', label: 'Phân tích', icon: FaChartBar },
+    { path: '', label: 'Bảng điều khiển', icon: FaTh },
+    { path: 'discovery', label: 'Tìm kiếm Creator', icon: FaSearch },
+    { path: 'campaigns', label: 'Chiến dịch', icon: FaBullhorn },
+    { path: 'proposals', label: 'Hộp thư đề xuất', icon: FaEnvelope },
+    { path: 'workspace', label: 'Không gian làm việc', icon: FaBriefcase },
+    { path: 'analytics', label: 'Phân tích', icon: FaChartBar },
   ]
 
   const accountItems = [
-    { path: '/brand/settings', label: 'Cài đặt', icon: FaCog },
+    { path: 'settings', label: 'Cài đặt', icon: FaCog },
   ]
 
   const isActive = (path: string) => {
-    if (path === '/brand/dashboard') {
-      return location.pathname === '/brand/dashboard'
+    if (path === '') {
+      // Index route - only active when exactly at /dashboard/brand
+      return location.pathname === '/dashboard/brand'
     }
-    return location.pathname.startsWith(path)
+    // For other paths, check if current pathname starts with the route
+    return location.pathname === `/dashboard/brand/${path}` || location.pathname.startsWith(`/dashboard/brand/${path}/`)
   }
 
   return (
@@ -1001,6 +722,8 @@ export default function BrandDashboardLayout({ children }: BrandDashboardLayoutP
                   <button
                     onClick={async () => {
                       await signOut()
+                      // Redirect to landing page after sign out
+                      navigate('/')
                     }}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
                   >
@@ -1013,7 +736,7 @@ export default function BrandDashboardLayout({ children }: BrandDashboardLayoutP
           </aside>
 
           <main className="flex-1 ml-64">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>
@@ -1023,7 +746,7 @@ export default function BrandDashboardLayout({ children }: BrandDashboardLayoutP
 </file>
 
 <file path="src/components/creator/CreatorDashboardLayout.tsx">
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { 
   FaTh, 
   FaUser, 
@@ -1038,33 +761,32 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import DashboardHeader from '../dashboard/DashboardHeader'
 
-interface CreatorDashboardLayoutProps {
-  children: React.ReactNode
-}
-
-export default function CreatorDashboardLayout({ children }: CreatorDashboardLayoutProps) {
+export default function CreatorDashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { signOut } = useAuth()
 
   const mainNavItems = [
-    { path: '/creator/dashboard', label: 'Bảng điều khiển', icon: FaTh },
-    { path: '/creator/profile', label: 'Hồ sơ cá nhân', icon: FaUser },
-    { path: '/creator/services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
-    { path: '/creator/discovery', label: 'Cơ hội', icon: FaLightbulb },
-    { path: '/creator/proposals', label: 'Đề xuất', icon: FaFileAlt },
-    { path: '/creator/workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
-    { path: '/creator/analytics', label: 'Phân tích', icon: FaChartBar },
+    { path: '', label: 'Bảng điều khiển', icon: FaTh },
+    { path: 'profile', label: 'Hồ sơ cá nhân', icon: FaUser },
+    { path: 'services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
+    { path: 'discovery', label: 'Cơ hội', icon: FaLightbulb },
+    { path: 'proposals', label: 'Đề xuất', icon: FaFileAlt },
+    { path: 'workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
+    { path: 'analytics', label: 'Phân tích', icon: FaChartBar },
   ]
 
   const accountItems = [
-    { path: '/creator/settings', label: 'Cài đặt', icon: FaCog },
+    { path: 'settings', label: 'Cài đặt', icon: FaCog },
   ]
 
   const isActive = (path: string) => {
-    if (path === '/creator/dashboard') {
-      return location.pathname === '/creator/dashboard'
+    if (path === '') {
+      // Index route - only active when exactly at /dashboard/creator
+      return location.pathname === '/dashboard/creator'
     }
-    return location.pathname.startsWith(path)
+    // For other paths, check if current pathname starts with the route
+    return location.pathname === `/dashboard/creator/${path}` || location.pathname.startsWith(`/dashboard/creator/${path}/`)
   }
 
   return (
@@ -1123,6 +845,8 @@ export default function CreatorDashboardLayout({ children }: CreatorDashboardLay
                   <button
                     onClick={async () => {
                       await signOut()
+                      // Redirect to landing page after sign out
+                      navigate('/')
                     }}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
                   >
@@ -1135,7 +859,7 @@ export default function CreatorDashboardLayout({ children }: CreatorDashboardLay
           </aside>
 
           <main className="flex-1 ml-64">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>
@@ -4040,7 +3764,10 @@ const MOCK_INSIGHTS = [
 
 export default function DashboardHome() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true)
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 
@@ -4857,7 +4584,10 @@ import { FaGoogle, FaFacebook, FaInstagram, FaTiktok, FaCheckCircle, FaTimesCirc
 
 export default function SettingsPage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const supabase = getSupabase()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -6085,7 +5815,10 @@ const PRO_PLAN_MAX_SERVICES = 10
 
 export default function ServicesPage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const supabase = getSupabase()
 
   const [services, setServices] = useState<Service[]>([])
@@ -6336,8 +6069,8 @@ export default function ServicesPage() {
     return `$${price.toLocaleString('vi-VN')}`
   }
 
-  const displayName = profile?.display_name || session?.user?.email?.split('@')[0] || 'Creator'
-  const avatarUrl = profile?.avatar_url || session?.user?.user_metadata?.avatar_url
+  const displayName = (profile?.role === 'creator' ? (profile as any).full_name : null) || session?.user?.email?.split('@')[0] || 'Creator'
+  const avatarUrl = (profile?.role === 'creator' ? (profile as any).avatar_url : null) || session?.user?.user_metadata?.avatar_url
 
   if (loading) {
     return (
@@ -6753,20 +6486,22 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getSupabase } from '../../lib/supabase'
+import { FaUserCircle, FaBuilding, FaArrowRight, FaCheck } from 'react-icons/fa'
 
 export default function RolePage() {
   const { session } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<'creator' | 'brand' | null>(null)
   const navigate = useNavigate()
   const supabase = getSupabase()
 
   const handleSelectRole = async (role: 'creator' | 'brand') => {
-    if (!session) return
+    if (!session || !session.access_token) return
 
+    setSelectedRole(role)
     setLoading(true)
 
     try {
-      // Update role directly to profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -6775,51 +6510,190 @@ export default function RolePage() {
         })
         .eq('id', session.user.id)
 
-      if (error) throw error
+      if (error) {
+        if (error.code === '42501' || error.code === 'PGRST301') {
+          setLoading(false)
+          setSelectedRole(null)
+          return
+        }
+        throw error
+      }
 
-      // After success → navigate('/app')
+      // Navigate to /app - AppGate will handle routing to onboarding
       navigate('/app', { replace: true })
     } catch (err: any) {
       setLoading(false)
+      setSelectedRole(null)
       alert(err.message || 'Có lỗi xảy ra khi chọn vai trò')
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="w-full max-w-4xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
+      <div className="w-full max-w-5xl">
+        {/* Header Section */}
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-[#6366F1] to-[#EC4899] bg-clip-text text-transparent">
             Chọn vai trò của bạn
           </h1>
-          <p className="text-lg text-[#6B7280] max-w-2xl mx-auto">
-            Chọn vai trò phù hợp với cách bạn sử dụng ALINO. Bạn có thể thay đổi sau.
+          <p className="text-xl text-[#6B7280] max-w-2xl mx-auto leading-relaxed">
+            Chọn vai trò phù hợp với cách bạn mong muốn sử dụng ALINO.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Role Cards */}
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
+          {/* Creator Card */}
           <button
             onClick={() => handleSelectRole('creator')}
             disabled={loading}
-            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
+            className={`group relative p-10 bg-white/90 backdrop-blur-xl rounded-3xl border-2 transition-all duration-300 text-left disabled:opacity-50 disabled:cursor-not-allowed ${
+              selectedRole === 'creator'
+                ? 'border-[#6366F1] shadow-2xl shadow-[#6366F1]/20 scale-105'
+                : 'border-gray-200 hover:border-[#6366F1]/50 hover:shadow-xl hover:shadow-[#6366F1]/10 hover:scale-[1.02]'
+            }`}
           >
-            <h3 className="text-2xl font-semibold mb-2">Creator</h3>
-            <p className="text-[#6B7280]">
+            {/* Icon Container */}
+            <div className={`mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 ${
+              selectedRole === 'creator'
+                ? 'bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] shadow-lg'
+                : 'bg-gradient-to-br from-[#6366F1]/10 to-[#8B5CF6]/10 group-hover:from-[#6366F1]/20 group-hover:to-[#8B5CF6]/20'
+            }`}>
+              <FaUserCircle className={`w-8 h-8 transition-colors ${
+                selectedRole === 'creator' ? 'text-white' : 'text-[#6366F1]'
+              }`} />
+            </div>
+
+            {/* Content */}
+            <h3 className="text-3xl font-bold mb-3 text-gray-900 group-hover:text-[#6366F1] transition-colors">
+              Creator
+            </h3>
+            <p className="text-lg text-[#6B7280] mb-6 leading-relaxed">
               Tôi là Creator muốn hợp tác với các Brand
             </p>
+
+            {/* Features List */}
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center text-sm text-[#6B7280]">
+                <div className="w-5 h-5 rounded-full bg-[#6366F1]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[#6366F1]" />
+                </div>
+                Quản lý đề xuất và hợp tác
+              </li>
+              <li className="flex items-center text-sm text-[#6B7280]">
+                <div className="w-5 h-5 rounded-full bg-[#6366F1]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[#6366F1]" />
+                </div>
+                Theo dõi hiệu suất và phân tích
+              </li>
+              <li className="flex items-center text-sm text-[#6B7280]">
+                <div className="w-5 h-5 rounded-full bg-[#6366F1]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[#6366F1]" />
+                </div>
+                Kết nối với các Brand phù hợp
+              </li>
+            </ul>
+
+            {/* Arrow Icon */}
+            <div className={`flex items-center text-[#6366F1] font-semibold transition-all ${
+              selectedRole === 'creator' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}>
+              <span className="text-sm mr-2">Bắt đầu</span>
+              <FaArrowRight className="w-4 h-4" />
+            </div>
+
+            {/* Selected Indicator */}
+            {selectedRole === 'creator' && loading && (
+              <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-gradient-to-br from-[#6366F1] to-[#EC4899] flex items-center justify-center animate-pulse">
+                <FaCheck className="w-4 h-4 text-white" />
+              </div>
+            )}
           </button>
 
+          {/* Brand Card */}
           <button
             onClick={() => handleSelectRole('brand')}
             disabled={loading}
-            className="p-8 bg-white rounded-2xl border-2 border-gray-200 hover:border-[#6366F1] transition-colors text-left disabled:opacity-50"
+            className={`group relative p-10 bg-white/90 backdrop-blur-xl rounded-3xl border-2 transition-all duration-300 text-left disabled:opacity-50 disabled:cursor-not-allowed ${
+              selectedRole === 'brand'
+                ? 'border-[#EC4899] shadow-2xl shadow-[#EC4899]/20 scale-105'
+                : 'border-gray-200 hover:border-[#EC4899]/50 hover:shadow-xl hover:shadow-[#EC4899]/10 hover:scale-[1.02]'
+            }`}
           >
-            <h3 className="text-2xl font-semibold mb-2">Brand</h3>
-            <p className="text-[#6B7280]">
+            {/* Icon Container */}
+            <div className={`mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-300 ${
+              selectedRole === 'brand'
+                ? 'bg-gradient-to-br from-[#EC4899] to-[#F472B6] shadow-lg'
+                : 'bg-gradient-to-br from-[#EC4899]/10 to-[#F472B6]/10 group-hover:from-[#EC4899]/20 group-hover:to-[#F472B6]/20'
+            }`}>
+              <FaBuilding className={`w-8 h-8 transition-colors ${
+                selectedRole === 'brand' ? 'text-white' : 'text-[#EC4899]'
+              }`} />
+            </div>
+
+            {/* Content */}
+            <h3 className="text-3xl font-bold mb-3 text-gray-900 group-hover:text-[#EC4899] transition-colors">
+              Brand
+            </h3>
+            <p className="text-lg text-[#6B7280] mb-6 leading-relaxed">
               Tôi là Brand muốn hợp tác với các Creator
             </p>
+
+            {/* Features List */}
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center text-sm text-[#6B7280]">
+                <div className="w-5 h-5 rounded-full bg-[#EC4899]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[#EC4899]" />
+                </div>
+                Tạo và quản lý chiến dịch
+              </li>
+              <li className="flex items-center text-sm text-[#6B7280]">
+                <div className="w-5 h-5 rounded-full bg-[#EC4899]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[#EC4899]" />
+                </div>
+                Khám phá và kết nối Creator
+              </li>
+              <li className="flex items-center text-sm text-[#6B7280]">
+                <div className="w-5 h-5 rounded-full bg-[#EC4899]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[#EC4899]" />
+                </div>
+                Theo dõi ROI và hiệu suất
+              </li>
+            </ul>
+
+            {/* Arrow Icon */}
+            <div className={`flex items-center text-[#EC4899] font-semibold transition-all ${
+              selectedRole === 'brand' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}>
+              <span className="text-sm mr-2">Bắt đầu</span>
+              <FaArrowRight className="w-4 h-4" />
+            </div>
+
+            {/* Selected Indicator */}
+            {selectedRole === 'brand' && loading && (
+              <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-gradient-to-br from-[#6366F1] to-[#EC4899] flex items-center justify-center animate-pulse">
+                <FaCheck className="w-4 h-4 text-white" />
+              </div>
+            )}
           </button>
         </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-full shadow-lg">
+              <div className="w-5 h-5 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium text-[#6B7280]">
+                Đang xử lý...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Footer Note */}
+        <p className="text-center text-sm text-[#6B7280] mt-8">
+          Bạn có thể thay đổi vai trò bất cứ lúc nào trong cài đặt
+        </p>
       </div>
     </div>
   )
@@ -6903,23 +6777,31 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-
+      
       if (error) {
-        // Map error messages to Vietnamese
         if (error.message === 'Email not confirmed') {
-          setError('Tài khoản chưa được xác thực')
+          setError('Tài khoản chưa được xác thực. Vui lòng kiểm tra email.')
         } else {
           setError('Email hoặc mật khẩu không đúng')
         }
         setLoading(false)
         return
       }
-
-      navigate('/app')
+      
+      if (!data.user?.email_confirmed_at) {
+        setError('Tài khoản chưa được xác thực. Vui lòng kiểm tra email.')
+        await supabase.auth.signOut()
+        setLoading(false)
+        return
+      }
+      
+      // After login, redirect to landing page
+      // User must explicitly click "Quản lý dự án" to go to /app
+      navigate('/')      
     } catch (err) {
       setError('Có lỗi xảy ra')
       setLoading(false)
@@ -6930,7 +6812,8 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/app`,
+        // Redirect to landing page after OAuth - user must click "Quản lý dự án" to go to /app
+        redirectTo: `${window.location.origin}/`,
       },
     })
 
@@ -7172,204 +7055,6 @@ export default function PrivacyPage() {
 }
 </file>
 
-<file path="src/pages/public/SignupPage.tsx">
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { getSupabase } from '../../lib/supabase'
-
-export default function SignupPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const supabase = getSupabase()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp')
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/verify-email`,
-        },
-      })
-      
-      if (error) {
-        setError(error.message || 'Đăng ký thất bại')
-        setLoading(false)
-        return
-      }
-      
-      if (data?.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            role: null,
-            onboarding_completed: false,
-            onboarding_data: {},
-          })
-      
-        if (profileError) {
-          setError('Không tạo được hồ sơ người dùng')
-          setLoading(false)
-          return
-        }
-      }
-      
-      navigate('/?signup=success', { replace: true })      
-
-    } catch (err) {
-      setError('Có lỗi xảy ra')
-      setLoading(false)
-    }
-  }
-
-  const handleGoogleSignup = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/app`,
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    if (data.url) {
-      window.location.href = data.url
-    }
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] px-6 pt-16">
-      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl overflow-hidden flex">
-        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-[#6366F1]/20 via-[#7C3AED]/15 to-[#EC4899]/20">
-          <div className="flex flex-col px-12 pt-12 items-center">
-            <img
-              src="/logo/logo.png"
-              alt="ALINO"
-              className="w-40 h-40 mb-6"
-            />
-            <h1 className="text-3xl font-semibold text-[#1F2937] mb-3">
-              Tạo tài khoản mới
-            </h1>
-            <p className="text-[#6B7280] leading-relaxed">
-              Bắt đầu hành trình hợp tác với Alino
-            </p>
-          </div>
-        </div>
-
-        <div className="w-full lg:w-[55%] px-10 py-8 flex items-center justify-center">
-          <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold mb-2">Đăng ký</h2>
-            <p className="text-sm text-[#6B7280] mb-6">
-              Tạo tài khoản mới để bắt đầu
-            </p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-lg"
-                required
-              />
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-              >
-                {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
-              </button>
-            </form>
-
-            <div className="my-5 text-center text-xs text-[#9CA3AF]">HOẶC</div>
-
-            <button
-              onClick={handleGoogleSignup}
-              className="w-full py-2.5 border rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Đăng ký với Google
-            </button>
-
-            <p className="mt-6 text-center text-sm text-[#6B7280]">
-              Đã có tài khoản?{' '}
-              <Link to="/login" className="text-[#6366F1] font-medium">
-                Đăng nhập
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-</file>
-
 <file path="src/pages/public/TermsPage.tsx">
 import { Link } from 'react-router-dom'
 import Header from '../../components/layout/Header'
@@ -7606,6 +7291,277 @@ module.exports = {
 }
 </file>
 
+<file path="src/app/AppGate.tsx">
+import { useEffect, useState, ReactNode } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { getSupabase } from '../lib/supabase'
+
+export default function AppGate({ children }: { children: ReactNode }) {
+  const { session, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const supabase = getSupabase()
+
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const isAppRoute = location.pathname.startsWith('/app')
+
+  useEffect(() => {
+    if (!isAppRoute) return
+    if (authLoading) return
+    if (isProcessing) return
+
+    // Not logged in
+    if (!session) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    // Email not confirmed
+    if (!session.user.email_confirmed_at) {
+      supabase.auth.signOut().finally(() => {
+        navigate('/login', { replace: true })
+      })
+      return
+    }
+
+    runGate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, session, isAppRoute])
+
+  async function runGate() {
+    if (!session) return
+
+    setIsProcessing(true)
+
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role, onboarding_completed')
+        .eq('id', session.user.id)
+        .maybeSingle()
+
+      if (error || !profile || !profile.role) {
+        navigate('/role', { replace: true })
+        return
+      }
+
+      if (!profile.onboarding_completed) {
+        navigate(`/onboarding/${profile.role}`, { replace: true })
+        return
+      }
+
+      const dashboardPath =
+        profile.role === 'creator'
+          ? '/dashboard/creator'
+          : '/dashboard/brand'
+
+      navigate(dashboardPath, { replace: true })
+    } catch (err) {
+      console.error('AppGate error:', err)
+      navigate('/login', { replace: true })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  if (isAppRoute && (authLoading || isProcessing)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}
+</file>
+
+<file path="src/app/router.tsx">
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import LandingPage from '../pages/public/LandingPage'
+import LoginPage from '../pages/public/LoginPage'
+import SignupPage from '../pages/public/SignupPage'
+import VerifyEmailPage from '../pages/public/VerifyEmailPage'
+import AppGate from './AppGate'
+import RolePage from '../pages/onboarding/RolePage'
+import OnboardingPage from '../pages/onboarding/OnboardingPage'
+import TermsPage from '../pages/public/TermsPage'
+import PrivacyPage from '../pages/public/PrivacyPage'
+import { CreatorRoutes } from './creatorRoutes'
+import { BrandRoutes } from './brandRoutes'
+import DashboardRoutes from './dashboardRoutes'
+
+/**
+ * ProtectedRoute: Simple auth check - redirects to login if not authenticated
+ * Used for routes that require authentication but don't need role/onboarding checks
+ */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />
+  }
+
+  return <>{children}</>
+}
+
+/**
+ * RoleBasedRoute: Protects routes that require a specific role
+ * Only checks role match - no redirects to /app or dashboards
+ */
+function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole: 'creator' | 'brand' }) {
+  const { session, loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session || !profile) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (profile.role !== requiredRole) {
+    // Role mismatch - redirect to login (user should go through /app to get to correct route)
+    return <Navigate to="/login" replace />
+  }
+
+  return <>{children}</>
+}
+
+/**
+ * CatchAllRoute: Simple 404 handler
+ * Just redirects to login if not authenticated, otherwise shows 404
+ */
+function CatchAllRoute() {
+  const { session, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#6B7280]">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Authenticated but unknown route - show 404
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-4">404</h1>
+        <p className="text-[#6B7280] mb-4">Trang không tồn tại</p>
+        <Navigate to="/" replace />
+      </div>
+    </div>
+  )
+}
+
+export function Router() {
+  return (
+    <Routes>
+      {/* Public routes - no AppGate, always accessible */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+
+      {/* AppGate routes - /app is the ONLY decision gate */}
+      {/* AppGate handles: auth check, role check, onboarding check, and redirects */}
+      <Route
+        path="/app"
+        element={
+          <AppGate>
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-[#6B7280]">Đang tải...</div>
+            </div>
+          </AppGate>
+        }
+      />
+
+      <Route
+        path="/role"
+        element={
+          <AppGate>
+            <ProtectedRoute>
+              <RolePage />
+            </ProtectedRoute>
+          </AppGate>
+        }
+      />
+
+      <Route
+        path="/onboarding/:role?"
+        element={
+          <AppGate>
+            <ProtectedRoute>
+              <OnboardingPage />
+            </ProtectedRoute>
+          </AppGate>
+        }
+      />
+
+      {/* Dashboard routes - OUTSIDE AppGate, stable final destinations */}
+      {/* These routes never redirect on their own - they are the final destination */}
+      <Route
+        path="/dashboard/:role/*"
+        element={
+          <ProtectedRoute>
+            <DashboardRoutes />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Legacy routes - keep for backward compatibility */}
+      <Route
+        path="/creator/*"
+        element={
+          <RoleBasedRoute requiredRole="creator">
+            <CreatorRoutes />
+          </RoleBasedRoute>
+        }
+      />
+
+      <Route
+        path="/brand/*"
+        element={
+          <RoleBasedRoute requiredRole="brand">
+            <BrandRoutes />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* 404 handler */}
+      <Route path="*" element={<CatchAllRoute />} />
+    </Routes>
+  )
+}
+</file>
+
 <file path="src/components/dashboard/DashboardHeader.tsx">
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
@@ -7625,24 +7581,34 @@ import NotificationModal from '../shared/NotificationModal'
  */
 export default function DashboardHeader() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const navigate = useNavigate()
   const location = useLocation()
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    navigate('/')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Navigate to dashboard home based on role
+    if (profile?.role === 'creator') {
+      navigate('/dashboard/creator', { replace: false })
+    } else if (profile?.role === 'brand') {
+      navigate('/dashboard/brand', { replace: false })
+    } else {
+      // Fallback to /app if role not set
+      navigate('/app', { replace: false })
+    }
   }
 
   const fullName =
-    profile?.display_name ||
+    (profile?.role === 'creator' ? (profile as any).full_name : profile?.role === 'brand' ? (profile as any).brand_name : null) ||
     session?.user?.user_metadata?.display_name ||
     ''
 
   const avatarUrl =
-    profile?.avatar_url ||
+    (profile?.role === 'creator' ? (profile as any).avatar_url : null) ||
     session?.user?.user_metadata?.avatar_url ||
     undefined
 
@@ -7655,102 +7621,111 @@ export default function DashboardHeader() {
   const pathname = location.pathname
 
   const getTitleAndSubtitle = () => {
-    if (pathname === '/creator/dashboard') {
-      const displayName = profile?.display_name || session?.user?.user_metadata?.display_name || 'Creator'
+    // Creator dashboard routes
+    if (pathname === '/dashboard/creator') {
+      const displayName = (profile?.role === 'creator' ? (profile as any).full_name : profile?.role === 'brand' ? (profile as any).brand_name : null) || session?.user?.user_metadata?.display_name || 'Creator'
       return {
         title: `Chào mừng, ${displayName}!`,
         subtitle: 'Tổng quan tài khoản ALINO của bạn hôm nay.',
       }
     }
 
-    if (pathname.startsWith('/creator/profile')) {
+    if (pathname.startsWith('/dashboard/creator/profile')) {
       return {
         title: 'Hồ sơ cá nhân',
         subtitle: 'Quản lý thông tin hiển thị của bạn với đối tác',
       }
     }
 
-    if (pathname.startsWith('/creator/settings')) {
+    if (pathname.startsWith('/dashboard/creator/settings')) {
       return {
         title: 'Cài đặt',
         subtitle: 'Quản lý cài đặt tài khoản và tùy chọn',
       }
     }
 
-    if (pathname.startsWith('/creator/services')) {
+    if (pathname.startsWith('/dashboard/creator/services')) {
       return {
         title: 'Dịch vụ & Bảng giá',
         subtitle: 'Thiết lập dịch vụ và mức giá bạn cung cấp',
       }
     }
 
-    if (pathname.startsWith('/creator/discovery')) {
+    if (pathname.startsWith('/dashboard/creator/discovery')) {
       return {
         title: 'Cơ hội hợp tác',
         subtitle: 'Khám phá các cơ hội phù hợp với bạn',
       }
     }
 
-    if (pathname.startsWith('/creator/proposals')) {
+    if (pathname.startsWith('/dashboard/creator/proposals')) {
       return {
         title: 'Đề xuất',
         subtitle: 'Quản lý các đề xuất hợp tác đang diễn ra',
       }
     }
 
-    if (pathname.startsWith('/creator/workspace')) {
+    if (pathname.startsWith('/dashboard/creator/workspace')) {
       return {
         title: 'Trung tâm làm việc',
         subtitle: 'Theo dõi và xử lý các hoạt động hợp tác',
       }
     }
 
-    if (pathname.startsWith('/creator/analytics')) {
+    if (pathname.startsWith('/dashboard/creator/analytics')) {
       return {
         title: 'Phân tích',
         subtitle: 'Theo dõi hiệu suất và tăng trưởng của bạn',
       }
     }
 
-    if (pathname === '/brand/dashboard') {
+    // Brand dashboard routes
+    if (pathname === '/dashboard/brand') {
       return {
         title: 'Brand Dashboard',
         subtitle: 'Tổng quan chiến dịch và hiệu suất',
       }
     }
 
-    if (pathname.startsWith('/brand/discovery')) {
+    if (pathname.startsWith('/dashboard/brand/discovery')) {
       return {
         title: 'Tìm kiếm Creator',
         subtitle: 'Khám phá và kết nối với các creator phù hợp',
       }
     }
 
-    if (pathname.startsWith('/brand/campaigns')) {
+    if (pathname.startsWith('/dashboard/brand/campaigns')) {
       return {
         title: 'Chiến dịch',
         subtitle: 'Quản lý các chiến dịch marketing của bạn',
       }
     }
 
-    if (pathname.startsWith('/brand/proposals')) {
+    if (pathname.startsWith('/dashboard/brand/proposals')) {
       return {
         title: 'Hộp thư đề xuất',
         subtitle: 'Xem và quản lý các đề xuất từ creator',
       }
     }
 
-    if (pathname.startsWith('/brand/workspace')) {
+    if (pathname.startsWith('/dashboard/brand/workspace')) {
       return {
         title: 'Không gian làm việc',
         subtitle: 'Theo dõi tiến độ và cộng tác với creator',
       }
     }
 
-    if (pathname.startsWith('/brand/analytics')) {
+    if (pathname.startsWith('/dashboard/brand/analytics')) {
       return {
         title: 'Phân tích',
         subtitle: 'Theo dõi hiệu suất chiến dịch và ROI',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/brand/settings')) {
+      return {
+        title: 'Cài đặt',
+        subtitle: 'Quản lý cài đặt tài khoản và tùy chọn',
       }
     }
 
@@ -7987,53 +7962,6 @@ export default function Footer() {
       </div>
     </footer>
   )
-}
-</file>
-
-<file path="src/components/AuthGate.tsx">
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
-
-export default function AuthGate({ children }: { children: React.ReactNode }) {
-  const { session, loading: authLoading, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(
-    session?.user?.id,
-    isAuthenticated
-  )
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (authLoading || profileLoading) return
-
-    if (!session) {
-      navigate('/login', { replace: true })
-      return
-    }
-
-    if (!profile) return
-
-    if (!profile.role) {
-      navigate('/role', { replace: true })
-      return
-    }
-
-    if (!profile.onboarding_completed) {
-      navigate('/onboarding', { replace: true })
-      return
-    }
-  }, [session, profile, authLoading, profileLoading, navigate])
-
-  if (authLoading || profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Đang tải...
-      </div>
-    )
-  }
-
-  return <>{children}</>
 }
 </file>
 
@@ -8284,61 +8212,20 @@ export default function AvatarUpload({
 </file>
 
 <file path="src/hooks/useAuth.ts">
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import type { Session } from '@supabase/supabase-js'
-import { getSupabase } from '../lib/supabase'
-
-export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
-  const supabase = getSupabase()
-
-  useEffect(() => {
-    let mounted = true
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return
-      setSession(session)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-      setSession(session)
-      setLoading(false)
-    })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setSession(null)
-    navigate('/')
-  }
-
-  return {
-    session,
-    user: session?.user ?? null,
-    loading,
-    signOut,
-    isAuthenticated: !!session,
-  }
-}
+/**
+ * useAuth: Re-export from AuthContext
+ * 
+ * This hook now reads from AuthContext (single source of truth).
+ * All components should use this hook to access auth state.
+ * 
+ * IMPORTANT: signOut() does NOT handle navigation.
+ * Components must handle redirects after signOut themselves.
+ */
+export { useAuth } from '../contexts/AuthContext'
 </file>
 
 <file path="src/pages/creator/profile/ProfilePage.tsx">
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../hooks/useAuth'
 import { useProfile } from '../../../hooks/useProfile'
 import { getSupabase } from '../../../lib/supabase'
@@ -8347,9 +8234,11 @@ import AvatarUpload from '../../../components/AvatarUpload'
 import Toast from '../../../components/shared/Toast'
 
 export default function ProfilePage() {
-  const { session, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading, needsOnboarding } = useProfile(session?.user?.id, isAuthenticated)
-  const navigate = useNavigate()
+  const { session } = useAuth()
+  const { profile, loading: profileLoading, needsOnboarding } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -8360,10 +8249,8 @@ export default function ProfilePage() {
 
   // Form state - matches FINAL schema exactly
   interface ProfileFormData {
-    // Core fields
     display_name?: string | null
     avatar_url?: string | null
-    bio?: string | null
     birth_year?: number | null
     country?: string | null
     city?: string | null
@@ -8385,14 +8272,14 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      // Load all fields directly from profile columns (matches FINAL schema)
+      const isCreator = profile.role === 'creator'
+      const isBrand = profile.role === 'brand'
       setFormData({
-        display_name: profile.display_name || undefined,
-        avatar_url: profile.avatar_url || undefined,
-        bio: profile.bio || undefined,
-        birth_year: profile.birth_year || undefined,
-        country: profile.country || undefined,
-        city: profile.city || undefined,
+        display_name: isCreator ? (profile as any).full_name : (isBrand ? (profile as any).brand_name : undefined),
+        avatar_url: isCreator ? (profile as any).avatar_url : undefined,
+        birth_year: isCreator ? (profile as any).birth_year : undefined,
+        country: isCreator ? (profile as any).country : undefined,
+        city: isCreator ? (profile as any).city : undefined,
         // Creator fields
         creator_platforms: (profile as any).creator_platforms || undefined,
         content_categories: (profile as any).content_categories || undefined,
@@ -8409,13 +8296,6 @@ export default function ProfilePage() {
       })
     }
   }, [profile])
-
-  // Redirect brand users without profile to onboarding
-  useEffect(() => {
-    if (!profileLoading && needsOnboarding && profile?.role === 'brand') {
-      navigate('/onboarding', { replace: true })
-    }
-  }, [profileLoading, needsOnboarding, profile, navigate])
 
   if (profileLoading) {
     return (
@@ -8523,9 +8403,8 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    if (!session || !profile) return
+    if (!session || !session.access_token || !profile) return
 
-    // Validate before saving
     const validation = validateProfile()
     if (!validation.isValid) {
       setToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'error' })
@@ -8539,27 +8418,13 @@ export default function ProfilePage() {
     setFieldErrors({})
 
     try {
-      // Step 1: Update core profile fields (profiles table)
-      const coreUpdateData: any = {
-        display_name: formData.display_name || null,
-        avatar_url: formData.avatar_url || null,
-        bio: formData.bio || null,
-        birth_year: formData.birth_year || null,
-        country: formData.country || null,
-        city: formData.city || null,
-        updated_at: new Date().toISOString(),
-      }
-      
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(coreUpdateData)
-        .eq('id', session.user.id)
-
-      if (profileError) throw profileError
-
-      // Step 2: Update domain-specific profile
       if (role === 'creator') {
         const creatorUpdateData: any = {
+          full_name: formData.display_name || null,
+          avatar_url: formData.avatar_url || null,
+          birth_year: formData.birth_year || null,
+          country: formData.country || null,
+          city: formData.city || null,
           creator_platforms: formData.creator_platforms || null,
           content_categories: formData.content_categories || null,
           followers_count: formData.followers_count || null,
@@ -8573,7 +8438,14 @@ export default function ProfilePage() {
           .update(creatorUpdateData)
           .eq('user_id', session.user.id)
 
-        if (creatorError) throw creatorError
+        if (creatorError) {
+          if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
+            setLoading(false)
+            setToast({ message: 'Không thể truy cập dữ liệu. Vui lòng thử lại.', type: 'error' })
+            return
+          }
+          throw creatorError
+        }
       } else if (role === 'brand') {
         const brandUpdateData: any = {
           brand_name: formData.brand_name || null,
@@ -8590,16 +8462,25 @@ export default function ProfilePage() {
           .update(brandUpdateData)
           .eq('user_id', session.user.id)
 
-        if (brandError) throw brandError
+        if (brandError) {
+          if (brandError.code === '42501' || brandError.code === 'PGRST301') {
+            setLoading(false)
+            setToast({ message: 'Không thể truy cập dữ liệu. Vui lòng thử lại.', type: 'error' })
+            return
+          }
+          throw brandError
+        }
       }
 
-      // Sync display_name and avatar_url to auth metadata
+      // Sync full_name and avatar_url to auth metadata (for creator only)
       const metadataUpdate: Record<string, any> = {}
-      if (formData.display_name !== undefined) {
-        metadataUpdate.display_name = formData.display_name
-      }
-      if (formData.avatar_url !== undefined) {
-        metadataUpdate.avatar_url = formData.avatar_url
+      if (role === 'creator') {
+        if (formData.display_name !== undefined) {
+          metadataUpdate.display_name = formData.display_name
+        }
+        if (formData.avatar_url !== undefined) {
+          metadataUpdate.avatar_url = formData.avatar_url
+        }
       }
 
       if (Object.keys(metadataUpdate).length > 0) {
@@ -8622,28 +8503,31 @@ export default function ProfilePage() {
   }
 
   const handleAvatarChange = async (url: string) => {
-    // URL is already a public URL from AvatarUpload component (after successful storage upload)
-    if (!session || !profile) {
+    if (!session || !profile || !role) {
       console.error('Cannot save avatar: missing session or profile')
       return
     }
 
-    // Optimistically update form state
     setFormData((prev) => ({ ...prev, avatar_url: url }))
 
     try {
-      // Update profiles.avatar_url (core field)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          avatar_url: url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id)
+      if (role === 'creator') {
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .update({
+            avatar_url: url,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', session.user.id)
 
-      if (profileError) {
-        console.error('Failed to update profiles.avatar_url:', profileError)
-        throw profileError
+        if (creatorError) {
+          if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
+            console.error('Permission denied updating avatar:', creatorError)
+            return
+          }
+          console.error('Failed to update creator_profiles.avatar_url:', creatorError)
+          throw creatorError
+        }
       }
 
       // Sync to auth metadata (secondary, non-blocking)
@@ -8921,19 +8805,6 @@ export default function ProfilePage() {
             {role === 'creator' && (
               <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold mb-4">Thông tin Creator</h2>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Giới thiệu
-                  </label>
-                  <textarea
-                    value={formData.bio || ''}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2.5 border rounded-lg"
-                    placeholder="Giới thiệu về bản thân..."
-                  />
-                </div>
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -9292,6 +9163,207 @@ export default function ProfilePage() {
 }
 </file>
 
+<file path="src/pages/public/SignupPage.tsx">
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { getSupabase } from '../../lib/supabase'
+
+export default function SignupPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const supabase = getSupabase()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/verify-email`,
+        },
+      })
+      
+      if (error) {
+        setError(error.message || 'Đăng ký thất bại')
+        setLoading(false)
+        return
+      }
+      
+      setSuccess(true)
+      setLoading(false)
+
+    } catch (err) {
+      setError('Có lỗi xảy ra')
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleSignup = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/app`,
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    if (data.url) {
+      window.location.href = data.url
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] px-6 pt-16">
+      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl overflow-hidden flex">
+        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-[#6366F1]/20 via-[#7C3AED]/15 to-[#EC4899]/20">
+          <div className="flex flex-col px-12 pt-12 items-center">
+            <img
+              src="/logo/logo.png"
+              alt="ALINO"
+              className="w-40 h-40 mb-6"
+            />
+            <h1 className="text-3xl font-semibold text-[#1F2937] mb-3">
+              Tạo tài khoản mới
+            </h1>
+            <p className="text-[#6B7280] leading-relaxed">
+              Bắt đầu hành trình hợp tác với Alino
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full lg:w-[55%] px-10 py-8 flex items-center justify-center">
+          <div className="w-full max-w-sm">
+            <h2 className="text-2xl font-semibold mb-2">Đăng ký</h2>
+            <p className="text-sm text-[#6B7280] mb-6">
+              Tạo tài khoản mới để bắt đầu
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="relative">
+              <div className={`transition-opacity duration-200 ${success ? 'opacity-0 invisible' : 'opacity-100 visible'}`}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3 py-2.5 border rounded-lg"
+                    required
+                  />
+
+                  <input
+                    type="password"
+                    placeholder="Mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2.5 border rounded-lg"
+                    required
+                  />
+
+                  <input
+                    type="password"
+                    placeholder="Xác nhận mật khẩu"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-3 py-2.5 border rounded-lg"
+                    required
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-2.5 rounded-lg text-white font-medium bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+                  >
+                    {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
+                  </button>
+                </form>
+
+                <div className="my-5 text-center text-xs text-[#9CA3AF]">HOẶC</div>
+
+                <button
+                  onClick={handleGoogleSignup}
+                  className="w-full py-2.5 border rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-3"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  Đăng ký với Google
+                </button>
+              </div>
+
+              <div className={`absolute inset-0 flex items-center transition-opacity duration-200 ${success ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+                <div className="w-full p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                  <p className="font-medium mb-1">Tài khoản đã được tạo thành công.</p>
+                  <p>Vui lòng kiểm tra email để xác thực tài khoản.</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-[#6B7280]">
+              {success ? (
+                <Link to="/login" className="text-[#6366F1] font-medium">
+                  Đăng nhập
+                </Link>
+              ) : (
+                <>
+                  Đã có tài khoản?{' '}
+                  <Link to="/login" className="text-[#6366F1] font-medium">
+                    Đăng nhập
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/pages/onboarding/OnboardingPage.tsx">
 import { useState, useEffect } from 'react'
 import { useNavigate, Link, useParams } from 'react-router-dom'
@@ -9304,6 +9376,7 @@ interface CreatorFormData {
   country?: string
   city?: string
   birth_year?: number
+  gender?: string
   creator_platforms?: string[]
   followers_count?: number
   avg_views?: number
@@ -9338,19 +9411,15 @@ export default function OnboardingPage() {
   const [creatorData, setCreatorData] = useState<CreatorFormData>({})
   const [brandData, setBrandData] = useState<BrandFormData>({})
 
-  // Guard: Must be authenticated before any onboarding logic runs
   useEffect(() => {
     if (authLoading) return
-    if (!session) {
-      navigate('/login', { replace: true })
-      return
-    }
+    if (!session) return
     checkOnboardingStatus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, authLoading, navigate])
+  }, [session, authLoading])
 
   async function checkOnboardingStatus() {
-    if (!session) return
+    if (!session || !session.access_token) return
 
     try {
       const { data, error } = await supabase
@@ -9359,12 +9428,16 @@ export default function OnboardingPage() {
         .eq('id', session.user.id)
         .single()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) {
+        if (error.code === '42501' || error.code === 'PGRST301') {
+          return
+        }
+        if (error.code !== 'PGRST116') throw error
+      }
 
-      // Let AppGate handle redirects - don't redirect here
       if (data?.role) {
         setRole(data.role)
-        loadExistingData(data.role, data.onboarding_data)
+        loadExistingData(data.role, data?.onboarding_data)
       }
     } catch (err) {
       console.error('Error checking onboarding:', err)
@@ -9388,6 +9461,7 @@ export default function OnboardingPage() {
           country: step2.country || undefined,
           city: step2.city || undefined,
           birth_year: step2.birth_year || undefined,
+          gender: step2.gender || undefined,
           creator_platforms: step3.creator_platforms || undefined,
           followers_count: step3.followers_count || undefined,
           avg_views: step3.avg_views || undefined,
@@ -9443,7 +9517,7 @@ export default function OnboardingPage() {
 
   // Helper to merge onboarding_data JSON
   async function mergeOnboardingData(stepKey: string, stepData: any) {
-    if (!session) return null
+    if (!session || !session.access_token) return null
 
     // Fetch current onboarding_data
     const { data: profile, error: fetchError } = await supabase
@@ -9452,7 +9526,12 @@ export default function OnboardingPage() {
       .eq('id', session.user.id)
       .single()
 
-    if (fetchError) throw fetchError
+    if (fetchError) {
+      if (fetchError.code === '42501' || fetchError.code === 'PGRST301') {
+        return null
+      }
+      throw fetchError
+    }
 
     // Merge new step data into existing onboarding_data
     const currentData = profile?.onboarding_data || {}
@@ -9470,7 +9549,12 @@ export default function OnboardingPage() {
       })
       .eq('id', session.user.id)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      if (updateError.code === '42501' || updateError.code === 'PGRST301') {
+        return null
+      }
+      throw updateError
+    }
 
     return mergedData
   }
@@ -9508,8 +9592,7 @@ export default function OnboardingPage() {
   }
 
   async function handleComplete() {
-    // Guard: Must have session and role
-    if (!session || !role) {
+    if (!session || !session.access_token || !role) {
       setError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.')
       return
     }
@@ -9518,16 +9601,80 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      // Fetch onboarding_data
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('onboarding_data')
         .eq('id', session.user.id)
         .single()
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        if (fetchError.code === '42501' || fetchError.code === 'PGRST301') {
+          setError('Không thể truy cập dữ liệu. Vui lòng thử lại.')
+          setLoading(false)
+          return
+        }
+        throw fetchError
+      }
 
       const onboardingData = profile?.onboarding_data || {}
+
+      // Validate required fields before completing
+      if (role === 'creator') {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+        
+        if (!step2.display_name?.trim() || !step2.birth_year || !step2.gender || !step2.country?.trim() || !step2.city?.trim()) {
+          setError('Vui lòng điền đầy đủ thông tin cơ bản (tên, năm sinh, giới tính, quốc gia, thành phố)')
+          setLoading(false)
+          return
+        }
+        if (!step3.creator_platforms || step3.creator_platforms.length === 0) {
+          setError('Vui lòng chọn ít nhất một nền tảng')
+          setLoading(false)
+          return
+        }
+        if (!step3.content_categories || step3.content_categories.length === 0) {
+          setError('Vui lòng chọn ít nhất một danh mục nội dung')
+          setLoading(false)
+          return
+        }
+        if (!step4.collaboration_expectation || step4.collaboration_expectation.length === 0) {
+          setError('Vui lòng chọn ít nhất một loại hợp tác')
+          setLoading(false)
+          return
+        }
+      } else {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+        
+        if (!step2.company_name?.trim() || !step2.industry?.trim() || !step2.country?.trim() || !step2.city?.trim()) {
+          setError('Vui lòng điền đầy đủ thông tin cơ bản (tên công ty, ngành nghề, quốc gia, thành phố)')
+          setLoading(false)
+          return
+        }
+        if (!step3.company_size) {
+          setError('Vui lòng chọn quy mô công ty')
+          setLoading(false)
+          return
+        }
+        if (!step3.target_platforms || step3.target_platforms.length === 0) {
+          setError('Vui lòng chọn ít nhất một nền tảng mục tiêu')
+          setLoading(false)
+          return
+        }
+        if (!step4.campaign_goal?.trim()) {
+          setError('Vui lòng nhập mục tiêu chiến dịch')
+          setLoading(false)
+          return
+        }
+        if (!step4.preferred_collaboration_type || step4.preferred_collaboration_type.length === 0) {
+          setError('Vui lòng chọn ít nhất một loại hợp tác')
+          setLoading(false)
+          return
+        }
+      }
 
       // Step 1: Create or update domain-specific profile FIRST
       if (role === 'creator') {
@@ -9537,6 +9684,11 @@ export default function OnboardingPage() {
 
         const creatorProfileData: any = {
           user_id: session.user.id,
+          full_name: step2.display_name || null,
+          birth_year: step2.birth_year || null,
+          gender: step2.gender || null,
+          country: step2.country || null,
+          city: step2.city || null,
           creator_platforms: step3.creator_platforms || null,
           followers_count: step3.followers_count || null,
           avg_views: step3.avg_views || null,
@@ -9589,11 +9741,12 @@ export default function OnboardingPage() {
         }
       }
 
-      // Step 2: Update profiles.onboarding_completed AFTER domain profile is created
+      // Step 2: Update profiles.onboarding_completed and clear onboarding_data
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           onboarding_completed: true,
+          onboarding_data: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', session.user.id)
@@ -9615,8 +9768,9 @@ export default function OnboardingPage() {
         // Don't block onboarding if consent insert fails
       }
 
-      // Redirect to /app - AppGate will handle routing to /dashboard/{role}
-      navigate('/app', { replace: true })
+      // Redirect directly to dashboard based on role (bypass /app to prevent loops)
+      const dashboardPath = role === 'creator' ? '/dashboard/creator' : '/dashboard/brand'
+      navigate(dashboardPath, { replace: true })
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
       setLoading(false)
@@ -9751,6 +9905,7 @@ function Step2BasicIdentity({
           country: creatorData.country || '',
           city: creatorData.city || '',
           birth_year: creatorData.birth_year || undefined,
+          gender: creatorData.gender || '',
         }
       : {
           company_name: brandData.company_name || '',
@@ -9759,15 +9914,37 @@ function Step2BasicIdentity({
           city: brandData.city || '',
         }
   )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {}
+    if (role === 'creator') {
+      if (!localData.display_name?.trim()) newErrors.display_name = 'Vui lòng nhập tên hiển thị'
+      if (!localData.birth_year) newErrors.birth_year = 'Vui lòng nhập năm sinh'
+      if (!localData.gender) newErrors.gender = 'Vui lòng chọn giới tính'
+      if (!localData.country?.trim()) newErrors.country = 'Vui lòng nhập quốc gia'
+      if (!localData.city?.trim()) newErrors.city = 'Vui lòng nhập thành phố'
+    } else {
+      if (!localData.company_name?.trim()) newErrors.company_name = 'Vui lòng nhập tên công ty'
+      if (!localData.industry?.trim()) newErrors.industry = 'Vui lòng nhập ngành nghề'
+      if (!localData.country?.trim()) newErrors.country = 'Vui lòng nhập quốc gia'
+      if (!localData.city?.trim()) newErrors.city = 'Vui lòng nhập thành phố'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateStep2()) return
+    
     if (role === 'creator') {
       onSave({
         display_name: localData.display_name,
         country: localData.country,
         city: localData.city,
         birth_year: localData.birth_year,
+        gender: localData.gender,
       } as CreatorFormData)
     } else {
       onSave({
@@ -9798,10 +9975,64 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.display_name}
-                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, display_name: e.target.value } as any)
+                  if (errors.display_name) {
+                    setErrors({ ...errors, display_name: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.display_name ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.display_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.display_name}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Năm sinh *
+              </label>
+              <input
+                type="number"
+                min="1950"
+                max={new Date().getFullYear()}
+                value={localData.birth_year || ''}
+                onChange={(e) => {
+                  setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)
+                  if (errors.birth_year) {
+                    setErrors({ ...errors, birth_year: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.birth_year ? 'border-red-500' : ''}`}
+                required
+              />
+              {errors.birth_year && (
+                <p className="mt-1 text-sm text-red-600">{errors.birth_year}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Giới tính *
+              </label>
+              <select
+                value={localData.gender}
+                onChange={(e) => {
+                  setLocalData({ ...localData, gender: e.target.value } as any)
+                  if (errors.gender) {
+                    setErrors({ ...errors, gender: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.gender ? 'border-red-500' : ''}`}
+                required
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+              </select>
+              {errors.gender && (
+                <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -9810,10 +10041,18 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.country}
-                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, country: e.target.value })
+                  if (errors.country) {
+                    setErrors({ ...errors, country: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.country ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.country && (
+                <p className="mt-1 text-sm text-red-600">{errors.country}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -9822,23 +10061,18 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.city}
-                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, city: e.target.value })
+                  if (errors.city) {
+                    setErrors({ ...errors, city: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.city ? 'border-red-500' : ''}`}
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Năm sinh
-              </label>
-              <input
-                type="number"
-                min="1950"
-                max={new Date().getFullYear()}
-                value={localData.birth_year || ''}
-                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-              />
+              {errors.city && (
+                <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+              )}
             </div>
           </>
         ) : (
@@ -9937,6 +10171,28 @@ function Step3Metrics({
           target_platforms: brandData.target_platforms || [],
         }
   )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep3 = () => {
+    const newErrors: Record<string, string> = {}
+    if (role === 'creator') {
+      if (!localData.creator_platforms || localData.creator_platforms.length === 0) {
+        newErrors.creator_platforms = 'Vui lòng chọn ít nhất một nền tảng'
+      }
+      if (!localData.content_categories || localData.content_categories.length === 0) {
+        newErrors.content_categories = 'Vui lòng chọn ít nhất một danh mục nội dung'
+      }
+    } else {
+      if (!localData.company_size) {
+        newErrors.company_size = 'Vui lòng chọn quy mô công ty'
+      }
+      if (!localData.target_platforms || localData.target_platforms.length === 0) {
+        newErrors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
+      }
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const togglePlatform = (platform: string, type: 'creator' | 'target') => {
     if (type === 'creator') {
@@ -9964,6 +10220,8 @@ function Step3Metrics({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateStep3()) return
+    
     if (role === 'creator') {
       onSave({
         creator_platforms: localData.creator_platforms,
@@ -10004,7 +10262,12 @@ function Step3Metrics({
                   <button
                     key={platform}
                     type="button"
-                    onClick={() => togglePlatform(platform, 'creator')}
+                    onClick={() => {
+                      togglePlatform(platform, 'creator')
+                      if (errors.creator_platforms) {
+                        setErrors({ ...errors, creator_platforms: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.creator_platforms?.includes(platform)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -10015,6 +10278,9 @@ function Step3Metrics({
                   </button>
                 ))}
               </div>
+              {errors.creator_platforms && (
+                <p className="mt-1 text-sm text-red-600">{errors.creator_platforms}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -10044,14 +10310,19 @@ function Step3Metrics({
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
-                Danh mục nội dung
+                Danh mục nội dung *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {categories.map((category) => (
                   <button
                     key={category}
                     type="button"
-                    onClick={() => toggleCategory(category)}
+                    onClick={() => {
+                      toggleCategory(category)
+                      if (errors.content_categories) {
+                        setErrors({ ...errors, content_categories: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.content_categories?.includes(category)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -10062,6 +10333,9 @@ function Step3Metrics({
                   </button>
                 ))}
               </div>
+              {errors.content_categories && (
+                <p className="mt-1 text-sm text-red-600">{errors.content_categories}</p>
+              )}
             </div>
           </>
         ) : (
@@ -10072,8 +10346,13 @@ function Step3Metrics({
               </label>
               <select
                 value={localData.company_size}
-                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, company_size: e.target.value } as any)
+                  if (errors.company_size) {
+                    setErrors({ ...errors, company_size: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.company_size ? 'border-red-500' : ''}`}
                 required
               >
                 <option value="">Chọn quy mô</option>
@@ -10083,6 +10362,9 @@ function Step3Metrics({
                 <option value="large">Lớn (201-1000 nhân viên)</option>
                 <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
               </select>
+              {errors.company_size && (
+                <p className="mt-1 text-sm text-red-600">{errors.company_size}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -10118,7 +10400,12 @@ function Step3Metrics({
                   <button
                     key={platform}
                     type="button"
-                    onClick={() => togglePlatform(platform, 'target')}
+                    onClick={() => {
+                      togglePlatform(platform, 'target')
+                      if (errors.target_platforms) {
+                        setErrors({ ...errors, target_platforms: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.target_platforms?.includes(platform)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -10129,13 +10416,16 @@ function Step3Metrics({
                   </button>
                 ))}
               </div>
+              {errors.target_platforms && (
+                <p className="mt-1 text-sm text-red-600">{errors.target_platforms}</p>
+              )}
             </div>
           </>
         )}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Object.keys(errors).length > 0 || (role === 'creator' ? (!localData.creator_platforms || localData.creator_platforms.length === 0 || !localData.content_categories || localData.content_categories.length === 0) : (!localData.company_size || !localData.target_platforms || localData.target_platforms.length === 0))}
           className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
         >
           {loading ? 'Đang lưu...' : 'Tiếp tục'}
@@ -10171,6 +10461,25 @@ function Step4Collaboration({
           preferred_collaboration_type: brandData.preferred_collaboration_type || [],
         }
   )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep4 = () => {
+    const newErrors: Record<string, string> = {}
+    if (role === 'creator') {
+      if (!localData.collaboration_expectation || localData.collaboration_expectation.length === 0) {
+        newErrors.collaboration_expectation = 'Vui lòng chọn ít nhất một loại hợp tác'
+      }
+    } else {
+      if (!localData.campaign_goal?.trim()) {
+        newErrors.campaign_goal = 'Vui lòng nhập mục tiêu chiến dịch'
+      }
+      if (!localData.preferred_collaboration_type || localData.preferred_collaboration_type.length === 0) {
+        newErrors.preferred_collaboration_type = 'Vui lòng chọn ít nhất một loại hợp tác'
+      }
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const toggleCollaborationType = (type: 'paid' | 'gift' | 'affiliate') => {
     if (role === 'creator') {
@@ -10190,6 +10499,8 @@ function Step4Collaboration({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateStep4()) return
+    
     if (role === 'creator') {
       onSave({
         collaboration_expectation: localData.collaboration_expectation,
@@ -10223,7 +10534,12 @@ function Step4Collaboration({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => toggleCollaborationType(type)}
+                    onClick={() => {
+                      toggleCollaborationType(type)
+                      if (errors.collaboration_expectation) {
+                        setErrors({ ...errors, collaboration_expectation: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.collaboration_expectation?.includes(type)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -10234,6 +10550,9 @@ function Step4Collaboration({
                   </button>
                 ))}
               </div>
+              {errors.collaboration_expectation && (
+                <p className="mt-1 text-sm text-red-600">{errors.collaboration_expectation}</p>
+              )}
             </div>
           </>
         ) : (
@@ -10244,12 +10563,20 @@ function Step4Collaboration({
               </label>
               <textarea
                 value={localData.campaign_goal}
-                onChange={(e) => setLocalData({ ...localData, campaign_goal: e.target.value } as any)}
+                onChange={(e) => {
+                  setLocalData({ ...localData, campaign_goal: e.target.value } as any)
+                  if (errors.campaign_goal) {
+                    setErrors({ ...errors, campaign_goal: '' })
+                  }
+                }}
                 rows={5}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.campaign_goal ? 'border-red-500' : ''}`}
                 placeholder="Mô tả mục tiêu hợp tác của thương hiệu..."
                 required
               />
+              {errors.campaign_goal && (
+                <p className="mt-1 text-sm text-red-600">{errors.campaign_goal}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -10260,7 +10587,12 @@ function Step4Collaboration({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => toggleCollaborationType(type)}
+                    onClick={() => {
+                      toggleCollaborationType(type)
+                      if (errors.preferred_collaboration_type) {
+                        setErrors({ ...errors, preferred_collaboration_type: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.preferred_collaboration_type?.includes(type)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -10271,13 +10603,16 @@ function Step4Collaboration({
                   </button>
                 ))}
               </div>
+              {errors.preferred_collaboration_type && (
+                <p className="mt-1 text-sm text-red-600">{errors.preferred_collaboration_type}</p>
+              )}
             </div>
           </>
         )}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Object.keys(errors).length > 0 || (role === 'creator' ? (!localData.collaboration_expectation || localData.collaboration_expectation.length === 0) : (!localData.campaign_goal?.trim() || !localData.preferred_collaboration_type || localData.preferred_collaboration_type.length === 0))}
           className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
         >
           {loading ? 'Đang lưu...' : 'Tiếp tục'}
@@ -10363,12 +10698,6 @@ function Step5Finalize({
 export interface Profile {
   id: string
   role: 'creator' | 'brand' | null
-  display_name?: string | null
-  avatar_url?: string | null
-  bio?: string | null
-  birth_year?: number | null
-  country?: string | null
-  city?: string | null
   onboarding_completed: boolean
   onboarding_data?: any
   is_admin?: boolean
@@ -10379,6 +10708,12 @@ export interface Profile {
 // Creator-specific fields (matches FINAL schema)
 export interface CreatorProfile extends Profile {
   role: 'creator'
+  full_name?: string | null
+  avatar_url?: string | null
+  birth_year?: number | null
+  gender?: string | null
+  country?: string | null
+  city?: string | null
   creator_platforms?: string[] | null // TEXT[]
   content_categories?: string[] | null // TEXT[]
   followers_count?: number | null
@@ -10486,6 +10821,8 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
   const handleLogout = async () => {
     setIsOpen(false)
     await signOut()
+    // Redirect to landing page after sign out
+    navigate('/')
   }
 
   const nameToShow = displayName || userEmail.split('@')[0]
@@ -10521,7 +10858,7 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
         <div className="absolute right-0 top-full pt-2 w-56 z-50">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
             <Link
-              to={role === 'brand' ? '/brand/dashboard' : '/creator/dashboard'}
+              to="/app"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >
@@ -10557,7 +10894,6 @@ export function useProfile(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
-  const supabase = getSupabase()
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -10572,6 +10908,19 @@ export function useProfile(
     let mounted = true
   
     async function fetchProfile() {
+      const supabaseInstance = getSupabase()
+      const { data: { session } } = await supabaseInstance.auth.getSession()
+      
+      if (!session || !session.access_token || !session.user.email_confirmed_at) {
+        if (mounted) {
+          setProfile(null)
+          setLoading(false)
+          setError(null)
+          setNeedsOnboarding(false)
+        }
+        return
+      }
+
       setLoading(true)
       setError(null)
       setNeedsOnboarding(false)
@@ -10585,7 +10934,7 @@ export function useProfile(
   
       try {
         // Step 1: Fetch core profile (role, onboarding flags)
-        const { data: coreProfile, error: coreError } = await supabase
+        const { data: coreProfile, error: coreError } = await supabaseInstance
           .from('profiles')
           .select('id, role, onboarding_completed, created_at, updated_at')
           .eq('id', userId)
@@ -10598,6 +10947,10 @@ export function useProfile(
   
         if (coreError) {
           if (mounted) {
+            if (coreError.code === '42501' || coreError.code === 'PGRST301') {
+              setLoading(false)
+              return
+            }
             setError(coreError.message)
             setLoading(false)
           }
@@ -10614,7 +10967,7 @@ export function useProfile(
   
         // Step 2: Fetch domain-specific profile based on role
         if (coreProfile.role === 'creator') {
-          const { data: creatorProfile, error: creatorError } = await supabase
+          const { data: creatorProfile, error: creatorError } = await supabaseInstance
             .from('creator_profiles')
             .select('*')
             .eq('user_id', userId)
@@ -10622,6 +10975,16 @@ export function useProfile(
   
           if (creatorError) {
             if (mounted) {
+              if (creatorError.code === 'PGRST116') {
+                setProfile(null)
+                setNeedsOnboarding(true)
+                setLoading(false)
+                return
+              }
+              if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
+                setLoading(false)
+                return
+              }
               setError(creatorError.message)
               setLoading(false)
             }
@@ -10638,7 +11001,7 @@ export function useProfile(
             setLoading(false)
           }
         } else if (coreProfile.role === 'brand') {
-          const { data: brandProfile, error: brandError } = await supabase
+          const { data: brandProfile, error: brandError } = await supabaseInstance
             .from('brand_profiles')
             .select('*')
             .eq('user_id', userId)
@@ -10656,6 +11019,10 @@ export function useProfile(
   
           if (brandError) {
             if (mounted) {
+              if (brandError.code === '42501' || brandError.code === 'PGRST301') {
+                setLoading(false)
+                return
+              }
               setError(brandError.message)
               setLoading(false)
             }
@@ -10694,7 +11061,7 @@ export function useProfile(
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [userId, enabled, supabase])
+  }, [userId, enabled])
   
 
   return { profile, loading, error, needsOnboarding }
@@ -10733,7 +11100,10 @@ import UserMenu from './UserMenu'
  */
 export default function Header() {
   const { session, loading: authLoading } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -10744,12 +11114,12 @@ export default function Header() {
   }
 
   const displayName =
-    profile?.display_name ||
+    (profile?.role === 'creator' ? (profile as any).full_name : profile?.role === 'brand' ? (profile as any).brand_name : null) ||
     session?.user?.user_metadata?.display_name ||
     undefined
 
   const avatarUrl =
-    profile?.avatar_url ||
+    (profile?.role === 'creator' ? (profile as any).avatar_url : null) ||
     session?.user?.user_metadata?.avatar_url ||
     undefined
 
@@ -10943,11 +11313,13 @@ import { Router } from './app/router'
 import ScrollToTop from './components/shared/ScrollToTop'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
+import { AuthProvider } from './contexts/AuthContext'
 
 function AppContent() {
   const location = useLocation()
   
-  const isDashboardMode = location.pathname.startsWith('/creator') || location.pathname.startsWith('/brand')
+  // Dashboard routes don't show header/footer
+  const isDashboardMode = location.pathname.startsWith('/dashboard')
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -10963,8 +11335,10 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <AppContent />
+      <AuthProvider>
+        <ScrollToTop />
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

@@ -3,11 +3,13 @@ import { Router } from './app/router'
 import ScrollToTop from './components/shared/ScrollToTop'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
+import { AuthProvider } from './contexts/AuthContext'
 
 function AppContent() {
   const location = useLocation()
   
-  const isDashboardMode = location.pathname.startsWith('/creator') || location.pathname.startsWith('/brand')
+  // Dashboard routes don't show header/footer
+  const isDashboardMode = location.pathname.startsWith('/dashboard')
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -23,8 +25,10 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <AppContent />
+      <AuthProvider>
+        <ScrollToTop />
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

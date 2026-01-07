@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 import CreatorDashboardLayout from '../components/creator/CreatorDashboardLayout'
 import DashboardHome from '../pages/creator/dashboard/DashboardHome'
 import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
@@ -12,6 +12,9 @@ import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
 export function CreatorRoutes() {
   const location = useLocation()
+  
+  // Guard: All old /creator/* routes must go through AppGate
+  return <Navigate to="/app" replace />
 
   if (location.pathname === '/creator/dashboard') {
     return (

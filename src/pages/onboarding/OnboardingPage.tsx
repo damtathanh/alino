@@ -9,6 +9,7 @@ interface CreatorFormData {
   country?: string
   city?: string
   birth_year?: number
+  gender?: string
   creator_platforms?: string[]
   followers_count?: number
   avg_views?: number
@@ -43,19 +44,15 @@ export default function OnboardingPage() {
   const [creatorData, setCreatorData] = useState<CreatorFormData>({})
   const [brandData, setBrandData] = useState<BrandFormData>({})
 
-  // Guard: Must be authenticated before any onboarding logic runs
   useEffect(() => {
     if (authLoading) return
-    if (!session) {
-      navigate('/login', { replace: true })
-      return
-    }
+    if (!session) return
     checkOnboardingStatus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, authLoading, navigate])
+  }, [session, authLoading])
 
   async function checkOnboardingStatus() {
-    if (!session) return
+    if (!session || !session.access_token) return
 
     try {
       const { data, error } = await supabase
@@ -64,12 +61,16 @@ export default function OnboardingPage() {
         .eq('id', session.user.id)
         .single()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) {
+        if (error.code === '42501' || error.code === 'PGRST301') {
+          return
+        }
+        if (error.code !== 'PGRST116') throw error
+      }
 
-      // Let AppGate handle redirects - don't redirect here
       if (data?.role) {
         setRole(data.role)
-        loadExistingData(data.role, data.onboarding_data)
+        loadExistingData(data.role, data?.onboarding_data)
       }
     } catch (err) {
       console.error('Error checking onboarding:', err)
@@ -93,6 +94,7 @@ export default function OnboardingPage() {
           country: step2.country || undefined,
           city: step2.city || undefined,
           birth_year: step2.birth_year || undefined,
+          gender: step2.gender || undefined,
           creator_platforms: step3.creator_platforms || undefined,
           followers_count: step3.followers_count || undefined,
           avg_views: step3.avg_views || undefined,
@@ -148,7 +150,7 @@ export default function OnboardingPage() {
 
   // Helper to merge onboarding_data JSON
   async function mergeOnboardingData(stepKey: string, stepData: any) {
-    if (!session) return null
+    if (!session || !session.access_token) return null
 
     // Fetch current onboarding_data
     const { data: profile, error: fetchError } = await supabase
@@ -157,7 +159,12 @@ export default function OnboardingPage() {
       .eq('id', session.user.id)
       .single()
 
-    if (fetchError) throw fetchError
+    if (fetchError) {
+      if (fetchError.code === '42501' || fetchError.code === 'PGRST301') {
+        return null
+      }
+      throw fetchError
+    }
 
     // Merge new step data into existing onboarding_data
     const currentData = profile?.onboarding_data || {}
@@ -175,7 +182,12 @@ export default function OnboardingPage() {
       })
       .eq('id', session.user.id)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      if (updateError.code === '42501' || updateError.code === 'PGRST301') {
+        return null
+      }
+      throw updateError
+    }
 
     return mergedData
   }
@@ -213,8 +225,7 @@ export default function OnboardingPage() {
   }
 
   async function handleComplete() {
-    // Guard: Must have session and role
-    if (!session || !role) {
+    if (!session || !session.access_token || !role) {
       setError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.')
       return
     }
@@ -223,16 +234,80 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      // Fetch onboarding_data
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('onboarding_data')
         .eq('id', session.user.id)
         .single()
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        if (fetchError.code === '42501' || fetchError.code === 'PGRST301') {
+          setError('Không thể truy cập dữ liệu. Vui lòng thử lại.')
+          setLoading(false)
+          return
+        }
+        throw fetchError
+      }
 
       const onboardingData = profile?.onboarding_data || {}
+
+      // Validate required fields before completing
+      if (role === 'creator') {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+        
+        if (!step2.display_name?.trim() || !step2.birth_year || !step2.gender || !step2.country?.trim() || !step2.city?.trim()) {
+          setError('Vui lòng điền đầy đủ thông tin cơ bản (tên, năm sinh, giới tính, quốc gia, thành phố)')
+          setLoading(false)
+          return
+        }
+        if (!step3.creator_platforms || step3.creator_platforms.length === 0) {
+          setError('Vui lòng chọn ít nhất một nền tảng')
+          setLoading(false)
+          return
+        }
+        if (!step3.content_categories || step3.content_categories.length === 0) {
+          setError('Vui lòng chọn ít nhất một danh mục nội dung')
+          setLoading(false)
+          return
+        }
+        if (!step4.collaboration_expectation || step4.collaboration_expectation.length === 0) {
+          setError('Vui lòng chọn ít nhất một loại hợp tác')
+          setLoading(false)
+          return
+        }
+      } else {
+        const step2 = onboardingData.step2 || {}
+        const step3 = onboardingData.step3 || {}
+        const step4 = onboardingData.step4 || {}
+        
+        if (!step2.company_name?.trim() || !step2.industry?.trim() || !step2.country?.trim() || !step2.city?.trim()) {
+          setError('Vui lòng điền đầy đủ thông tin cơ bản (tên công ty, ngành nghề, quốc gia, thành phố)')
+          setLoading(false)
+          return
+        }
+        if (!step3.company_size) {
+          setError('Vui lòng chọn quy mô công ty')
+          setLoading(false)
+          return
+        }
+        if (!step3.target_platforms || step3.target_platforms.length === 0) {
+          setError('Vui lòng chọn ít nhất một nền tảng mục tiêu')
+          setLoading(false)
+          return
+        }
+        if (!step4.campaign_goal?.trim()) {
+          setError('Vui lòng nhập mục tiêu chiến dịch')
+          setLoading(false)
+          return
+        }
+        if (!step4.preferred_collaboration_type || step4.preferred_collaboration_type.length === 0) {
+          setError('Vui lòng chọn ít nhất một loại hợp tác')
+          setLoading(false)
+          return
+        }
+      }
 
       // Step 1: Create or update domain-specific profile FIRST
       if (role === 'creator') {
@@ -242,6 +317,11 @@ export default function OnboardingPage() {
 
         const creatorProfileData: any = {
           user_id: session.user.id,
+          full_name: step2.display_name || null,
+          birth_year: step2.birth_year || null,
+          gender: step2.gender || null,
+          country: step2.country || null,
+          city: step2.city || null,
           creator_platforms: step3.creator_platforms || null,
           followers_count: step3.followers_count || null,
           avg_views: step3.avg_views || null,
@@ -294,11 +374,12 @@ export default function OnboardingPage() {
         }
       }
 
-      // Step 2: Update profiles.onboarding_completed AFTER domain profile is created
+      // Step 2: Update profiles.onboarding_completed and clear onboarding_data
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           onboarding_completed: true,
+          onboarding_data: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', session.user.id)
@@ -320,8 +401,9 @@ export default function OnboardingPage() {
         // Don't block onboarding if consent insert fails
       }
 
-      // Redirect to /app - AppGate will handle routing to /dashboard/{role}
-      navigate('/app', { replace: true })
+      // Redirect directly to dashboard based on role (bypass /app to prevent loops)
+      const dashboardPath = role === 'creator' ? '/dashboard/creator' : '/dashboard/brand'
+      navigate(dashboardPath, { replace: true })
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi hoàn tất onboarding')
       setLoading(false)
@@ -456,6 +538,7 @@ function Step2BasicIdentity({
           country: creatorData.country || '',
           city: creatorData.city || '',
           birth_year: creatorData.birth_year || undefined,
+          gender: creatorData.gender || '',
         }
       : {
           company_name: brandData.company_name || '',
@@ -464,15 +547,37 @@ function Step2BasicIdentity({
           city: brandData.city || '',
         }
   )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {}
+    if (role === 'creator') {
+      if (!localData.display_name?.trim()) newErrors.display_name = 'Vui lòng nhập tên hiển thị'
+      if (!localData.birth_year) newErrors.birth_year = 'Vui lòng nhập năm sinh'
+      if (!localData.gender) newErrors.gender = 'Vui lòng chọn giới tính'
+      if (!localData.country?.trim()) newErrors.country = 'Vui lòng nhập quốc gia'
+      if (!localData.city?.trim()) newErrors.city = 'Vui lòng nhập thành phố'
+    } else {
+      if (!localData.company_name?.trim()) newErrors.company_name = 'Vui lòng nhập tên công ty'
+      if (!localData.industry?.trim()) newErrors.industry = 'Vui lòng nhập ngành nghề'
+      if (!localData.country?.trim()) newErrors.country = 'Vui lòng nhập quốc gia'
+      if (!localData.city?.trim()) newErrors.city = 'Vui lòng nhập thành phố'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateStep2()) return
+    
     if (role === 'creator') {
       onSave({
         display_name: localData.display_name,
         country: localData.country,
         city: localData.city,
         birth_year: localData.birth_year,
+        gender: localData.gender,
       } as CreatorFormData)
     } else {
       onSave({
@@ -503,10 +608,64 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.display_name}
-                onChange={(e) => setLocalData({ ...localData, display_name: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, display_name: e.target.value } as any)
+                  if (errors.display_name) {
+                    setErrors({ ...errors, display_name: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.display_name ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.display_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.display_name}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Năm sinh *
+              </label>
+              <input
+                type="number"
+                min="1950"
+                max={new Date().getFullYear()}
+                value={localData.birth_year || ''}
+                onChange={(e) => {
+                  setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)
+                  if (errors.birth_year) {
+                    setErrors({ ...errors, birth_year: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.birth_year ? 'border-red-500' : ''}`}
+                required
+              />
+              {errors.birth_year && (
+                <p className="mt-1 text-sm text-red-600">{errors.birth_year}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Giới tính *
+              </label>
+              <select
+                value={localData.gender}
+                onChange={(e) => {
+                  setLocalData({ ...localData, gender: e.target.value } as any)
+                  if (errors.gender) {
+                    setErrors({ ...errors, gender: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.gender ? 'border-red-500' : ''}`}
+                required
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+              </select>
+              {errors.gender && (
+                <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -515,10 +674,18 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.country}
-                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, country: e.target.value })
+                  if (errors.country) {
+                    setErrors({ ...errors, country: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.country ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.country && (
+                <p className="mt-1 text-sm text-red-600">{errors.country}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -527,23 +694,18 @@ function Step2BasicIdentity({
               <input
                 type="text"
                 value={localData.city}
-                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, city: e.target.value })
+                  if (errors.city) {
+                    setErrors({ ...errors, city: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.city ? 'border-red-500' : ''}`}
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Năm sinh
-              </label>
-              <input
-                type="number"
-                min="1950"
-                max={new Date().getFullYear()}
-                value={localData.birth_year || ''}
-                onChange={(e) => setLocalData({ ...localData, birth_year: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-              />
+              {errors.city && (
+                <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+              )}
             </div>
           </>
         ) : (
@@ -642,6 +804,28 @@ function Step3Metrics({
           target_platforms: brandData.target_platforms || [],
         }
   )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep3 = () => {
+    const newErrors: Record<string, string> = {}
+    if (role === 'creator') {
+      if (!localData.creator_platforms || localData.creator_platforms.length === 0) {
+        newErrors.creator_platforms = 'Vui lòng chọn ít nhất một nền tảng'
+      }
+      if (!localData.content_categories || localData.content_categories.length === 0) {
+        newErrors.content_categories = 'Vui lòng chọn ít nhất một danh mục nội dung'
+      }
+    } else {
+      if (!localData.company_size) {
+        newErrors.company_size = 'Vui lòng chọn quy mô công ty'
+      }
+      if (!localData.target_platforms || localData.target_platforms.length === 0) {
+        newErrors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
+      }
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const togglePlatform = (platform: string, type: 'creator' | 'target') => {
     if (type === 'creator') {
@@ -669,6 +853,8 @@ function Step3Metrics({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateStep3()) return
+    
     if (role === 'creator') {
       onSave({
         creator_platforms: localData.creator_platforms,
@@ -709,7 +895,12 @@ function Step3Metrics({
                   <button
                     key={platform}
                     type="button"
-                    onClick={() => togglePlatform(platform, 'creator')}
+                    onClick={() => {
+                      togglePlatform(platform, 'creator')
+                      if (errors.creator_platforms) {
+                        setErrors({ ...errors, creator_platforms: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.creator_platforms?.includes(platform)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -720,6 +911,9 @@ function Step3Metrics({
                   </button>
                 ))}
               </div>
+              {errors.creator_platforms && (
+                <p className="mt-1 text-sm text-red-600">{errors.creator_platforms}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -749,14 +943,19 @@ function Step3Metrics({
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
-                Danh mục nội dung
+                Danh mục nội dung *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {categories.map((category) => (
                   <button
                     key={category}
                     type="button"
-                    onClick={() => toggleCategory(category)}
+                    onClick={() => {
+                      toggleCategory(category)
+                      if (errors.content_categories) {
+                        setErrors({ ...errors, content_categories: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.content_categories?.includes(category)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -767,6 +966,9 @@ function Step3Metrics({
                   </button>
                 ))}
               </div>
+              {errors.content_categories && (
+                <p className="mt-1 text-sm text-red-600">{errors.content_categories}</p>
+              )}
             </div>
           </>
         ) : (
@@ -777,8 +979,13 @@ function Step3Metrics({
               </label>
               <select
                 value={localData.company_size}
-                onChange={(e) => setLocalData({ ...localData, company_size: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                onChange={(e) => {
+                  setLocalData({ ...localData, company_size: e.target.value } as any)
+                  if (errors.company_size) {
+                    setErrors({ ...errors, company_size: '' })
+                  }
+                }}
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.company_size ? 'border-red-500' : ''}`}
                 required
               >
                 <option value="">Chọn quy mô</option>
@@ -788,6 +995,9 @@ function Step3Metrics({
                 <option value="large">Lớn (201-1000 nhân viên)</option>
                 <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
               </select>
+              {errors.company_size && (
+                <p className="mt-1 text-sm text-red-600">{errors.company_size}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -823,7 +1033,12 @@ function Step3Metrics({
                   <button
                     key={platform}
                     type="button"
-                    onClick={() => togglePlatform(platform, 'target')}
+                    onClick={() => {
+                      togglePlatform(platform, 'target')
+                      if (errors.target_platforms) {
+                        setErrors({ ...errors, target_platforms: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.target_platforms?.includes(platform)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -834,13 +1049,16 @@ function Step3Metrics({
                   </button>
                 ))}
               </div>
+              {errors.target_platforms && (
+                <p className="mt-1 text-sm text-red-600">{errors.target_platforms}</p>
+              )}
             </div>
           </>
         )}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Object.keys(errors).length > 0 || (role === 'creator' ? (!localData.creator_platforms || localData.creator_platforms.length === 0 || !localData.content_categories || localData.content_categories.length === 0) : (!localData.company_size || !localData.target_platforms || localData.target_platforms.length === 0))}
           className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
         >
           {loading ? 'Đang lưu...' : 'Tiếp tục'}
@@ -876,6 +1094,25 @@ function Step4Collaboration({
           preferred_collaboration_type: brandData.preferred_collaboration_type || [],
         }
   )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateStep4 = () => {
+    const newErrors: Record<string, string> = {}
+    if (role === 'creator') {
+      if (!localData.collaboration_expectation || localData.collaboration_expectation.length === 0) {
+        newErrors.collaboration_expectation = 'Vui lòng chọn ít nhất một loại hợp tác'
+      }
+    } else {
+      if (!localData.campaign_goal?.trim()) {
+        newErrors.campaign_goal = 'Vui lòng nhập mục tiêu chiến dịch'
+      }
+      if (!localData.preferred_collaboration_type || localData.preferred_collaboration_type.length === 0) {
+        newErrors.preferred_collaboration_type = 'Vui lòng chọn ít nhất một loại hợp tác'
+      }
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const toggleCollaborationType = (type: 'paid' | 'gift' | 'affiliate') => {
     if (role === 'creator') {
@@ -895,6 +1132,8 @@ function Step4Collaboration({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateStep4()) return
+    
     if (role === 'creator') {
       onSave({
         collaboration_expectation: localData.collaboration_expectation,
@@ -928,7 +1167,12 @@ function Step4Collaboration({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => toggleCollaborationType(type)}
+                    onClick={() => {
+                      toggleCollaborationType(type)
+                      if (errors.collaboration_expectation) {
+                        setErrors({ ...errors, collaboration_expectation: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.collaboration_expectation?.includes(type)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -939,6 +1183,9 @@ function Step4Collaboration({
                   </button>
                 ))}
               </div>
+              {errors.collaboration_expectation && (
+                <p className="mt-1 text-sm text-red-600">{errors.collaboration_expectation}</p>
+              )}
             </div>
           </>
         ) : (
@@ -949,12 +1196,20 @@ function Step4Collaboration({
               </label>
               <textarea
                 value={localData.campaign_goal}
-                onChange={(e) => setLocalData({ ...localData, campaign_goal: e.target.value } as any)}
+                onChange={(e) => {
+                  setLocalData({ ...localData, campaign_goal: e.target.value } as any)
+                  if (errors.campaign_goal) {
+                    setErrors({ ...errors, campaign_goal: '' })
+                  }
+                }}
                 rows={5}
-                className="w-full px-4 py-2.5 border rounded-lg"
+                className={`w-full px-4 py-2.5 border rounded-lg ${errors.campaign_goal ? 'border-red-500' : ''}`}
                 placeholder="Mô tả mục tiêu hợp tác của thương hiệu..."
                 required
               />
+              {errors.campaign_goal && (
+                <p className="mt-1 text-sm text-red-600">{errors.campaign_goal}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
@@ -965,7 +1220,12 @@ function Step4Collaboration({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => toggleCollaborationType(type)}
+                    onClick={() => {
+                      toggleCollaborationType(type)
+                      if (errors.preferred_collaboration_type) {
+                        setErrors({ ...errors, preferred_collaboration_type: '' })
+                      }
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm ${
                       localData.preferred_collaboration_type?.includes(type)
                         ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
@@ -976,13 +1236,16 @@ function Step4Collaboration({
                   </button>
                 ))}
               </div>
+              {errors.preferred_collaboration_type && (
+                <p className="mt-1 text-sm text-red-600">{errors.preferred_collaboration_type}</p>
+              )}
             </div>
           </>
         )}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Object.keys(errors).length > 0 || (role === 'creator' ? (!localData.collaboration_expectation || localData.collaboration_expectation.length === 0) : (!localData.campaign_goal?.trim() || !localData.preferred_collaboration_type || localData.preferred_collaboration_type.length === 0))}
           className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
         >
           {loading ? 'Đang lưu...' : 'Tiếp tục'}

@@ -115,7 +115,10 @@ const MOCK_INSIGHTS = [
 
 export default function DashboardHome() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true)
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 

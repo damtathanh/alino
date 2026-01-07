@@ -8,7 +8,10 @@ import { FaGoogle, FaFacebook, FaInstagram, FaTiktok, FaCheckCircle, FaTimesCirc
 
 export default function SettingsPage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const supabase = getSupabase()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')

@@ -10,7 +10,10 @@ import UserMenu from './UserMenu'
  */
 export default function Header() {
   const { session, loading: authLoading } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -21,12 +24,12 @@ export default function Header() {
   }
 
   const displayName =
-    profile?.display_name ||
+    (profile?.role === 'creator' ? (profile as any).full_name : profile?.role === 'brand' ? (profile as any).brand_name : null) ||
     session?.user?.user_metadata?.display_name ||
     undefined
 
   const avatarUrl =
-    profile?.avatar_url ||
+    (profile?.role === 'creator' ? (profile as any).avatar_url : null) ||
     session?.user?.user_metadata?.avatar_url ||
     undefined
 

@@ -34,6 +34,8 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
   const handleLogout = async () => {
     setIsOpen(false)
     await signOut()
+    // Redirect to landing page after sign out
+    navigate('/')
   }
 
   const nameToShow = displayName || userEmail.split('@')[0]
@@ -69,7 +71,7 @@ export default function UserMenu({ userEmail, displayName, avatarUrl, role }: Us
         <div className="absolute right-0 top-full pt-2 w-56 z-50">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2">
             <Link
-              to={role === 'brand' ? '/brand/dashboard' : '/creator/dashboard'}
+              to="/app"
               onClick={() => setIsOpen(false)}
               className="block px-4 py-2.5 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
             >

@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { 
   FaTh, 
   FaUser, 
@@ -13,32 +13,31 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import DashboardHeader from '../dashboard/DashboardHeader'
 
-interface BrandDashboardLayoutProps {
-  children: React.ReactNode
-}
-
-export default function BrandDashboardLayout({ children }: BrandDashboardLayoutProps) {
+export default function BrandDashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { signOut } = useAuth()
 
   const mainNavItems = [
-    { path: '/brand/dashboard', label: 'Bảng điều khiển', icon: FaTh },
-    { path: '/brand/discovery', label: 'Tìm kiếm Creator', icon: FaSearch },
-    { path: '/brand/campaigns', label: 'Chiến dịch', icon: FaBullhorn },
-    { path: '/brand/proposals', label: 'Hộp thư đề xuất', icon: FaEnvelope },
-    { path: '/brand/workspace', label: 'Không gian làm việc', icon: FaBriefcase },
-    { path: '/brand/analytics', label: 'Phân tích', icon: FaChartBar },
+    { path: '', label: 'Bảng điều khiển', icon: FaTh },
+    { path: 'discovery', label: 'Tìm kiếm Creator', icon: FaSearch },
+    { path: 'campaigns', label: 'Chiến dịch', icon: FaBullhorn },
+    { path: 'proposals', label: 'Hộp thư đề xuất', icon: FaEnvelope },
+    { path: 'workspace', label: 'Không gian làm việc', icon: FaBriefcase },
+    { path: 'analytics', label: 'Phân tích', icon: FaChartBar },
   ]
 
   const accountItems = [
-    { path: '/brand/settings', label: 'Cài đặt', icon: FaCog },
+    { path: 'settings', label: 'Cài đặt', icon: FaCog },
   ]
 
   const isActive = (path: string) => {
-    if (path === '/brand/dashboard') {
-      return location.pathname === '/brand/dashboard'
+    if (path === '') {
+      // Index route - only active when exactly at /dashboard/brand
+      return location.pathname === '/dashboard/brand'
     }
-    return location.pathname.startsWith(path)
+    // For other paths, check if current pathname starts with the route
+    return location.pathname === `/dashboard/brand/${path}` || location.pathname.startsWith(`/dashboard/brand/${path}/`)
   }
 
   return (
@@ -97,6 +96,8 @@ export default function BrandDashboardLayout({ children }: BrandDashboardLayoutP
                   <button
                     onClick={async () => {
                       await signOut()
+                      // Redirect to landing page after sign out
+                      navigate('/')
                     }}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
                   >
@@ -109,7 +110,7 @@ export default function BrandDashboardLayout({ children }: BrandDashboardLayoutP
           </aside>
 
           <main className="flex-1 ml-64">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>

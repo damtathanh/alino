@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../hooks/useAuth'
 import { useProfile } from '../../../hooks/useProfile'
 import { getSupabase } from '../../../lib/supabase'
@@ -8,9 +7,11 @@ import AvatarUpload from '../../../components/AvatarUpload'
 import Toast from '../../../components/shared/Toast'
 
 export default function ProfilePage() {
-  const { session, isAuthenticated } = useAuth()
-  const { profile, loading: profileLoading, needsOnboarding } = useProfile(session?.user?.id, isAuthenticated)
-  const navigate = useNavigate()
+  const { session } = useAuth()
+  const { profile, loading: profileLoading, needsOnboarding } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -21,10 +22,8 @@ export default function ProfilePage() {
 
   // Form state - matches FINAL schema exactly
   interface ProfileFormData {
-    // Core fields
     display_name?: string | null
     avatar_url?: string | null
-    bio?: string | null
     birth_year?: number | null
     country?: string | null
     city?: string | null
@@ -46,14 +45,14 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      // Load all fields directly from profile columns (matches FINAL schema)
+      const isCreator = profile.role === 'creator'
+      const isBrand = profile.role === 'brand'
       setFormData({
-        display_name: profile.display_name || undefined,
-        avatar_url: profile.avatar_url || undefined,
-        bio: profile.bio || undefined,
-        birth_year: profile.birth_year || undefined,
-        country: profile.country || undefined,
-        city: profile.city || undefined,
+        display_name: isCreator ? (profile as any).full_name : (isBrand ? (profile as any).brand_name : undefined),
+        avatar_url: isCreator ? (profile as any).avatar_url : undefined,
+        birth_year: isCreator ? (profile as any).birth_year : undefined,
+        country: isCreator ? (profile as any).country : undefined,
+        city: isCreator ? (profile as any).city : undefined,
         // Creator fields
         creator_platforms: (profile as any).creator_platforms || undefined,
         content_categories: (profile as any).content_categories || undefined,
@@ -70,13 +69,6 @@ export default function ProfilePage() {
       })
     }
   }, [profile])
-
-  // Redirect brand users without profile to onboarding
-  useEffect(() => {
-    if (!profileLoading && needsOnboarding && profile?.role === 'brand') {
-      navigate('/onboarding', { replace: true })
-    }
-  }, [profileLoading, needsOnboarding, profile, navigate])
 
   if (profileLoading) {
     return (
@@ -184,9 +176,8 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    if (!session || !profile) return
+    if (!session || !session.access_token || !profile) return
 
-    // Validate before saving
     const validation = validateProfile()
     if (!validation.isValid) {
       setToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'error' })
@@ -200,27 +191,13 @@ export default function ProfilePage() {
     setFieldErrors({})
 
     try {
-      // Step 1: Update core profile fields (profiles table)
-      const coreUpdateData: any = {
-        display_name: formData.display_name || null,
-        avatar_url: formData.avatar_url || null,
-        bio: formData.bio || null,
-        birth_year: formData.birth_year || null,
-        country: formData.country || null,
-        city: formData.city || null,
-        updated_at: new Date().toISOString(),
-      }
-      
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(coreUpdateData)
-        .eq('id', session.user.id)
-
-      if (profileError) throw profileError
-
-      // Step 2: Update domain-specific profile
       if (role === 'creator') {
         const creatorUpdateData: any = {
+          full_name: formData.display_name || null,
+          avatar_url: formData.avatar_url || null,
+          birth_year: formData.birth_year || null,
+          country: formData.country || null,
+          city: formData.city || null,
           creator_platforms: formData.creator_platforms || null,
           content_categories: formData.content_categories || null,
           followers_count: formData.followers_count || null,
@@ -234,7 +211,14 @@ export default function ProfilePage() {
           .update(creatorUpdateData)
           .eq('user_id', session.user.id)
 
-        if (creatorError) throw creatorError
+        if (creatorError) {
+          if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
+            setLoading(false)
+            setToast({ message: 'Không thể truy cập dữ liệu. Vui lòng thử lại.', type: 'error' })
+            return
+          }
+          throw creatorError
+        }
       } else if (role === 'brand') {
         const brandUpdateData: any = {
           brand_name: formData.brand_name || null,
@@ -251,16 +235,25 @@ export default function ProfilePage() {
           .update(brandUpdateData)
           .eq('user_id', session.user.id)
 
-        if (brandError) throw brandError
+        if (brandError) {
+          if (brandError.code === '42501' || brandError.code === 'PGRST301') {
+            setLoading(false)
+            setToast({ message: 'Không thể truy cập dữ liệu. Vui lòng thử lại.', type: 'error' })
+            return
+          }
+          throw brandError
+        }
       }
 
-      // Sync display_name and avatar_url to auth metadata
+      // Sync full_name and avatar_url to auth metadata (for creator only)
       const metadataUpdate: Record<string, any> = {}
-      if (formData.display_name !== undefined) {
-        metadataUpdate.display_name = formData.display_name
-      }
-      if (formData.avatar_url !== undefined) {
-        metadataUpdate.avatar_url = formData.avatar_url
+      if (role === 'creator') {
+        if (formData.display_name !== undefined) {
+          metadataUpdate.display_name = formData.display_name
+        }
+        if (formData.avatar_url !== undefined) {
+          metadataUpdate.avatar_url = formData.avatar_url
+        }
       }
 
       if (Object.keys(metadataUpdate).length > 0) {
@@ -283,28 +276,31 @@ export default function ProfilePage() {
   }
 
   const handleAvatarChange = async (url: string) => {
-    // URL is already a public URL from AvatarUpload component (after successful storage upload)
-    if (!session || !profile) {
+    if (!session || !profile || !role) {
       console.error('Cannot save avatar: missing session or profile')
       return
     }
 
-    // Optimistically update form state
     setFormData((prev) => ({ ...prev, avatar_url: url }))
 
     try {
-      // Update profiles.avatar_url (core field)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          avatar_url: url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id)
+      if (role === 'creator') {
+        const { error: creatorError } = await supabase
+          .from('creator_profiles')
+          .update({
+            avatar_url: url,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', session.user.id)
 
-      if (profileError) {
-        console.error('Failed to update profiles.avatar_url:', profileError)
-        throw profileError
+        if (creatorError) {
+          if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
+            console.error('Permission denied updating avatar:', creatorError)
+            return
+          }
+          console.error('Failed to update creator_profiles.avatar_url:', creatorError)
+          throw creatorError
+        }
       }
 
       // Sync to auth metadata (secondary, non-blocking)
@@ -582,19 +578,6 @@ export default function ProfilePage() {
             {role === 'creator' && (
               <div className="border-b pb-6">
                 <h2 className="text-xl font-semibold mb-4">Thông tin Creator</h2>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Giới thiệu
-                  </label>
-                  <textarea
-                    value={formData.bio || ''}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2.5 border rounded-lg"
-                    placeholder="Giới thiệu về bản thân..."
-                  />
-                </div>
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-[#374151] mb-2">

@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 import BrandDashboardLayout from '../components/brand/BrandDashboardLayout'
 import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
 import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
@@ -10,6 +10,9 @@ import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
 export function BrandRoutes() {
   const location = useLocation()
+  
+  // Guard: All old /brand/* routes must go through AppGate
+  return <Navigate to="/app" replace />
 
   if (location.pathname === '/brand/dashboard') {
     return (

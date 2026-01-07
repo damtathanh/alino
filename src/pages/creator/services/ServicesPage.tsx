@@ -26,7 +26,10 @@ const PRO_PLAN_MAX_SERVICES = 10
 
 export default function ServicesPage() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const supabase = getSupabase()
 
   const [services, setServices] = useState<Service[]>([])
@@ -277,8 +280,8 @@ export default function ServicesPage() {
     return `$${price.toLocaleString('vi-VN')}`
   }
 
-  const displayName = profile?.display_name || session?.user?.email?.split('@')[0] || 'Creator'
-  const avatarUrl = profile?.avatar_url || session?.user?.user_metadata?.avatar_url
+  const displayName = (profile?.role === 'creator' ? (profile as any).full_name : null) || session?.user?.email?.split('@')[0] || 'Creator'
+  const avatarUrl = (profile?.role === 'creator' ? (profile as any).avatar_url : null) || session?.user?.user_metadata?.avatar_url
 
   if (loading) {
     return (

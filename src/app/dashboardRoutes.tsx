@@ -19,10 +19,29 @@ import CampaignWorkspacePage from '../pages/brand/campaigns/CampaignWorkspacePag
 import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
 import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
+/**
+ * DashboardRoutes: Stable final destination routes
+ * 
+ * IMPORTANT: These routes are OUTSIDE AppGate and should NEVER redirect.
+ * They are the final destination after onboarding is completed.
+ * 
+ * If user needs to complete onboarding or select role, they should go through /app
+ * (which is handled by AppGate), not through dashboard redirects.
+ * 
+ * This component only:
+ * 1. Checks authentication (redirects to login if not authenticated)
+ * 2. Validates role matches URL
+ * 3. Renders the appropriate dashboard
+ * 
+ * No onboarding checks, no role selection redirects - those are handled by AppGate at /app
+ */
 function DashboardRoutes() {
   const { role } = useParams<{ role: 'creator' | 'brand' }>()
   const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id, !!session)
+  const { profile, loading: profileLoading } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
 
   if (authLoading || profileLoading) {
     return (
@@ -32,77 +51,32 @@ function DashboardRoutes() {
     )
   }
 
+  // Basic auth check - if not authenticated, redirect to login
   if (!session || !profile) {
     return <Navigate to="/login" replace />
   }
 
-  if (!role || (role !== 'creator' && role !== 'brand')) {
-    return <Navigate to="/app" replace />
-  }
-
-  if (profile.role !== role) {
-    // Redirect to correct role dashboard
-    if (profile.role === 'creator') {
-      return <Navigate to="/dashboard/creator" replace />
-    } else if (profile.role === 'brand') {
-      return <Navigate to="/dashboard/brand" replace />
-    }
+  // Validate role in URL matches profile role
+  // If mismatch, redirect to /app (AppGate will handle routing to correct dashboard)
+  if (!role || (role !== 'creator' && role !== 'brand') || profile.role !== role) {
     return <Navigate to="/app" replace />
   }
 
   if (role === 'creator') {
     return (
       <Routes>
-        <Route path="" element={
-          <CreatorDashboardLayout>
-            <DashboardHome />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="profile" element={
-          <CreatorDashboardLayout>
-            <ProfilePage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="settings" element={
-          <CreatorDashboardLayout>
-            <SettingsPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="services" element={
-          <CreatorDashboardLayout>
-            <ServicesPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="discovery" element={
-          <CreatorDashboardLayout>
-            <OpportunitiesPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="proposals/new" element={
-          <CreatorDashboardLayout>
-            <SubmitProposalPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="proposals/*" element={
-          <CreatorDashboardLayout>
-            <ComingSoonPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="workspace" element={
-          <CreatorDashboardLayout>
-            <DealWorkspacePage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="analytics" element={
-          <CreatorDashboardLayout>
-            <AnalyticsPage />
-          </CreatorDashboardLayout>
-        } />
-        <Route path="*" element={
-          <CreatorDashboardLayout>
-            <ComingSoonPage />
-          </CreatorDashboardLayout>
-        } />
+        <Route element={<CreatorDashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="services" element={<ServicesPage />} />
+          <Route path="discovery" element={<OpportunitiesPage />} />
+          <Route path="proposals/new" element={<SubmitProposalPage />} />
+          <Route path="proposals/*" element={<ComingSoonPage />} />
+          <Route path="workspace" element={<DealWorkspacePage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="*" element={<ComingSoonPage />} />
+        </Route>
       </Routes>
     )
   }
@@ -110,51 +84,17 @@ function DashboardRoutes() {
   // Brand routes
   return (
     <Routes>
-      <Route path="" element={
-        <BrandDashboardLayout>
-          <BrandDashboard />
-        </BrandDashboardLayout>
-      } />
-      <Route path="analytics" element={
-        <BrandDashboardLayout>
-          <BrandCampaignAnalyticsPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="discovery" element={
-        <BrandDashboardLayout>
-          <CreatorDiscoveryPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="campaigns/new" element={
-        <BrandDashboardLayout>
-          <CreateCampaignPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="campaigns/*" element={
-        <BrandDashboardLayout>
-          <CampaignWorkspacePage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="proposals/*" element={
-        <BrandDashboardLayout>
-          <ProposalInboxPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="workspace" element={
-        <BrandDashboardLayout>
-          <ComingSoonPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="settings" element={
-        <BrandDashboardLayout>
-          <ComingSoonPage />
-        </BrandDashboardLayout>
-      } />
-      <Route path="*" element={
-        <BrandDashboardLayout>
-          <ComingSoonPage />
-        </BrandDashboardLayout>
-      } />
+      <Route element={<BrandDashboardLayout />}>
+        <Route index element={<BrandDashboard />} />
+        <Route path="analytics" element={<BrandCampaignAnalyticsPage />} />
+        <Route path="discovery" element={<CreatorDiscoveryPage />} />
+        <Route path="campaigns/new" element={<CreateCampaignPage />} />
+        <Route path="campaigns/*" element={<CampaignWorkspacePage />} />
+        <Route path="proposals/*" element={<ProposalInboxPage />} />
+        <Route path="workspace" element={<ComingSoonPage />} />
+        <Route path="settings" element={<ComingSoonPage />} />
+        <Route path="*" element={<ComingSoonPage />} />
+      </Route>
     </Routes>
   )
 }

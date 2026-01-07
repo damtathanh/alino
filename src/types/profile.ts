@@ -2,12 +2,6 @@
 export interface Profile {
   id: string
   role: 'creator' | 'brand' | null
-  display_name?: string | null
-  avatar_url?: string | null
-  bio?: string | null
-  birth_year?: number | null
-  country?: string | null
-  city?: string | null
   onboarding_completed: boolean
   onboarding_data?: any
   is_admin?: boolean
@@ -18,6 +12,12 @@ export interface Profile {
 // Creator-specific fields (matches FINAL schema)
 export interface CreatorProfile extends Profile {
   role: 'creator'
+  full_name?: string | null
+  avatar_url?: string | null
+  birth_year?: number | null
+  gender?: string | null
+  country?: string | null
+  city?: string | null
   creator_platforms?: string[] | null // TEXT[]
   content_categories?: string[] | null // TEXT[]
   followers_count?: number | null

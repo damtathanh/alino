@@ -16,24 +16,34 @@ import NotificationModal from '../shared/NotificationModal'
  */
 export default function DashboardHeader() {
   const { session } = useAuth()
-  const { profile } = useProfile(session?.user?.id, !!session)
+  const { profile } = useProfile(
+    session?.user?.id,
+    !!(session && session.access_token && session.user.email_confirmed_at)
+  )
   const navigate = useNavigate()
   const location = useLocation()
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    navigate('/')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Navigate to dashboard home based on role
+    if (profile?.role === 'creator') {
+      navigate('/dashboard/creator', { replace: false })
+    } else if (profile?.role === 'brand') {
+      navigate('/dashboard/brand', { replace: false })
+    } else {
+      // Fallback to /app if role not set
+      navigate('/app', { replace: false })
+    }
   }
 
   const fullName =
-    profile?.display_name ||
+    (profile?.role === 'creator' ? (profile as any).full_name : profile?.role === 'brand' ? (profile as any).brand_name : null) ||
     session?.user?.user_metadata?.display_name ||
     ''
 
   const avatarUrl =
-    profile?.avatar_url ||
+    (profile?.role === 'creator' ? (profile as any).avatar_url : null) ||
     session?.user?.user_metadata?.avatar_url ||
     undefined
 
@@ -46,102 +56,111 @@ export default function DashboardHeader() {
   const pathname = location.pathname
 
   const getTitleAndSubtitle = () => {
-    if (pathname === '/creator/dashboard') {
-      const displayName = profile?.display_name || session?.user?.user_metadata?.display_name || 'Creator'
+    // Creator dashboard routes
+    if (pathname === '/dashboard/creator') {
+      const displayName = (profile?.role === 'creator' ? (profile as any).full_name : profile?.role === 'brand' ? (profile as any).brand_name : null) || session?.user?.user_metadata?.display_name || 'Creator'
       return {
         title: `Chào mừng, ${displayName}!`,
         subtitle: 'Tổng quan tài khoản ALINO của bạn hôm nay.',
       }
     }
 
-    if (pathname.startsWith('/creator/profile')) {
+    if (pathname.startsWith('/dashboard/creator/profile')) {
       return {
         title: 'Hồ sơ cá nhân',
         subtitle: 'Quản lý thông tin hiển thị của bạn với đối tác',
       }
     }
 
-    if (pathname.startsWith('/creator/settings')) {
+    if (pathname.startsWith('/dashboard/creator/settings')) {
       return {
         title: 'Cài đặt',
         subtitle: 'Quản lý cài đặt tài khoản và tùy chọn',
       }
     }
 
-    if (pathname.startsWith('/creator/services')) {
+    if (pathname.startsWith('/dashboard/creator/services')) {
       return {
         title: 'Dịch vụ & Bảng giá',
         subtitle: 'Thiết lập dịch vụ và mức giá bạn cung cấp',
       }
     }
 
-    if (pathname.startsWith('/creator/discovery')) {
+    if (pathname.startsWith('/dashboard/creator/discovery')) {
       return {
         title: 'Cơ hội hợp tác',
         subtitle: 'Khám phá các cơ hội phù hợp với bạn',
       }
     }
 
-    if (pathname.startsWith('/creator/proposals')) {
+    if (pathname.startsWith('/dashboard/creator/proposals')) {
       return {
         title: 'Đề xuất',
         subtitle: 'Quản lý các đề xuất hợp tác đang diễn ra',
       }
     }
 
-    if (pathname.startsWith('/creator/workspace')) {
+    if (pathname.startsWith('/dashboard/creator/workspace')) {
       return {
         title: 'Trung tâm làm việc',
         subtitle: 'Theo dõi và xử lý các hoạt động hợp tác',
       }
     }
 
-    if (pathname.startsWith('/creator/analytics')) {
+    if (pathname.startsWith('/dashboard/creator/analytics')) {
       return {
         title: 'Phân tích',
         subtitle: 'Theo dõi hiệu suất và tăng trưởng của bạn',
       }
     }
 
-    if (pathname === '/brand/dashboard') {
+    // Brand dashboard routes
+    if (pathname === '/dashboard/brand') {
       return {
         title: 'Brand Dashboard',
         subtitle: 'Tổng quan chiến dịch và hiệu suất',
       }
     }
 
-    if (pathname.startsWith('/brand/discovery')) {
+    if (pathname.startsWith('/dashboard/brand/discovery')) {
       return {
         title: 'Tìm kiếm Creator',
         subtitle: 'Khám phá và kết nối với các creator phù hợp',
       }
     }
 
-    if (pathname.startsWith('/brand/campaigns')) {
+    if (pathname.startsWith('/dashboard/brand/campaigns')) {
       return {
         title: 'Chiến dịch',
         subtitle: 'Quản lý các chiến dịch marketing của bạn',
       }
     }
 
-    if (pathname.startsWith('/brand/proposals')) {
+    if (pathname.startsWith('/dashboard/brand/proposals')) {
       return {
         title: 'Hộp thư đề xuất',
         subtitle: 'Xem và quản lý các đề xuất từ creator',
       }
     }
 
-    if (pathname.startsWith('/brand/workspace')) {
+    if (pathname.startsWith('/dashboard/brand/workspace')) {
       return {
         title: 'Không gian làm việc',
         subtitle: 'Theo dõi tiến độ và cộng tác với creator',
       }
     }
 
-    if (pathname.startsWith('/brand/analytics')) {
+    if (pathname.startsWith('/dashboard/brand/analytics')) {
       return {
         title: 'Phân tích',
         subtitle: 'Theo dõi hiệu suất chiến dịch và ROI',
+      }
+    }
+
+    if (pathname.startsWith('/dashboard/brand/settings')) {
+      return {
+        title: 'Cài đặt',
+        subtitle: 'Quản lý cài đặt tài khoản và tùy chọn',
       }
     }
 

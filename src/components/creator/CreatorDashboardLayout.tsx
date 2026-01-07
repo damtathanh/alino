@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { 
   FaTh, 
   FaUser, 
@@ -13,33 +13,32 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import DashboardHeader from '../dashboard/DashboardHeader'
 
-interface CreatorDashboardLayoutProps {
-  children: React.ReactNode
-}
-
-export default function CreatorDashboardLayout({ children }: CreatorDashboardLayoutProps) {
+export default function CreatorDashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { signOut } = useAuth()
 
   const mainNavItems = [
-    { path: '/creator/dashboard', label: 'Bảng điều khiển', icon: FaTh },
-    { path: '/creator/profile', label: 'Hồ sơ cá nhân', icon: FaUser },
-    { path: '/creator/services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
-    { path: '/creator/discovery', label: 'Cơ hội', icon: FaLightbulb },
-    { path: '/creator/proposals', label: 'Đề xuất', icon: FaFileAlt },
-    { path: '/creator/workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
-    { path: '/creator/analytics', label: 'Phân tích', icon: FaChartBar },
+    { path: '', label: 'Bảng điều khiển', icon: FaTh },
+    { path: 'profile', label: 'Hồ sơ cá nhân', icon: FaUser },
+    { path: 'services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
+    { path: 'discovery', label: 'Cơ hội', icon: FaLightbulb },
+    { path: 'proposals', label: 'Đề xuất', icon: FaFileAlt },
+    { path: 'workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
+    { path: 'analytics', label: 'Phân tích', icon: FaChartBar },
   ]
 
   const accountItems = [
-    { path: '/creator/settings', label: 'Cài đặt', icon: FaCog },
+    { path: 'settings', label: 'Cài đặt', icon: FaCog },
   ]
 
   const isActive = (path: string) => {
-    if (path === '/creator/dashboard') {
-      return location.pathname === '/creator/dashboard'
+    if (path === '') {
+      // Index route - only active when exactly at /dashboard/creator
+      return location.pathname === '/dashboard/creator'
     }
-    return location.pathname.startsWith(path)
+    // For other paths, check if current pathname starts with the route
+    return location.pathname === `/dashboard/creator/${path}` || location.pathname.startsWith(`/dashboard/creator/${path}/`)
   }
 
   return (
@@ -98,6 +97,8 @@ export default function CreatorDashboardLayout({ children }: CreatorDashboardLay
                   <button
                     onClick={async () => {
                       await signOut()
+                      // Redirect to landing page after sign out
+                      navigate('/')
                     }}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
                   >
@@ -110,7 +111,7 @@ export default function CreatorDashboardLayout({ children }: CreatorDashboardLay
           </aside>
 
           <main className="flex-1 ml-64">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>
