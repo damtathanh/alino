@@ -25,16 +25,9 @@ export default function DashboardHeader() {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
 
   const handleLogoClick = (e: React.MouseEvent) => {
+    // Always navigate to landing page
     e.preventDefault()
-    // Navigate to dashboard home based on role
-    if (profile?.role === 'creator') {
-      navigate('/dashboard/creator', { replace: false })
-    } else if (profile?.role === 'brand') {
-      navigate('/dashboard/brand', { replace: false })
-    } else {
-      // Fallback to /app if role not set
-      navigate('/app', { replace: false })
-    }
+    navigate('/', { replace: false })
   }
 
   const fullName =

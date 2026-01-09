@@ -429,7 +429,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#EEF1FF] via-[#F5F7FF] to-white py-20 px-6 pt-24">
-      <div className="max-w-3xl mx-auto">
+      <div className={`max-w-7xl mx-auto ${role === 'creator' && currentStep >= 2 && currentStep <= 4 ? '' : 'max-w-3xl'}`}>
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 md:p-10 shadow-xl border border-black/5">
           {/* Progress indicator */}
           <div className="mb-8">
@@ -589,8 +589,48 @@ function Step2BasicIdentity({
     }
   }
 
+  // Creator preview component
+  const CreatorProfilePreview = () => {
+    if (role !== 'creator') return null
+    
+    const displayName = localData.display_name || 'Tên của bạn'
+    const location = localData.city && localData.country 
+      ? `${localData.city}, ${localData.country}` 
+      : localData.city || localData.country || 'Địa điểm'
+    
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+        <div className="text-center mb-6">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-1">{displayName}</h3>
+          <p className="text-sm text-gray-600 mb-2">Creator Profile</p>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Available
+          </span>
+        </div>
+        
+        <div className="space-y-4 text-sm">
+          <div>
+            <p className="text-gray-600 mb-2">📍 {location}</p>
+          </div>
+          
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-xs text-gray-500 mb-2">Xem trước hồ sơ</p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {displayName !== 'Tên của bạn' 
+                ? `Đây là cách hồ sơ của bạn sẽ hiển thị cho các thương hiệu. Hoàn thành các bước để xem thêm thông tin.`
+                : 'Nhập thông tin để xem trước hồ sơ của bạn'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <h1 className="text-3xl font-semibold tracking-tight mb-4">
         Thông tin cơ bản
       </h1>
@@ -598,9 +638,10 @@ function Step2BasicIdentity({
         {role === 'creator' ? 'Hãy cho chúng tôi biết về bạn' : 'Hãy cho chúng tôi biết về thương hiệu của bạn'}
       </p>
 
-      <div className="space-y-4">
-        {role === 'creator' ? (
-          <>
+      {role === 'creator' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 Tên hiển thị *
@@ -707,69 +748,80 @@ function Step2BasicIdentity({
                 <p className="mt-1 text-sm text-red-600">{errors.city}</p>
               )}
             </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Tên công ty *
-              </label>
-              <input
-                type="text"
-                value={localData.company_name}
-                onChange={(e) => setLocalData({ ...localData, company_name: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Ngành nghề *
-              </label>
-              <input
-                type="text"
-                value={localData.industry}
-                onChange={(e) => setLocalData({ ...localData, industry: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Quốc gia *
-              </label>
-              <input
-                type="text"
-                value={localData.country}
-                onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Thành phố *
-              </label>
-              <input
-                type="text"
-                value={localData.city}
-                onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                required
-              />
-            </div>
-          </>
-        )}
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+            >
+              {loading ? 'Đang lưu...' : 'Tiếp tục'}
+            </button>
+          </form>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-        >
-          {loading ? 'Đang lưu...' : 'Tiếp tục'}
-        </button>
-      </div>
-    </form>
+          {/* Right: Live Preview */}
+          <CreatorProfilePreview />
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Tên công ty *
+            </label>
+            <input
+              type="text"
+              value={localData.company_name}
+              onChange={(e) => setLocalData({ ...localData, company_name: e.target.value } as any)}
+              className="w-full px-4 py-2.5 border rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Ngành nghề *
+            </label>
+            <input
+              type="text"
+              value={localData.industry}
+              onChange={(e) => setLocalData({ ...localData, industry: e.target.value } as any)}
+              className="w-full px-4 py-2.5 border rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Quốc gia *
+            </label>
+            <input
+              type="text"
+              value={localData.country}
+              onChange={(e) => setLocalData({ ...localData, country: e.target.value })}
+              className="w-full px-4 py-2.5 border rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Thành phố *
+            </label>
+            <input
+              type="text"
+              value={localData.city}
+              onChange={(e) => setLocalData({ ...localData, city: e.target.value })}
+              className="w-full px-4 py-2.5 border rounded-lg"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+          >
+            {loading ? 'Đang lưu...' : 'Tiếp tục'}
+          </button>
+        </form>
+      )}
+    </div>
   )
 }
 
@@ -874,8 +926,89 @@ function Step3Metrics({
 
   const categories = ['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education']
 
+  // Enhanced Creator preview for Step 3
+  const CreatorMetricsPreview = () => {
+    if (role !== 'creator') return null
+    
+    const displayName = creatorData.display_name || 'Tên của bạn'
+    const location = creatorData.city && creatorData.country 
+      ? `${creatorData.city}, ${creatorData.country}` 
+      : creatorData.city || creatorData.country || 'Địa điểm'
+    const followers = localData.followers_count 
+      ? localData.followers_count >= 1000 
+        ? `${(localData.followers_count / 1000).toFixed(1)}K` 
+        : localData.followers_count.toString()
+      : null
+    const platforms = localData.creator_platforms || []
+    const contentCategories = localData.content_categories || []
+    
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+        <div className="text-center mb-6">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-1">{displayName}</h3>
+          <p className="text-sm text-gray-600 mb-2">Creator Profile</p>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-3">
+            Available
+          </span>
+        </div>
+        
+        <div className="space-y-4 text-sm">
+          <div>
+            <p className="text-gray-600 mb-2">📍 {location}</p>
+          </div>
+          
+          {followers && (
+            <div className="flex items-center gap-2 text-gray-700">
+              <span className="text-gray-500">👥</span>
+              <span>Followers: {followers}</span>
+            </div>
+          )}
+          
+          {platforms.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Platforms</p>
+              <div className="flex flex-wrap gap-2">
+                {platforms.slice(0, 3).map((platform) => (
+                  <span key={platform} className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                    {platform}
+                  </span>
+                ))}
+                {platforms.length > 3 && (
+                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                    +{platforms.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {contentCategories.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Content Categories</p>
+              <div className="flex flex-wrap gap-2">
+                {contentCategories.slice(0, 3).map((cat) => (
+                  <span key={cat} className="px-2 py-1 bg-[#6366F1]/10 text-[#6366F1] rounded text-xs">
+                    {cat}
+                  </span>
+                ))}
+                {contentCategories.length > 3 && (
+                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                    +{contentCategories.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <h1 className="text-3xl font-semibold tracking-tight mb-4">
         {role === 'creator' ? 'Thông tin Creator' : 'Thông tin Brand'}
       </h1>
@@ -883,9 +1016,10 @@ function Step3Metrics({
         {role === 'creator' ? 'Chia sẻ về kênh và nội dung của bạn' : 'Chia sẻ về quy mô và ngân sách marketing'}
       </p>
 
-      <div className="space-y-4">
-        {role === 'creator' ? (
-          <>
+      {role === 'creator' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 Nền tảng bạn sử dụng *
@@ -970,101 +1104,112 @@ function Step3Metrics({
                 <p className="mt-1 text-sm text-red-600">{errors.content_categories}</p>
               )}
             </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Quy mô công ty *
-              </label>
-              <select
-                value={localData.company_size}
-                onChange={(e) => {
-                  setLocalData({ ...localData, company_size: e.target.value } as any)
-                  if (errors.company_size) {
-                    setErrors({ ...errors, company_size: '' })
-                  }
-                }}
-                className={`w-full px-4 py-2.5 border rounded-lg ${errors.company_size ? 'border-red-500' : ''}`}
-                required
-              >
-                <option value="">Chọn quy mô</option>
-                <option value="startup">Startup (1-10 nhân viên)</option>
-                <option value="small">Nhỏ (11-50 nhân viên)</option>
-                <option value="medium">Vừa (51-200 nhân viên)</option>
-                <option value="large">Lớn (201-1000 nhân viên)</option>
-                <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
-              </select>
-              {errors.company_size && (
-                <p className="mt-1 text-sm text-red-600">{errors.company_size}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Ngân sách marketing (USD)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={localData.budget || ''}
-                onChange={(e) => setLocalData({ ...localData, budget: e.target.value ? parseInt(e.target.value) : undefined } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: 5000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Khoảng ngân sách chiến dịch
-              </label>
-              <input
-                type="text"
-                value={localData.campaign_budget_range}
-                onChange={(e) => setLocalData({ ...localData, campaign_budget_range: e.target.value } as any)}
-                className="w-full px-4 py-2.5 border rounded-lg"
-                placeholder="Ví dụ: $1000 - $5000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Nền tảng mục tiêu *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {platforms.map((platform) => (
-                  <button
-                    key={platform}
-                    type="button"
-                    onClick={() => {
-                      togglePlatform(platform, 'target')
-                      if (errors.target_platforms) {
-                        setErrors({ ...errors, target_platforms: '' })
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-lg border text-sm ${
-                      localData.target_platforms?.includes(platform)
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {platform}
-                  </button>
-                ))}
-              </div>
-              {errors.target_platforms && (
-                <p className="mt-1 text-sm text-red-600">{errors.target_platforms}</p>
-              )}
-            </div>
-          </>
-        )}
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+            >
+              {loading ? 'Đang lưu...' : 'Tiếp tục'}
+            </button>
+          </form>
 
-        <button
-          type="submit"
-          disabled={loading || Object.keys(errors).length > 0 || (role === 'creator' ? (!localData.creator_platforms || localData.creator_platforms.length === 0 || !localData.content_categories || localData.content_categories.length === 0) : (!localData.company_size || !localData.target_platforms || localData.target_platforms.length === 0))}
-          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-        >
-          {loading ? 'Đang lưu...' : 'Tiếp tục'}
-        </button>
-      </div>
-    </form>
+          {/* Right: Live Preview */}
+          <CreatorMetricsPreview />
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Quy mô công ty *
+            </label>
+            <select
+              value={localData.company_size}
+              onChange={(e) => {
+                setLocalData({ ...localData, company_size: e.target.value } as any)
+                if (errors.company_size) {
+                  setErrors({ ...errors, company_size: '' })
+                }
+              }}
+              className={`w-full px-4 py-2.5 border rounded-lg ${errors.company_size ? 'border-red-500' : ''}`}
+              required
+            >
+              <option value="">Chọn quy mô</option>
+              <option value="startup">Startup (1-10 nhân viên)</option>
+              <option value="small">Nhỏ (11-50 nhân viên)</option>
+              <option value="medium">Vừa (51-200 nhân viên)</option>
+              <option value="large">Lớn (201-1000 nhân viên)</option>
+              <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+            </select>
+            {errors.company_size && (
+              <p className="mt-1 text-sm text-red-600">{errors.company_size}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Ngân sách marketing (USD)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={localData.budget || ''}
+              onChange={(e) => setLocalData({ ...localData, budget: e.target.value ? parseInt(e.target.value) : undefined } as any)}
+              className="w-full px-4 py-2.5 border rounded-lg"
+              placeholder="Ví dụ: 5000"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Khoảng ngân sách chiến dịch
+            </label>
+            <input
+              type="text"
+              value={localData.campaign_budget_range}
+              onChange={(e) => setLocalData({ ...localData, campaign_budget_range: e.target.value } as any)}
+              className="w-full px-4 py-2.5 border rounded-lg"
+              placeholder="Ví dụ: $1000 - $5000"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Nền tảng mục tiêu *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {platforms.map((platform) => (
+                <button
+                  key={platform}
+                  type="button"
+                  onClick={() => {
+                    togglePlatform(platform, 'target')
+                    if (errors.target_platforms) {
+                      setErrors({ ...errors, target_platforms: '' })
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg border text-sm ${
+                    localData.target_platforms?.includes(platform)
+                      ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {platform}
+                </button>
+              ))}
+            </div>
+            {errors.target_platforms && (
+              <p className="mt-1 text-sm text-red-600">{errors.target_platforms}</p>
+            )}
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+          >
+            {loading ? 'Đang lưu...' : 'Tiếp tục'}
+          </button>
+        </form>
+      )}
+    </div>
   )
 }
 
@@ -1146,8 +1291,112 @@ function Step4Collaboration({
     }
   }
 
+  // Creator collaboration preview
+  const CreatorCollaborationPreview = () => {
+    if (role !== 'creator') return null
+    
+    const displayName = creatorData.display_name || 'Tên của bạn'
+    const location = creatorData.city && creatorData.country 
+      ? `${creatorData.city}, ${creatorData.country}` 
+      : creatorData.city || creatorData.country || 'Địa điểm'
+    const followers = creatorData.followers_count 
+      ? creatorData.followers_count >= 1000 
+        ? `${(creatorData.followers_count / 1000).toFixed(1)}K` 
+        : creatorData.followers_count.toString()
+      : null
+    const platforms = creatorData.creator_platforms || []
+    const contentCategories = creatorData.content_categories || []
+    const collaborationTypes = localData.collaboration_expectation || []
+    
+    const getCollaborationLabel = (type: string) => {
+      switch(type) {
+        case 'paid': return 'Trả phí'
+        case 'gift': return 'Sản phẩm'
+        case 'affiliate': return 'Affiliate'
+        default: return type
+      }
+    }
+    
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+        <div className="text-center mb-6">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#6366F1] to-[#EC4899] mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-1">{displayName}</h3>
+          <p className="text-sm text-gray-600 mb-2">Creator Profile</p>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-3">
+            Available
+          </span>
+        </div>
+        
+        <div className="space-y-4 text-sm">
+          <div>
+            <p className="text-gray-600 mb-2">📍 {location}</p>
+          </div>
+          
+          {followers && (
+            <div className="flex items-center gap-2 text-gray-700">
+              <span className="text-gray-500">👥</span>
+              <span>Followers: {followers}</span>
+            </div>
+          )}
+          
+          {platforms.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Platforms</p>
+              <div className="flex flex-wrap gap-2">
+                {platforms.slice(0, 3).map((platform) => (
+                  <span key={platform} className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                    {platform}
+                  </span>
+                ))}
+                {platforms.length > 3 && (
+                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                    +{platforms.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {contentCategories.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Content Categories</p>
+              <div className="flex flex-wrap gap-2">
+                {contentCategories.slice(0, 3).map((cat) => (
+                  <span key={cat} className="px-2 py-1 bg-[#6366F1]/10 text-[#6366F1] rounded text-xs">
+                    {cat}
+                  </span>
+                ))}
+                {contentCategories.length > 3 && (
+                  <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                    +{contentCategories.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {collaborationTypes.length > 0 && (
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-500 mb-2">Open to Collaboration</p>
+              <div className="flex flex-wrap gap-2">
+                {collaborationTypes.map((type) => (
+                  <span key={type} className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                    {getCollaborationLabel(type)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <h1 className="text-3xl font-semibold tracking-tight mb-4">
         Mục tiêu hợp tác
       </h1>
@@ -1155,9 +1404,10 @@ function Step4Collaboration({
         {role === 'creator' ? 'Bạn mong đợi gì từ các hợp tác?' : 'Mục tiêu hợp tác của thương hiệu là gì?'}
       </p>
 
-      <div className="space-y-4">
-        {role === 'creator' ? (
-          <>
+      {role === 'creator' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 Loại hợp tác mong muốn *
@@ -1187,16 +1437,28 @@ function Step4Collaboration({
                 <p className="mt-1 text-sm text-red-600">{errors.collaboration_expectation}</p>
               )}
             </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Mục tiêu chiến dịch *
-              </label>
-              <textarea
-                value={localData.campaign_goal}
-                onChange={(e) => {
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+            >
+              {loading ? 'Đang lưu...' : 'Tiếp tục'}
+            </button>
+          </form>
+
+          {/* Right: Live Preview */}
+          <CreatorCollaborationPreview />
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              Mục tiêu chiến dịch *
+            </label>
+            <textarea
+              value={localData.campaign_goal}
+              onChange={(e) => {
                   setLocalData({ ...localData, campaign_goal: e.target.value } as any)
                   if (errors.campaign_goal) {
                     setErrors({ ...errors, campaign_goal: '' })
@@ -1240,18 +1502,17 @@ function Step4Collaboration({
                 <p className="mt-1 text-sm text-red-600">{errors.preferred_collaboration_type}</p>
               )}
             </div>
-          </>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
+            >
+              {loading ? 'Đang lưu...' : 'Tiếp tục'}
+            </button>
+          </form>
         )}
-
-        <button
-          type="submit"
-          disabled={loading || Object.keys(errors).length > 0 || (role === 'creator' ? (!localData.collaboration_expectation || localData.collaboration_expectation.length === 0) : (!localData.campaign_goal?.trim() || !localData.preferred_collaboration_type || localData.preferred_collaboration_type.length === 0))}
-          className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-        >
-          {loading ? 'Đang lưu...' : 'Tiếp tục'}
-        </button>
-      </div>
-    </form>
+    </div>
   )
 }
 

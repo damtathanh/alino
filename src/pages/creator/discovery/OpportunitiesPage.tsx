@@ -65,7 +65,7 @@ export default function OpportunitiesPage() {
   const navigate = useNavigate()
 
   const handlePropose = (opportunityId: string) => {
-    navigate(`/creator/proposals/new?opportunityId=${opportunityId}`)
+    navigate(`/dashboard/creator/proposals/new?opportunityId=${opportunityId}`)
   }
 
   const formatBudget = (min: number, max: number) => {
@@ -83,12 +83,6 @@ export default function OpportunitiesPage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8 px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Cơ hội hợp tác</h1>
-          <p className="text-gray-600">
-            Khám phá các chiến dịch thú vị từ các thương hiệu hàng đầu và gửi đề xuất của bạn để mở rộng mạng lưới và thu nhập.
-          </p>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {MOCK_OPPORTUNITIES.map((opportunity) => (

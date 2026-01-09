@@ -298,24 +298,6 @@ export default function ServicesPage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8 px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dịch vụ & Bảng giá</h1>
-            <p className="text-gray-600 mt-2">
-              Định nghĩa gói dịch vụ, đặt giá và chỉ định sản phẩm đầu ra. Quản lý cách dịch vụ của bạn hiển thị trên hồ sơ công khai.
-            </p>
-          </div>
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-6 py-3 bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Thêm dịch vụ mới
-            </button>
-          )}
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Create/Edit Form */}
           {showForm && (

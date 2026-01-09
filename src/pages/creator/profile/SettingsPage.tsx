@@ -309,37 +309,13 @@ export default function SettingsPage() {
             
             <div className="space-y-4 text-gray-700">
               <div>
-                <h3 className="font-semibold mb-2">Dữ liệu chúng tôi thu thập</h3>
                 <p className="text-sm mb-4">
-                  ALINO thu thập thông tin cá nhân của bạn để cung cấp và cải thiện dịch vụ, bao gồm:
+                  ALINO sử dụng thông tin của bạn để vận hành, duy trì, cải thiện và tối ưu hóa nền tảng. 
+                  Chúng tôi thu thập và xử lý dữ liệu cần thiết để cung cấp dịch vụ kết nối giữa Creator và Brand một cách hiệu quả.
                 </p>
-                <ul className="list-disc pl-6 text-sm space-y-1 mb-4">
-                  <li>Thông tin tài khoản (email, tên, ngày sinh, địa chỉ)</li>
-                  <li>Thông tin hồ sơ công khai</li>
-                  <li>Dữ liệu từ các tài khoản mạng xã hội được kết nối (Google, Facebook, Instagram, TikTok)</li>
-                  <li>Thông tin về cách bạn sử dụng nền tảng</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Mục đích sử dụng</h3>
                 <p className="text-sm mb-4">
-                  Chúng tôi sử dụng dữ liệu của bạn để:
-                </p>
-                <ul className="list-disc pl-6 text-sm space-y-1 mb-4">
-                  <li>Kết nối bạn với các đối tác phù hợp (Creators với Brands)</li>
-                  <li>Cải thiện trải nghiệm người dùng và tính năng của nền tảng</li>
-                  <li>Gửi thông báo và cập nhật về dịch vụ</li>
-                  <li>Phân tích và tối ưu hóa hiệu suất</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Kết nối mạng xã hội</h3>
-                <p className="text-sm mb-4">
-                  Khi bạn kết nối tài khoản mạng xã hội với ALINO, chúng tôi có thể truy cập và lưu trữ 
-                  thông tin công khai từ các tài khoản đó để cung cấp dịch vụ tốt hơn và tạo điều kiện 
-                  cho các tính năng của nền tảng.
+                  Thông tin của bạn được sử dụng để nâng cao trải nghiệm người dùng, cải thiện chất lượng dịch vụ, 
+                  và đảm bảo nền tảng hoạt động ổn định và an toàn.
                 </p>
               </div>
 

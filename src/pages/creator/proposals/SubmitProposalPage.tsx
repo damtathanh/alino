@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FaPaperPlane, FaEye, FaCheck, FaTimes, FaChevronDown } from 'react-icons/fa'
-import CreatorDashboardLayout from '../../../components/creator/CreatorDashboardLayout'
 
 interface ProposalFormData {
   campaignId: string
@@ -113,7 +112,7 @@ export default function SubmitProposalPage() {
   }
 
   const handleSubmit = () => {
-    navigate('/creator/proposals')
+    navigate('/dashboard/creator/proposals')
   }
 
   const selectedCampaign = MOCK_CAMPAIGNS.find(c => c.id === formData.campaignId)
@@ -137,8 +136,7 @@ export default function SubmitProposalPage() {
   }, [])
 
   return (
-    <CreatorDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Gửi đề xuất của bạn</h1>
@@ -509,6 +507,5 @@ export default function SubmitProposalPage() {
           </div>
         </div>
       </div>
-    </CreatorDashboardLayout>
   )
 }

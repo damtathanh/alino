@@ -1,74 +1,105 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
 import { useProfile } from '../../../hooks/useProfile'
 import { getSupabase } from '../../../lib/supabase'
-import type { Profile, CreatorProfile, BrandProfile } from '../../../types/profile'
 import AvatarUpload from '../../../components/AvatarUpload'
 import Toast from '../../../components/shared/Toast'
+import { FaClock, FaUsers, FaStar, FaLink, FaInstagram, FaYoutube } from 'react-icons/fa'
+
+type TabType = 'overview' | 'services' | 'portfolio' | 'reviews'
 
 export default function ProfilePage() {
   const { session } = useAuth()
-  const { profile, loading: profileLoading, needsOnboarding } = useProfile(
+  const { profile, loading: profileLoading } = useProfile(
     session?.user?.id,
     !!(session && session.access_token && session.user.email_confirmed_at)
   )
+  const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const supabase = getSupabase()
   
-  // Refs for field focus/scroll
-  const fieldRefs = useRef<Record<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>>({})
+  // Form state - only editable fields
+  const [formData, setFormData] = useState({
+    display_name: '',
+    avatar_url: '',
+    bio: '',
+    portfolio_website: '',
+    instagram_url: '',
+    youtube_url: '',
+    response_time: '24 hours',
+  })
 
-  // Form state - matches FINAL schema exactly
-  interface ProfileFormData {
-    display_name?: string | null
-    avatar_url?: string | null
-    birth_year?: number | null
-    country?: string | null
-    city?: string | null
-    // Creator fields
-    creator_platforms?: string[] | null // TEXT[]
-    content_categories?: string[] | null // TEXT[]
-    followers_count?: number | null
-    avg_views?: number | null
-    collaboration_expectation?: string[] | null // TEXT[]
-    // Brand fields
-    brand_name?: string | null
-    industry?: string | null
-    company_size?: string | null
-    monthly_marketing_budget?: number | null // NUMERIC
-    target_platforms?: string[] | null // TEXT[]
-    collaboration_goals?: string[] | null // TEXT[]
-  }
-  const [formData, setFormData] = useState<ProfileFormData>({})
+  // Non-editable display data (from profile)
+  const [displayData, setDisplayData] = useState({
+    followers_count: 0,
+    recommendations: 0,
+  })
 
   useEffect(() => {
-    if (profile) {
-      const isCreator = profile.role === 'creator'
-      const isBrand = profile.role === 'brand'
+    if (profile && profile.role === 'creator') {
+      const creatorProfile = profile as any
       setFormData({
-        display_name: isCreator ? (profile as any).full_name : (isBrand ? (profile as any).brand_name : undefined),
-        avatar_url: isCreator ? (profile as any).avatar_url : undefined,
-        birth_year: isCreator ? (profile as any).birth_year : undefined,
-        country: isCreator ? (profile as any).country : undefined,
-        city: isCreator ? (profile as any).city : undefined,
-        // Creator fields
-        creator_platforms: (profile as any).creator_platforms || undefined,
-        content_categories: (profile as any).content_categories || undefined,
-        followers_count: (profile as any).followers_count || undefined,
-        avg_views: (profile as any).avg_views || undefined,
-        collaboration_expectation: (profile as any).collaboration_expectation || undefined,
-        // Brand fields
-        brand_name: (profile as any).brand_name || undefined,
-        industry: (profile as any).industry || undefined,
-        company_size: (profile as any).company_size || undefined,
-        monthly_marketing_budget: (profile as any).monthly_marketing_budget ? Number((profile as any).monthly_marketing_budget) : undefined,
-        target_platforms: (profile as any).target_platforms || undefined,
-        collaboration_goals: Array.isArray((profile as any).collaboration_goals) ? (profile as any).collaboration_goals : undefined,
+        display_name: creatorProfile.full_name || '',
+        avatar_url: creatorProfile.avatar_url || '',
+        bio: creatorProfile.bio || '',
+        portfolio_website: creatorProfile.portfolio_website || '',
+        instagram_url: creatorProfile.instagram_url || '',
+        youtube_url: creatorProfile.youtube_url || '',
+        response_time: creatorProfile.response_time || '24 hours',
+      })
+      setDisplayData({
+        followers_count: creatorProfile.followers_count || 0,
+        recommendations: creatorProfile.recommendations || 0,
       })
     }
   }, [profile])
+
+  const handleSave = async () => {
+    if (!session || !profile) return
+
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('creator_profiles')
+        .update({
+          full_name: formData.display_name,
+          avatar_url: formData.avatar_url,
+          bio: formData.bio,
+          portfolio_website: formData.portfolio_website,
+          instagram_url: formData.instagram_url,
+          youtube_url: formData.youtube_url,
+          response_time: formData.response_time,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', session.user.id)
+
+      if (error) throw error
+
+      setToast({ message: 'Lưu hồ sơ thành công', type: 'success' })
+    } catch (err: any) {
+      setToast({ message: err.message || 'Có lỗi xảy ra', type: 'error' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAvatarChange = async (url: string) => {
+    setFormData({ ...formData, avatar_url: url })
+    if (!session || !profile) return
+
+    try {
+      const { error } = await supabase
+        .from('creator_profiles')
+        .update({ avatar_url: url, updated_at: new Date().toISOString() })
+        .eq('user_id', session.user.id)
+
+      if (error) throw error
+      setToast({ message: 'Đã lưu avatar thành công', type: 'success' })
+    } catch (error: any) {
+      setToast({ message: error.message || 'Có lỗi xảy ra', type: 'error' })
+    }
+  }
 
   if (profileLoading) {
     return (
@@ -78,14 +109,7 @@ export default function ProfilePage() {
     )
   }
 
-  if (!profile) {
-    if (needsOnboarding) {
-      return (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-[#6B7280]">Đang chuyển hướng đến onboarding...</div>
-        </div>
-      )
-    }
+  if (!profile || profile.role !== 'creator') {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
@@ -93,833 +117,214 @@ export default function ProfilePage() {
     )
   }
 
-  const role = profile.role || 'creator'
-
-  // Validation function
-  const validateProfile = (): { isValid: boolean; firstInvalidField: string | null } => {
-    const errors: Record<string, string> = {}
-
-    // Core required fields
-    if (!formData.display_name || formData.display_name.trim() === '') {
-      errors.display_name = 'Vui lòng nhập tên hiển thị'
-    }
-    if (!formData.birth_year) {
-      errors.birth_year = 'Vui lòng nhập năm sinh'
-    }
-    if (!formData.country || formData.country.trim() === '') {
-      errors.country = 'Vui lòng nhập quốc gia'
-    }
-    if (!formData.city || formData.city.trim() === '') {
-      errors.city = 'Vui lòng nhập thành phố'
-    }
-
-    if (role === 'creator') {
-      // Creator required fields
-      if (!formData.creator_platforms || formData.creator_platforms.length === 0) {
-        errors.creator_platforms = 'Vui lòng chọn ít nhất một nền tảng'
-      }
-      if (!formData.content_categories || formData.content_categories.length === 0) {
-        errors.content_categories = 'Vui lòng chọn ít nhất một danh mục nội dung'
-      }
-      if (!formData.collaboration_expectation || formData.collaboration_expectation.length === 0) {
-        errors.collaboration_expectation = 'Vui lòng chọn ít nhất một kỳ vọng hợp tác'
-      }
-      if (!formData.followers_count || formData.followers_count <= 0) {
-        errors.followers_count = 'Vui lòng nhập số lượng người theo dõi (lớn hơn 0)'
-      }
-      if (!formData.avg_views || formData.avg_views <= 0) {
-        errors.avg_views = 'Vui lòng nhập lượt xem trung bình (lớn hơn 0)'
-      }
-    } else {
-      // Brand required fields
-      if (!formData.brand_name || formData.brand_name.trim() === '') {
-        errors.brand_name = 'Vui lòng nhập tên công ty'
-      }
-      if (!formData.industry || formData.industry.trim() === '') {
-        errors.industry = 'Vui lòng nhập ngành nghề'
-      }
-      if (!formData.company_size || formData.company_size.trim() === '') {
-        errors.company_size = 'Vui lòng chọn quy mô công ty'
-      }
-      if (!formData.monthly_marketing_budget || formData.monthly_marketing_budget <= 0) {
-        errors.monthly_marketing_budget = 'Vui lòng nhập ngân sách marketing (lớn hơn 0)'
-      }
-      if (!formData.target_platforms || formData.target_platforms.length === 0) {
-        errors.target_platforms = 'Vui lòng chọn ít nhất một nền tảng mục tiêu'
-      }
-      if (!formData.collaboration_goals || formData.collaboration_goals.length === 0) {
-        errors.collaboration_goals = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
-      }
-    }
-
-    setFieldErrors(errors)
-
-    if (Object.keys(errors).length > 0) {
-      // Find first invalid field for scrolling
-      const fieldOrder = role === 'creator'
-        ? ['display_name', 'birth_year', 'country', 'city', 'creator_platforms', 'content_categories', 'followers_count', 'avg_views', 'collaboration_expectation']
-        : ['display_name', 'birth_year', 'country', 'city', 'brand_name', 'industry', 'company_size', 'monthly_marketing_budget', 'target_platforms', 'collaboration_goals']
-      
-      const firstInvalidField = fieldOrder.find(field => errors[field]) || null
-      return { isValid: false, firstInvalidField }
-    }
-
-    return { isValid: true, firstInvalidField: null }
-  }
-
-  const scrollToField = (fieldName: string) => {
-    const field = fieldRefs.current[fieldName]
-    if (field) {
-      field.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      setTimeout(() => field.focus(), 300)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!session || !session.access_token || !profile) return
-
-    const validation = validateProfile()
-    if (!validation.isValid) {
-      setToast({ message: 'Vui lòng điền đầy đủ thông tin bắt buộc', type: 'error' })
-      if (validation.firstInvalidField) {
-        scrollToField(validation.firstInvalidField)
-      }
-      return
-    }
-
-    setLoading(true)
-    setFieldErrors({})
-
-    try {
-      if (role === 'creator') {
-        const creatorUpdateData: any = {
-          full_name: formData.display_name || null,
-          avatar_url: formData.avatar_url || null,
-          birth_year: formData.birth_year || null,
-          country: formData.country || null,
-          city: formData.city || null,
-          creator_platforms: formData.creator_platforms || null,
-          content_categories: formData.content_categories || null,
-          followers_count: formData.followers_count || null,
-          avg_views: formData.avg_views || null,
-          collaboration_expectation: formData.collaboration_expectation || null,
-          updated_at: new Date().toISOString(),
-        }
-
-        const { error: creatorError } = await supabase
-          .from('creator_profiles')
-          .update(creatorUpdateData)
-          .eq('user_id', session.user.id)
-
-        if (creatorError) {
-          if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
-            setLoading(false)
-            setToast({ message: 'Không thể truy cập dữ liệu. Vui lòng thử lại.', type: 'error' })
-            return
-          }
-          throw creatorError
-        }
-      } else if (role === 'brand') {
-        const brandUpdateData: any = {
-          brand_name: formData.brand_name || null,
-          industry: formData.industry || null,
-          company_size: formData.company_size || null,
-          monthly_marketing_budget: formData.monthly_marketing_budget !== undefined ? formData.monthly_marketing_budget : null,
-          target_platforms: formData.target_platforms || null,
-          collaboration_goals: formData.collaboration_goals || null,
-          updated_at: new Date().toISOString(),
-        }
-
-        const { error: brandError } = await supabase
-          .from('brand_profiles')
-          .update(brandUpdateData)
-          .eq('user_id', session.user.id)
-
-        if (brandError) {
-          if (brandError.code === '42501' || brandError.code === 'PGRST301') {
-            setLoading(false)
-            setToast({ message: 'Không thể truy cập dữ liệu. Vui lòng thử lại.', type: 'error' })
-            return
-          }
-          throw brandError
-        }
-      }
-
-      // Sync full_name and avatar_url to auth metadata (for creator only)
-      const metadataUpdate: Record<string, any> = {}
-      if (role === 'creator') {
-        if (formData.display_name !== undefined) {
-          metadataUpdate.display_name = formData.display_name
-        }
-        if (formData.avatar_url !== undefined) {
-          metadataUpdate.avatar_url = formData.avatar_url
-        }
-      }
-
-      if (Object.keys(metadataUpdate).length > 0) {
-        const { error: authError } = await supabase.auth.updateUser({
-          data: metadataUpdate,
-        })
-        if (authError) {
-          console.warn('Failed to update auth metadata:', authError)
-          // Don't throw - profile update succeeded
-        }
-      }
-
-      setToast({ message: 'Lưu hồ sơ thành công', type: 'success' })
-    } catch (err: any) {
-      console.error('Profile save error:', err)
-      setToast({ message: err.message || 'Có lỗi xảy ra, vui lòng thử lại', type: 'error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAvatarChange = async (url: string) => {
-    if (!session || !profile || !role) {
-      console.error('Cannot save avatar: missing session or profile')
-      return
-    }
-
-    setFormData((prev) => ({ ...prev, avatar_url: url }))
-
-    try {
-      if (role === 'creator') {
-        const { error: creatorError } = await supabase
-          .from('creator_profiles')
-          .update({
-            avatar_url: url,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', session.user.id)
-
-        if (creatorError) {
-          if (creatorError.code === '42501' || creatorError.code === 'PGRST301') {
-            console.error('Permission denied updating avatar:', creatorError)
-            return
-          }
-          console.error('Failed to update creator_profiles.avatar_url:', creatorError)
-          throw creatorError
-        }
-      }
-
-      // Sync to auth metadata (secondary, non-blocking)
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { avatar_url: url },
-      })
-      if (authError) {
-        console.warn('Failed to sync avatar_url to auth metadata (non-blocking):', authError)
-        // Don't throw - profile update succeeded
-      }
-
-      setToast({ message: 'Đã lưu avatar thành công', type: 'success' })
-    } catch (error: any) {
-      console.error('Avatar save error:', error)
-      // Revert optimistic update on error
-      setFormData((prev) => ({ ...prev, avatar_url: profile.avatar_url || null }))
-      setToast({ message: error.message || 'Có lỗi xảy ra khi lưu avatar', type: 'error' })
-    }
-  }
+  const displayName = formData.display_name || 'Creator'
 
   return (
-    <div className="bg-white py-8 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-200">
-
-          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
-            {/* Basic Identity Section */}
-            <div className="border-b pb-6">
-              <h2 className="text-xl font-semibold mb-4">Thông tin cơ bản</h2>
-              
-              {role === 'creator' ? (
-                <>
-                  {/* Top Row: Display Name | Avatar */}
-                  <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
-                    {/* Left: Display Name */}
-                    <div className="flex-1 space-y-4 w-full md:w-auto">
-                      <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-2">
-                          Tên hiển thị *
-                        </label>
-                        <input
-                          ref={(el) => fieldRefs.current.display_name = el}
-                          type="text"
-                          value={formData.display_name || ''}
-                          onChange={(e) => {
-                            setFormData({ ...formData, display_name: e.target.value })
-                            if (fieldErrors.display_name) {
-                              setFieldErrors(prev => {
-                                const next = { ...prev }
-                                delete next.display_name
-                                return next
-                              })
-                            }
-                          }}
-                          className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.display_name ? 'border-red-500' : ''}`}
-                          placeholder="Nhập tên hiển thị"
-                        />
-                        {fieldErrors.display_name && (
-                          <p className="mt-1 text-sm text-red-600">{fieldErrors.display_name}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Avatar */}
-                    <div className="flex-shrink-0">
+    <div className="bg-gray-50 py-6 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Left Column - Creator Summary Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-24">
+              {/* Profile Summary - Editable */}
+              <div className="text-center mb-5">
+                {/* Single Avatar with Upload */}
+                <div className="mb-4">
                       <AvatarUpload
-                        currentAvatarUrl={formData.avatar_url ?? undefined}
+                    currentAvatarUrl={formData.avatar_url}
                         onAvatarChange={handleAvatarChange}
                         userId={session?.user?.id || ''}
                       />
-                    </div>
                   </div>
 
-                  {/* 2-Column Grid: Birth Year | Country + City */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Năm sinh *
-                      </label>
+                {/* Display Name - Editable */}
                       <input
-                        ref={(el) => fieldRefs.current.birth_year = el}
-                        type="number"
-                        min="1950"
-                        max={new Date().getFullYear()}
-                        value={formData.birth_year || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, birth_year: e.target.value ? parseInt(e.target.value) : undefined })
-                          if (fieldErrors.birth_year) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.birth_year
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.birth_year ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.birth_year && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.birth_year}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Quốc gia *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.country = el}
                         type="text"
-                        value={formData.country || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, country: e.target.value })
-                          if (fieldErrors.country) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.country
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.country ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.country && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.country}</p>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Thành phố *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.city = el}
-                        type="text"
-                        value={formData.city || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, city: e.target.value })
-                          if (fieldErrors.city) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.city
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.city ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.city && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Top Row: Company Name | Avatar */}
-                  <div className="flex flex-col md:flex-row gap-6 mb-6 items-start">
-                    {/* Left: Company Name */}
-                    <div className="flex-1 space-y-4 w-full md:w-auto">
-                      <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-2">
-                          Tên công ty *
-                        </label>
-                        <input
-                          ref={(el) => fieldRefs.current.brand_name = el}
-                          type="text"
-                          value={formData.brand_name || ''}
-                          onChange={(e) => {
-                            setFormData({ ...formData, brand_name: e.target.value })
-                            if (fieldErrors.brand_name) {
-                              setFieldErrors(prev => {
-                                const next = { ...prev }
-                                delete next.brand_name
-                                return next
-                              })
-                            }
-                          }}
-                          className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.brand_name ? 'border-red-500' : ''}`}
-                          placeholder="Nhập tên công ty"
-                        />
-                        {fieldErrors.brand_name && (
-                          <p className="mt-1 text-sm text-red-600">{fieldErrors.brand_name}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Avatar */}
-                    <div className="flex-shrink-0">
-                      <AvatarUpload
-                        currentAvatarUrl={formData.avatar_url ?? undefined}
-                        onAvatarChange={handleAvatarChange}
-                        userId={session?.user?.id || ''}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 2-Column Grid: Industry | Country + City */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Ngành nghề *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.industry = el}
-                        type="text"
-                        value={formData.industry || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, industry: e.target.value })
-                          if (fieldErrors.industry) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.industry
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.industry ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.industry && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.industry}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Quốc gia *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.country = el}
-                        type="text"
-                        value={formData.country || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, country: e.target.value })
-                          if (fieldErrors.country) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.country
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.country ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.country && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.country}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-2">
-                        Thành phố *
-                      </label>
-                      <input
-                        ref={(el) => fieldRefs.current.city = el}
-                        type="text"
-                        value={formData.city || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, city: e.target.value })
-                          if (fieldErrors.city) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.city
-                              return next
-                            })
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.city ? 'border-red-500' : ''}`}
-                      />
-                      {fieldErrors.city && (
-                        <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Business/Creator Metrics Section */}
-            {role === 'creator' && (
-              <div className="border-b pb-6">
-                <h2 className="text-xl font-semibold mb-4">Thông tin Creator</h2>
-
+                  value={formData.display_name}
+                  onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                  placeholder="Tên hiển thị"
+                  className="text-lg font-semibold text-gray-900 text-center border-0 border-b-2 border-transparent hover:border-gray-300 focus:border-[#6366F1] focus:outline-none bg-transparent mb-1 w-full"
+                />
+                
+                <p className="text-xs text-gray-500 mb-3">Creator Profile</p>
+                
+                {/* Availability Status - Editable */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Nền tảng *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
-                      <button
-                        key={platform}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.creator_platforms || []
-                          const updated = current.includes(platform)
-                            ? current.filter((p) => p !== platform)
-                            : [...current, platform]
-                          setFormData({ ...formData, creator_platforms: updated })
-                          if (fieldErrors.creator_platforms && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.creator_platforms
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.creator_platforms?.includes(platform)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {platform}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.creator_platforms && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.creator_platforms}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Số lượng người theo dõi *
-                    </label>
-                    <input
-                      ref={(el) => fieldRefs.current.followers_count = el}
-                      type="number"
-                      min="0"
-                      value={formData.followers_count || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, followers_count: e.target.value ? parseInt(e.target.value) : undefined })
-                        if (fieldErrors.followers_count) {
-                          setFieldErrors(prev => {
-                            const next = { ...prev }
-                            delete next.followers_count
-                            return next
-                          })
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.followers_count ? 'border-red-500' : ''}`}
-                    />
-                    {fieldErrors.followers_count && (
-                      <p className="mt-1 text-sm text-red-600">{fieldErrors.followers_count}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Lượt xem trung bình *
-                    </label>
-                    <input
-                      ref={(el) => fieldRefs.current.avg_views = el}
-                      type="number"
-                      min="0"
-                      value={formData.avg_views || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, avg_views: e.target.value ? parseInt(e.target.value) : undefined })
-                        if (fieldErrors.avg_views) {
-                          setFieldErrors(prev => {
-                            const next = { ...prev }
-                            delete next.avg_views
-                            return next
-                          })
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.avg_views ? 'border-red-500' : ''}`}
-                    />
-                    {fieldErrors.avg_views && (
-                      <p className="mt-1 text-sm text-red-600">{fieldErrors.avg_views}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Danh mục nội dung *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Beauty', 'Fashion', 'Food', 'Travel', 'Tech', 'Fitness', 'Lifestyle', 'Education'].map((category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.content_categories || []
-                          const updated = current.includes(category)
-                            ? current.filter((c) => c !== category)
-                            : [...current, category]
-                          setFormData({ ...formData, content_categories: updated })
-                          if (fieldErrors.content_categories && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.content_categories
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.content_categories?.includes(category)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-                  {fieldErrors.content_categories && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.content_categories}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Brand Info Section */}
-            {role === 'brand' && (
-              <div className="border-b pb-6">
-                <h2 className="text-xl font-semibold mb-4">Thông tin Brand</h2>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Quy mô công ty *
-                  </label>
                   <select
-                    ref={(el) => fieldRefs.current.company_size = el}
-                    value={formData.company_size || ''}
-                    onChange={(e) => {
-                      setFormData({ ...formData, company_size: e.target.value })
-                      if (fieldErrors.company_size) {
-                        setFieldErrors(prev => {
-                          const next = { ...prev }
-                          delete next.company_size
-                          return next
-                        })
-                      }
-                    }}
-                    className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.company_size ? 'border-red-500' : ''}`}
+                    value={formData.response_time}
+                    onChange={(e) => setFormData({ ...formData, response_time: e.target.value })}
+                    className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 border-0 focus:ring-2 focus:ring-green-500"
                   >
-                    <option value="">Chọn quy mô</option>
-                    <option value="startup">Startup (1-10 nhân viên)</option>
-                    <option value="small">Nhỏ (11-50 nhân viên)</option>
-                    <option value="medium">Vừa (51-200 nhân viên)</option>
-                    <option value="large">Lớn (201-1000 nhân viên)</option>
-                    <option value="enterprise">Doanh nghiệp (1000+ nhân viên)</option>
+                    <option value="24 hours">Available</option>
+                    <option value="48 hours">Busy</option>
+                    <option value="1 week">Away</option>
                   </select>
-                  {fieldErrors.company_size && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.company_size}</p>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-2">
-                      Ngân sách marketing hàng tháng *
-                    </label>
-                    <input
-                      ref={(el) => fieldRefs.current.monthly_marketing_budget = el}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.monthly_marketing_budget || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, monthly_marketing_budget: e.target.value ? parseFloat(e.target.value) : undefined })
-                        if (fieldErrors.monthly_marketing_budget) {
-                          setFieldErrors(prev => {
-                            const next = { ...prev }
-                            delete next.monthly_marketing_budget
-                            return next
-                          })
-                        }
-                      }}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${fieldErrors.monthly_marketing_budget ? 'border-red-500' : ''}`}
-                      placeholder="Ví dụ: 5000"
+                    </div>
+                  </div>
+
+              {/* Response Time - Editable */}
+              <div className="flex items-center gap-2 text-xs text-gray-600 mb-5 pb-5 border-b border-gray-200">
+                <FaClock className="w-3.5 h-3.5" />
+                <span>Typically responds within</span>
+                      <input
+                        type="text"
+                  value={formData.response_time}
+                  onChange={(e) => setFormData({ ...formData, response_time: e.target.value })}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-[#6366F1] focus:border-transparent"
+                  placeholder="24 hours"
+                />
+                    </div>
+
+              {/* About Me - Editable */}
+              <div className="mb-5 pb-5 border-b border-gray-200">
+                <label className="block text-sm font-medium text-gray-900 mb-2">About Me</label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Tell brands about yourself, your experience, and what makes you unique..."
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                  rows={4}
+                />
+                    </div>
+
+              {/* Linked Platforms - Editable */}
+              <div className="mb-5 pb-5 border-b border-gray-200">
+                <label className="block text-sm font-medium text-gray-900 mb-3">Linked Platforms</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FaLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <input
+                      type="url"
+                      value={formData.portfolio_website}
+                      onChange={(e) => setFormData({ ...formData, portfolio_website: e.target.value })}
+                      placeholder="Portfolio Website"
+                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                     />
-                    {fieldErrors.monthly_marketing_budget && (
-                      <p className="mt-1 text-sm text-red-600">{fieldErrors.monthly_marketing_budget}</p>
-                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FaInstagram className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <input
+                      type="url"
+                      value={formData.instagram_url}
+                      onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                      placeholder="Instagram"
+                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FaYoutube className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <input
+                      type="url"
+                      value={formData.youtube_url}
+                      onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+                      placeholder="YouTube"
+                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                    />
                   </div>
                 </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Nền tảng mục tiêu *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['TikTok', 'Instagram', 'YouTube', 'Facebook', 'Twitter', 'LinkedIn'].map((platform) => (
+              </div>
+
+              {/* Social Proof - Read-only Display */}
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-900 mb-3">Social Proof</label>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <FaUsers className="w-4 h-4 text-gray-400" />
+                    <span>Followers: {displayData.followers_count.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <FaStar className="w-4 h-4 text-gray-400" />
+                    <span>Recommendations: {displayData.recommendations}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">These metrics are updated automatically</p>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <button
+                onClick={handleSave}
+                disabled={loading}
+                className="w-full px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] hover:opacity-90 disabled:opacity-50 transition-opacity text-sm"
+              >
+                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+                  </div>
+                </div>
+
+          {/* Right Column - Tabbed Content */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              {/* Navigation Tabs */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="flex space-x-6">
+                  {(['overview', 'services', 'portfolio', 'reviews'] as TabType[]).map((tab) => (
                       <button
-                        key={platform}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.target_platforms || []
-                          const updated = current.includes(platform)
-                            ? current.filter((p) => p !== platform)
-                            : [...current, platform]
-                          setFormData({ ...formData, target_platforms: updated })
-                          if (fieldErrors.target_platforms && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.target_platforms
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.target_platforms?.includes(platform)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {platform}
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                        activeTab === tab
+                          ? 'border-[#6366F1] text-[#6366F1]'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {tab === 'overview' ? 'Overview' :
+                       tab === 'services' ? 'Services & Pricing' :
+                       tab === 'portfolio' ? 'Portfolio' :
+                       'Reviews'}
                       </button>
                     ))}
-                  </div>
-                  {fieldErrors.target_platforms && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.target_platforms}</p>
-                  )}
-                </div>
+                </nav>
+              </div>
+
+              {/* Tab Content */}
+              <div className="min-h-[400px]">
+                {activeTab === 'overview' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Profile Overview</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      This is your public profile that brands will see. Use the summary card on the left to edit your basic information, 
+                      and explore the tabs above to manage your services, portfolio, and reviews.
+                    </p>
               </div>
             )}
 
-            {/* Collaboration Intent Section */}
-            <div className="pb-6">
-              <h2 className="text-xl font-semibold mb-4">Mục tiêu hợp tác</h2>
-              {role === 'creator' ? (
+                {activeTab === 'services' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Kỳ vọng hợp tác *
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['paid', 'gift', 'affiliate'].map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.collaboration_expectation || []
-                          const updated = current.includes(type)
-                            ? current.filter((t) => t !== type)
-                            : [...current, type]
-                          setFormData({ ...formData, collaboration_expectation: updated })
-                          if (fieldErrors.collaboration_expectation && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.collaboration_expectation
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.collaboration_expectation?.includes(type)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {type === 'paid' ? 'Trả phí' : type === 'gift' ? 'Quà tặng' : 'Affiliate'}
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Services & Pricing</h3>
+                        <p className="text-sm text-gray-600">Set up service packages and pricing tiers</p>
+                      </div>
+                      <button className="px-3 py-1.5 text-sm font-medium text-[#6366F1] border border-[#6366F1] rounded-lg hover:bg-[#6366F1]/10 transition-colors">
+                        Manage Services
                       </button>
-                    ))}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                      <div className="border border-gray-200 rounded-lg p-4 text-center">
+                        <p className="text-sm text-gray-500">Service packages will be displayed here</p>
+                        <p className="text-xs text-gray-400 mt-2">Coming soon</p>
+                      </div>
+                    </div>
                   </div>
-                  {fieldErrors.collaboration_expectation && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_expectation}</p>
                   )}
-                </div>
-              ) : (
+
+                {activeTab === 'portfolio' && (
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-2">
-                    Mục tiêu hợp tác *
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['brand_awareness', 'sales', 'engagement', 'lead_generation', 'product_launch', 'community_building'].map((goal) => (
-                      <button
-                        key={goal}
-                        type="button"
-                        onClick={() => {
-                          const current = formData.collaboration_goals || []
-                          const updated = current.includes(goal)
-                            ? current.filter((g) => g !== goal)
-                            : [...current, goal]
-                          setFormData({ ...formData, collaboration_goals: updated })
-                          if (fieldErrors.collaboration_goals && updated.length > 0) {
-                            setFieldErrors(prev => {
-                              const next = { ...prev }
-                              delete next.collaboration_goals
-                              return next
-                            })
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors h-10 ${
-                          formData.collaboration_goals?.includes(goal)
-                            ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
-                            : 'border-gray-300 hover:border-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {goal === 'brand_awareness' ? 'Nhận diện thương hiệu' :
-                         goal === 'sales' ? 'Bán hàng' :
-                         goal === 'engagement' ? 'Tương tác' :
-                         goal === 'lead_generation' ? 'Tạo lead' :
-                         goal === 'product_launch' ? 'Ra mắt sản phẩm' :
-                         'Xây dựng cộng đồng'}
-                      </button>
-                    ))}
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Portfolio</h3>
+                    <p className="text-gray-600 text-sm">Showcase your best work here. Portfolio items will be displayed here.</p>
                   </div>
-                  {fieldErrors.collaboration_goals && (
-                    <p className="mt-1 text-sm text-red-600">{fieldErrors.collaboration_goals}</p>
                   )}
+
+                {activeTab === 'reviews' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Reviews</h3>
+                    <p className="text-gray-600 text-sm">Reviews and testimonials from brands you've worked with will appear here.</p>
                 </div>
               )}
             </div>
-
-            {/* Email (read-only) */}
-            <div className="border-t pt-6">
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={session?.user?.email || ''}
-                disabled
-                className="w-full px-4 py-2.5 border rounded-lg bg-gray-50 text-gray-500"
-              />
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-6 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#EC4899] disabled:opacity-50"
-            >
-              {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
-          </form>
+          </div>
         </div>
       </div>
 

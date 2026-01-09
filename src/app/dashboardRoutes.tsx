@@ -8,10 +8,12 @@ import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
 import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
 import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
 import ProfilePage from '../pages/creator/profile/ProfilePage'
+import BrandProfilePage from '../pages/brand/profile/ProfilePage'
 import SettingsPage from '../pages/creator/profile/SettingsPage'
 import ServicesPage from '../pages/creator/services/ServicesPage'
 import OpportunitiesPage from '../pages/creator/discovery/OpportunitiesPage'
 import SubmitProposalPage from '../pages/creator/proposals/SubmitProposalPage'
+import ProposalsListPage from '../pages/creator/proposals/ProposalsListPage'
 import DealWorkspacePage from '../pages/creator/proposals/DealWorkspacePage'
 import CreatorDiscoveryPage from '../pages/brand/discovery/CreatorDiscoveryPage'
 import CreateCampaignPage from '../pages/brand/campaigns/CreateCampaignPage'
@@ -71,8 +73,8 @@ function DashboardRoutes() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="discovery" element={<OpportunitiesPage />} />
+          <Route path="proposals" element={<ProposalsListPage />} />
           <Route path="proposals/new" element={<SubmitProposalPage />} />
-          <Route path="proposals/*" element={<ComingSoonPage />} />
           <Route path="workspace" element={<DealWorkspacePage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="*" element={<ComingSoonPage />} />
@@ -86,6 +88,7 @@ function DashboardRoutes() {
     <Routes>
       <Route element={<BrandDashboardLayout />}>
         <Route index element={<BrandDashboard />} />
+        <Route path="profile" element={<BrandProfilePage />} />
         <Route path="analytics" element={<BrandCampaignAnalyticsPage />} />
         <Route path="discovery" element={<CreatorDiscoveryPage />} />
         <Route path="campaigns/new" element={<CreateCampaignPage />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FaEye, FaLock, FaSyncAlt, FaCheckCircle, FaDownload, FaChevronDown } from 'react-icons/fa'
+import { FaEye, FaLock, FaSyncAlt, FaCheckCircle, FaDownload, FaChevronDown, FaTimes } from 'react-icons/fa'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface MetricCard {
@@ -10,7 +10,7 @@ interface MetricCard {
   icon: React.ReactNode
 }
 
-type DateRange = '7days' | '30days' | '90days'
+type DateRange = '7days' | '30days' | '90days' | 'custom'
 
 const MOCK_DATA_7DAYS = {
   profileViews: { value: 12450, change: 15.2 },
@@ -84,12 +84,16 @@ const MOCK_DATA_90DAYS = {
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState<DateRange>('30days')
   const [dateRangeDropdownOpen, setDateRangeDropdownOpen] = useState(false)
+  const [customDateModalOpen, setCustomDateModalOpen] = useState(false)
+  const [customDateFrom, setCustomDateFrom] = useState('')
+  const [customDateTo, setCustomDateTo] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDateRangeDropdownOpen(false)
+        setCustomDateModalOpen(false)
       }
     }
 
@@ -166,8 +170,28 @@ Deal Completion,${data.dealCompletion.value}%,${data.dealCompletion.change}%`
         return '30 ngày qua'
       case '90days':
         return '90 ngày qua'
+      case 'custom':
+        if (customDateFrom && customDateTo) {
+          // Format dates for display (DD/MM/YYYY)
+          const formatDate = (dateString: string) => {
+            const date = new Date(dateString)
+            const day = date.getDate().toString().padStart(2, '0')
+            const month = (date.getMonth() + 1).toString().padStart(2, '0')
+            const year = date.getFullYear()
+            return `${day}/${month}/${year}`
+          }
+          return `${formatDate(customDateFrom)} - ${formatDate(customDateTo)}`
+        }
+        return 'Tùy chọn'
       default:
         return '30 ngày qua'
+    }
+  }
+
+  const handleCustomDateApply = () => {
+    if (customDateFrom && customDateTo) {
+      setDateRange('custom')
+      setCustomDateModalOpen(false)
     }
   }
 
@@ -177,18 +201,18 @@ Deal Completion,${data.dealCompletion.value}%,${data.dealCompletion.change}%`
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-900">Phân tích Creator</h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <FaDownload className="w-4 h-4" />
+                <FaDownload className="w-3.5 h-3.5" />
                 <span>Xuất báo cáo</span>
               </button>
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDateRangeDropdownOpen(!dateRangeDropdownOpen)}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <span>{getDateRangeLabel()}</span>
                   <FaChevronDown className="w-3 h-3" />
@@ -200,7 +224,7 @@ Deal Completion,${data.dealCompletion.value}%,${data.dealCompletion.change}%`
                         setDateRange('7days')
                         setDateRangeDropdownOpen(false)
                       }}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
                     >
                       7 ngày qua
                     </button>
@@ -209,7 +233,7 @@ Deal Completion,${data.dealCompletion.value}%,${data.dealCompletion.change}%`
                         setDateRange('30days')
                         setDateRangeDropdownOpen(false)
                       }}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
                     >
                       30 ngày qua
                     </button>
@@ -218,10 +242,81 @@ Deal Completion,${data.dealCompletion.value}%,${data.dealCompletion.change}%`
                         setDateRange('90days')
                         setDateRangeDropdownOpen(false)
                       }}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
                     >
                       90 ngày qua
                     </button>
+                    <div className="border-t border-gray-200 my-1" />
+                    <button
+                      onClick={() => {
+                        setCustomDateModalOpen(true)
+                        setDateRangeDropdownOpen(false)
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                    >
+                      Tùy chọn
+                    </button>
+                  </div>
+                )}
+                
+                {/* Custom Date Range Popover */}
+                {customDateModalOpen && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-gray-900">Chọn khoảng thời gian</h3>
+                        <button
+                          onClick={() => {
+                            setCustomDateModalOpen(false)
+                            setCustomDateFrom('')
+                            setCustomDateTo('')
+                          }}
+                          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <FaTimes className="w-3.5 h-3.5 text-gray-500" />
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1.5">Từ</label>
+                          <input
+                            type="date"
+                            value={customDateFrom}
+                            onChange={(e) => setCustomDateFrom(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1.5">Đến</label>
+                          <input
+                            type="date"
+                            value={customDateTo}
+                            onChange={(e) => setCustomDateTo(e.target.value)}
+                            min={customDateFrom}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 mt-4">
+                        <button
+                          onClick={() => {
+                            setCustomDateModalOpen(false)
+                            setCustomDateFrom('')
+                            setCustomDateTo('')
+                          }}
+                          className="px-3 py-1.5 text-xs border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          onClick={handleCustomDateApply}
+                          disabled={!customDateFrom || !customDateTo}
+                          className="px-3 py-1.5 text-xs bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Áp dụng
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
