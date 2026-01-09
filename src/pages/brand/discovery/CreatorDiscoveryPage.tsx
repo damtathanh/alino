@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { FaSearch, FaYoutube, FaInstagram, FaFilter, FaTh, FaList, FaUser } from 'react-icons/fa'
 import { SiTiktok, SiTwitch } from 'react-icons/si'
-import BrandDashboardLayout from '../../../components/brand/BrandDashboardLayout'
 
 interface Creator {
   id: string
@@ -218,8 +217,7 @@ export default function CreatorDiscoveryPage() {
   }
 
   return (
-    <BrandDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-end mb-6">
             <div className="flex items-center gap-4">
@@ -439,7 +437,6 @@ export default function CreatorDiscoveryPage() {
           </div>
         </div>
       </div>
-    </BrandDashboardLayout>
   )
 }
 

@@ -5,6 +5,12 @@ import { getSupabase } from '../../../lib/supabase'
 import { FaCheck, FaEdit, FaEye, FaTrash, FaTimes, FaExternalLinkAlt } from 'react-icons/fa'
 import UpgradePlanModal from '../../../components/shared/UpgradePlanModal'
 import Toast from '../../../components/shared/Toast'
+import type { CreatorProfile } from '../../../types/profile'
+
+// Type guard to check if profile is a CreatorProfile
+function isCreatorProfile(profile: any): profile is CreatorProfile {
+  return profile?.role === 'creator'
+}
 
 interface Service {
   id: string
@@ -20,6 +26,7 @@ interface Service {
 }
 
 type ServiceStatus = 'active' | 'draft' | 'hidden'
+type PlanType = 'free' | 'pro' | 'business'
 
 const FREE_PLAN_MAX_SERVICES = 3
 const PRO_PLAN_MAX_SERVICES = 10
@@ -49,9 +56,17 @@ export default function ServicesPage() {
   })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
-  const currentPlan = profile?.is_admin ? 'business' : 'free' // TODO: Get from subscription
+  // TODO: Get from subscription - currently using is_admin as proxy for business plan
+  const currentPlan: PlanType = profile?.is_admin ? 'business' : 'free'
   const canShowPricing = currentPlan !== 'free'
-  const maxServices = currentPlan === 'free' ? FREE_PLAN_MAX_SERVICES : currentPlan === 'pro' ? PRO_PLAN_MAX_SERVICES : Infinity
+  
+  // Calculate max services based on plan type
+  const getMaxServices = (plan: PlanType): number => {
+    if (plan === 'free') return FREE_PLAN_MAX_SERVICES
+    if (plan === 'pro') return PRO_PLAN_MAX_SERVICES
+    return Infinity // business plan has unlimited services
+  }
+  const maxServices = getMaxServices(currentPlan)
   const activeServicesCount = services.filter(s => s.status === 'active').length
 
   useEffect(() => {
@@ -280,8 +295,36 @@ export default function ServicesPage() {
     return `$${price.toLocaleString('vi-VN')}`
   }
 
-  const displayName = (profile?.role === 'creator' ? (profile as any).full_name : null) || session?.user?.email?.split('@')[0] || 'Creator'
-  const avatarUrl = (profile?.role === 'creator' ? (profile as any).avatar_url : null) || session?.user?.user_metadata?.avatar_url
+  // Type-safe access to creator profile properties using proper type narrowing
+  const getCreatorProfileBio = (): string => {
+    if (isCreatorProfile(profile)) {
+      // TypeScript narrows to CreatorProfile here
+      // Check if bio exists using 'in' operator for runtime safety
+      if ('bio' in profile && typeof profile.bio === 'string') {
+        return profile.bio || 'Creator'
+      }
+    }
+    return 'Creator'
+  }
+
+  const getCreatorProfileName = (): string | null => {
+    if (isCreatorProfile(profile)) {
+      // TypeScript narrows to CreatorProfile here, full_name is defined
+      return profile.full_name || null
+    }
+    return null
+  }
+
+  const getCreatorProfileAvatar = (): string | null => {
+    if (isCreatorProfile(profile)) {
+      // TypeScript narrows to CreatorProfile here, avatar_url is defined
+      return profile.avatar_url || null
+    }
+    return null
+  }
+
+  const displayName = getCreatorProfileName() || session?.user?.email?.split('@')[0] || 'Creator'
+  const avatarUrl = getCreatorProfileAvatar() || session?.user?.user_metadata?.avatar_url
 
   if (loading) {
     return (
@@ -595,7 +638,7 @@ export default function ServicesPage() {
                     )}
                     <div>
                       <div className="font-semibold text-gray-900">{displayName}</div>
-                      <div className="text-sm text-gray-600">{profile?.bio || 'Creator'}</div>
+                      <div className="text-sm text-gray-600">{getCreatorProfileBio()}</div>
                     </div>
                   </div>
 

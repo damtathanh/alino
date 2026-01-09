@@ -1,5 +1,4 @@
 import { FaPlus, FaEnvelope, FaBullhorn, FaUser, FaClock, FaDollarSign, FaArrowRight } from 'react-icons/fa'
-import BrandDashboardLayout from '../../../components/brand/BrandDashboardLayout'
 
 const MOCK_ACTIVE_CAMPAIGNS = [
   {
@@ -120,8 +119,7 @@ export default function BrandDashboard() {
   }
 
   return (
-    <BrandDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Brand Dashboard</h1>
@@ -304,6 +302,5 @@ export default function BrandDashboard() {
           </div>
         </div>
       </div>
-    </BrandDashboardLayout>
   )
 }

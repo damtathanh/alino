@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { FaEdit, FaCheck, FaRedo, FaFileAlt, FaDownload, FaPaperPlane, FaEllipsisV } from 'react-icons/fa'
-import BrandDashboardLayout from '../../../components/brand/BrandDashboardLayout'
 
 interface Creator {
   id: string
@@ -92,8 +91,7 @@ export default function CampaignWorkspacePage() {
   }
 
   return (
-    <BrandDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Summer Influencer Outreach 2024</h1>
@@ -273,7 +271,6 @@ export default function CampaignWorkspacePage() {
           </div>
         </div>
       </div>
-    </BrandDashboardLayout>
   )
 }
 

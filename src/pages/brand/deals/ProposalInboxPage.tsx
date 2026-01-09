@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { FaSearch, FaFilter, FaCheck, FaTimes } from 'react-icons/fa'
-import BrandDashboardLayout from '../../../components/brand/BrandDashboardLayout'
 
 interface Proposal {
   id: string
@@ -139,8 +138,7 @@ export default function ProposalInboxPage() {
   }
 
   return (
-    <BrandDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">
@@ -247,7 +245,6 @@ export default function ProposalInboxPage() {
           </div>
         </div>
       </div>
-    </BrandDashboardLayout>
   )
 }
 

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BrandDashboardLayout from '../../../components/brand/BrandDashboardLayout'
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate()
@@ -60,8 +59,7 @@ export default function CreateCampaignPage() {
   }
 
   return (
-    <BrandDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Campaign</h1>
@@ -249,7 +247,6 @@ export default function CreateCampaignPage() {
           </form>
         </div>
       </div>
-    </BrandDashboardLayout>
   )
 }
 

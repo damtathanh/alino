@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { FaDownload, FaCalendarAlt, FaChevronDown, FaArrowDown, FaArrowUp } from 'react-icons/fa'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import BrandDashboardLayout from '../../../components/brand/BrandDashboardLayout'
 
 const MOCK_CAMPAIGN_PROGRESS = [
   { month: 'Jan', progress: 65 },
@@ -66,8 +65,7 @@ Campaign Completion Rate,92%`
   }
 
   return (
-    <BrandDashboardLayout>
-      <div className="bg-gray-50 min-h-screen py-8 px-6">
+    <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <div className="flex items-center justify-between">
@@ -233,7 +231,6 @@ Campaign Completion Rate,92%`
           </div>
         </div>
       </div>
-    </BrandDashboardLayout>
   )
 }
 
