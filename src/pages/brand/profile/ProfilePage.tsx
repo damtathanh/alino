@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
 import { useProfile } from '../../../hooks/useProfile'
 import { getSupabase } from '../../../lib/supabase'
-import AvatarUpload from '../../../components/AvatarUpload'
+import AvatarUpload from '../../../components/AvatarUpload/AvatarUpload'
 import Toast from '../../../components/shared/Toast'
+import { LoadingState, NotFoundState } from '../../../components/shared/LoadingState'
+import type { ToastState } from '../../../types/toast'
 import { FaPaperPlane, FaFileAlt, FaClock, FaBuilding, FaIndustry, FaUsers, FaDollarSign } from 'react-icons/fa'
 
 type TabType = 'overview' | 'campaigns' | 'analytics' | 'settings'
@@ -16,7 +18,7 @@ export default function ProfilePage() {
   )
   const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [toast, setToast] = useState<ToastState | null>(null)
   const supabase = getSupabase()
 
   // Form state
@@ -95,19 +97,11 @@ export default function ProfilePage() {
   }
 
   if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (!profile || profile.role !== 'brand') {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-[#6B7280]">Không tìm thấy hồ sơ</div>
-      </div>
-    )
+    return <NotFoundState message="Không tìm thấy hồ sơ" />
   }
 
   const brandProfile = profile as any

@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
+import type { ToastType } from '../../types/toast'
 
 interface ToastProps {
   message: string
-  type: 'success' | 'error'
+  type: ToastType
   onClose: () => void
   duration?: number
 }

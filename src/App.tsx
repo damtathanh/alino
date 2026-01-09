@@ -26,8 +26,8 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ScrollToTop />
-        <AppContent />
+      <ScrollToTop />
+    <AppContent />
       </AuthProvider>
     </BrowserRouter>
   )

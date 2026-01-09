@@ -1,25 +1,8 @@
-import { Routes, Route, useParams, Navigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
+import { Routes, Route, useParams } from 'react-router-dom'
 import CreatorDashboardLayout from '../components/creator/CreatorDashboardLayout'
 import BrandDashboardLayout from '../components/brand/BrandDashboardLayout'
-import DashboardHome from '../pages/creator/dashboard/DashboardHome'
-import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
-import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
-import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
-import ProfilePage from '../pages/creator/profile/ProfilePage'
-import BrandProfilePage from '../pages/brand/profile/ProfilePage'
-import SettingsPage from '../pages/creator/profile/SettingsPage'
-import ServicesPage from '../pages/creator/services/ServicesPage'
-import OpportunitiesPage from '../pages/creator/discovery/OpportunitiesPage'
-import SubmitProposalPage from '../pages/creator/proposals/SubmitProposalPage'
-import ProposalsListPage from '../pages/creator/proposals/ProposalsListPage'
-import DealWorkspacePage from '../pages/creator/proposals/DealWorkspacePage'
-import CreatorDiscoveryPage from '../pages/brand/discovery/CreatorDiscoveryPage'
-import CreateCampaignPage from '../pages/brand/campaigns/CreateCampaignPage'
-import CampaignWorkspacePage from '../pages/brand/campaigns/CampaignWorkspacePage'
-import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
-import ComingSoonPage from '../pages/shared/ComingSoonPage'
+import { DashboardRouteGuard } from './routeGuards'
+import { getRoutesForRole, fallbackRoute, type RouteRole } from './routeConfig'
 
 /**
  * DashboardRoutes: Stable final destination routes
@@ -30,75 +13,49 @@ import ComingSoonPage from '../pages/shared/ComingSoonPage'
  * If user needs to complete onboarding or select role, they should go through /app
  * (which is handled by AppGate), not through dashboard redirects.
  * 
- * This component only:
- * 1. Checks authentication (redirects to login if not authenticated)
- * 2. Validates role matches URL
- * 3. Renders the appropriate dashboard
+ * This component:
+ * 1. Uses DashboardRouteGuard for authentication and role validation
+ * 2. Renders routes from centralized route configuration
+ * 3. Applies appropriate layout based on role
  * 
  * No onboarding checks, no role selection redirects - those are handled by AppGate at /app
  */
 function DashboardRoutes() {
-  const { role } = useParams<{ role: 'creator' | 'brand' }>()
-  const { session, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(
-    session?.user?.id,
-    !!(session && session.access_token && session.user.email_confirmed_at)
-  )
+  const { role } = useParams<{ role: RouteRole }>()
+  const routes = role ? getRoutesForRole(role) : []
+  const Layout = role === 'creator' ? CreatorDashboardLayout : BrandDashboardLayout
 
-  if (authLoading || profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+  if (!role || routes.length === 0) {
+    return null // Guard will handle redirect
   }
 
-  // Basic auth check - if not authenticated, redirect to login
-  if (!session || !profile) {
-    return <Navigate to="/login" replace />
-  }
-
-  // Validate role in URL matches profile role
-  // If mismatch, redirect to /app (AppGate will handle routing to correct dashboard)
-  if (!role || (role !== 'creator' && role !== 'brand') || profile.role !== role) {
-    return <Navigate to="/app" replace />
-  }
-
-  if (role === 'creator') {
-    return (
+  return (
+    <DashboardRouteGuard>
       <Routes>
-        <Route element={<CreatorDashboardLayout />}>
-          <Route index element={<DashboardHome />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="services" element={<ServicesPage />} />
-          <Route path="discovery" element={<OpportunitiesPage />} />
-          <Route path="proposals" element={<ProposalsListPage />} />
-          <Route path="proposals/new" element={<SubmitProposalPage />} />
-          <Route path="workspace" element={<DealWorkspacePage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="*" element={<ComingSoonPage />} />
+        <Route element={<Layout />}>
+          {routes.map((route) => {
+            // Index route (empty path) should use index prop
+            if (route.path === '' || route.exact) {
+              return (
+                <Route
+                  key={route.path || 'index'}
+                  index
+                  element={route.element}
+                />
+              )
+            }
+            return (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={route.element}
+              />
+            )
+          })}
+          <Route path={fallbackRoute.path} element={fallbackRoute.element} />
         </Route>
       </Routes>
-    )
-  }
-
-  // Brand routes
-  return (
-    <Routes>
-      <Route element={<BrandDashboardLayout />}>
-        <Route index element={<BrandDashboard />} />
-        <Route path="profile" element={<BrandProfilePage />} />
-        <Route path="analytics" element={<BrandCampaignAnalyticsPage />} />
-        <Route path="discovery" element={<CreatorDiscoveryPage />} />
-        <Route path="campaigns/new" element={<CreateCampaignPage />} />
-        <Route path="campaigns/*" element={<CampaignWorkspacePage />} />
-        <Route path="proposals/*" element={<ProposalInboxPage />} />
-        <Route path="workspace" element={<ComingSoonPage />} />
-        <Route path="settings" element={<ComingSoonPage />} />
-        <Route path="*" element={<ComingSoonPage />} />
-      </Route>
-    </Routes>
+    </DashboardRouteGuard>
   )
 }
 

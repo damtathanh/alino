@@ -138,20 +138,20 @@ export default function DealWorkspacePage() {
         <div className="mb-8">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">Spring Collection Launch</h1>
-                <p className="text-lg text-gray-600">FashionNova</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                  Đang thực hiện
-                </span>
-                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                  Xem chi tiết chiến dịch
-                </button>
-                <button className="px-4 py-2 bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white rounded-lg hover:opacity-90 transition-opacity">
-                  Liên hệ thương hiệu
-                </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">Spring Collection Launch</h1>
+              <p className="text-lg text-gray-600">FashionNova</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                Đang thực hiện
+              </span>
+              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Xem chi tiết chiến dịch
+              </button>
+              <button className="px-4 py-2 bg-gradient-to-r from-[#6366F1] to-[#EC4899] text-white rounded-lg hover:opacity-90 transition-opacity">
+                Liên hệ thương hiệu
+              </button>
               </div>
             </div>
           </div>

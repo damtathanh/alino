@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getSupabase } from '../../lib/supabase'
+import { LoadingState } from '../../components/shared/LoadingState'
 
 // Form state interfaces
 interface CreatorFormData {
@@ -412,19 +413,11 @@ export default function OnboardingPage() {
 
   // Show loading while checking auth or fetching role
   if (authLoading || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (!role) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải thông tin...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   return (

@@ -1,8 +1,16 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { getSupabase } from '../lib/supabase'
+import { useAuthState } from '../hooks/useAuthState'
+import { useAuthOperations } from '../hooks/useAuthOperations'
+import { getUserFromSession, isUserAuthenticated } from '../utils/authHelpers'
 
-interface AuthContextType {
+/**
+ * AuthContextType: Public API for authentication state and operations
+ * 
+ * This interface defines what components can access from the auth context.
+ * All external code should depend only on this interface.
+ */
+export interface AuthContextType {
   session: Session | null
   user: Session['user'] | null
   loading: boolean
@@ -13,54 +21,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 /**
- * AuthProvider: Single source of truth for authentication state
+ * AuthProvider: Wires auth state and operations, exposes public API
  * 
  * Responsibilities:
- * - Fetches initial session on mount
- * - Listens to auth state changes from Supabase
- * - Provides stable session state to all components
+ * - Composes useAuthState and useAuthOperations
+ * - Derives computed values (user, isAuthenticated)
+ * - Provides context value to children
  * - Does NOT handle routing/navigation (that's handled by components)
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = getSupabase()
-
-  useEffect(() => {
-    let mounted = true
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return
-      setSession(session)
-      setLoading(false)
-    })
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-      setSession(session)
-      setLoading(false)
-    })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [supabase])
-
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    // Session will be cleared by onAuthStateChange listener
-  }
+  const { session, loading } = useAuthState()
+  const { signOut } = useAuthOperations()
 
   const value: AuthContextType = {
     session,
-    user: session?.user ?? null,
+    user: getUserFromSession(session),
     loading,
-    isAuthenticated: !!session,
+    isAuthenticated: isUserAuthenticated(session),
     signOut,
   }
 

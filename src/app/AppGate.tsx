@@ -2,6 +2,7 @@ import { useEffect, useState, ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getSupabase } from '../lib/supabase'
+import { LoadingState } from '../components/shared/LoadingState'
 
 export default function AppGate({ children }: { children: ReactNode }) {
   const { session, loading: authLoading } = useAuth()
@@ -73,11 +74,7 @@ export default function AppGate({ children }: { children: ReactNode }) {
   }
 
   if (isAppRoute && (authLoading || isProcessing)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   return <>{children}</>

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
+import { LoadingState } from '../components/shared/LoadingState'
 import LandingPage from '../pages/public/LandingPage'
 import LoginPage from '../pages/public/LoginPage'
 import SignupPage from '../pages/public/SignupPage'
@@ -13,6 +14,7 @@ import PrivacyPage from '../pages/public/PrivacyPage'
 import { CreatorRoutes } from './creatorRoutes'
 import { BrandRoutes } from './brandRoutes'
 import DashboardRoutes from './dashboardRoutes'
+import type { RouteRole } from './routeConfig'
 
 /**
  * ProtectedRoute: Simple auth check - redirects to login if not authenticated
@@ -22,11 +24,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (!session) {
@@ -40,7 +38,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
  * RoleBasedRoute: Protects routes that require a specific role
  * Only checks role match - no redirects to /app or dashboards
  */
-function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole: 'creator' | 'brand' }) {
+function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole: RouteRole }) {
   const { session, loading: authLoading } = useAuth()
   const { profile, loading: profileLoading } = useProfile(
     session?.user?.id,
@@ -48,11 +46,7 @@ function RoleBasedRoute({ children, requiredRole }: { children: React.ReactNode;
   )
 
   if (authLoading || profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (!session || !profile) {
@@ -75,11 +69,7 @@ function CatchAllRoute() {
   const { session, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#6B7280]">Đang tải...</div>
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (!session) {
