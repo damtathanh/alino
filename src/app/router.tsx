@@ -146,22 +146,16 @@ export function Router() {
       />
 
       {/* Legacy routes - keep for backward compatibility */}
+      {/* Redirect-only components used as terminal route elements (not wrapped) */}
+      {/* They redirect to /app which handles auth, role, and onboarding checks */}
       <Route
         path="/creator/*"
-        element={
-          <RoleBasedRoute requiredRole="creator">
-            <CreatorRoutes />
-          </RoleBasedRoute>
-        }
+        element={<CreatorRoutes />}
       />
 
       <Route
         path="/brand/*"
-        element={
-          <RoleBasedRoute requiredRole="brand">
-            <BrandRoutes />
-          </RoleBasedRoute>
-        }
+        element={<BrandRoutes />}
       />
 
       {/* 404 handler */}

@@ -18,6 +18,17 @@ interface CreatorFormData {
   collaboration_expectation?: ('paid' | 'gift' | 'affiliate')[]
 }
 
+// Collaboration goal options for brands
+// These are predefined business objectives that brands can select multiple of
+export type CollaborationGoalOption = 
+  | 'brand_awareness'
+  | 'product_launch'
+  | 'engagement'
+  | 'conversions'
+  | 'community_building'
+  | 'content_creation'
+  | 'influencer_relations'
+
 interface BrandFormData {
   company_name?: string
   industry?: string
@@ -27,7 +38,7 @@ interface BrandFormData {
   budget?: number
   campaign_budget_range?: string
   target_platforms?: string[]
-  campaign_goal?: string
+  collaboration_goals?: CollaborationGoalOption[] // Changed from campaign_goal (string) to array
   preferred_collaboration_type?: ('paid' | 'gift' | 'affiliate')[]
 }
 
@@ -128,7 +139,12 @@ export default function OnboardingPage() {
           budget: step3.budget || undefined,
           campaign_budget_range: step3.campaign_budget_range || undefined,
           target_platforms: step3.target_platforms || undefined,
-          campaign_goal: step4.campaign_goal || undefined,
+          // Support legacy single campaign_goal or new collaboration_goals array
+          collaboration_goals: Array.isArray(step4.collaboration_goals) 
+            ? step4.collaboration_goals 
+            : step4.campaign_goal 
+              ? [step4.campaign_goal as CollaborationGoalOption] // Legacy support
+              : undefined,
           preferred_collaboration_type: step4.preferred_collaboration_type || undefined,
         }
         setBrandData(bd)
@@ -138,8 +154,15 @@ export default function OnboardingPage() {
           setCurrentStep(2)
         } else if (!step3.company_size) {
           setCurrentStep(3)
-        } else if (!step4.campaign_goal) {
-          setCurrentStep(4)
+        } else if (!step4.collaboration_goals || (Array.isArray(step4.collaboration_goals) && step4.collaboration_goals.length === 0)) {
+          // Check for new array format or legacy single campaign_goal
+          const hasGoals = Array.isArray(step4.collaboration_goals) && step4.collaboration_goals.length > 0
+          const hasLegacyGoal = step4.campaign_goal && step4.campaign_goal.trim()
+          if (!hasGoals && !hasLegacyGoal) {
+            setCurrentStep(4)
+          } else {
+            setCurrentStep(5)
+          }
         } else {
           setCurrentStep(5)
         }
@@ -298,8 +321,11 @@ export default function OnboardingPage() {
           setLoading(false)
           return
         }
-        if (!step4.campaign_goal?.trim()) {
-          setError('Vui lòng nhập mục tiêu chiến dịch')
+        // Validate collaboration_goals (array) - support legacy campaign_goal for migration
+        const hasCollaborationGoals = Array.isArray(step4.collaboration_goals) && step4.collaboration_goals.length > 0
+        const hasLegacyCampaignGoal = step4.campaign_goal && step4.campaign_goal.trim()
+        if (!hasCollaborationGoals && !hasLegacyCampaignGoal) {
+          setError('Vui lòng chọn ít nhất một mục tiêu hợp tác')
           setLoading(false)
           return
         }
@@ -356,9 +382,17 @@ export default function OnboardingPage() {
             return budgetValue ? (typeof budgetValue === 'string' ? parseFloat(budgetValue.replace(/[^0-9.]/g, '')) || null : Number(budgetValue)) : null
           })(),
           target_platforms: step3.target_platforms || null,
+          // Store collaboration_goals as array - support legacy campaign_goal during migration
           collaboration_goals: (() => {
-            const goalValue = step4.campaign_goal || step4.collaboration_goal
-            return Array.isArray(goalValue) ? goalValue : (goalValue ? [goalValue] : null)
+            if (Array.isArray(step4.collaboration_goals) && step4.collaboration_goals.length > 0) {
+              return step4.collaboration_goals
+            }
+            // Legacy support: convert single campaign_goal to array if present
+            if (step4.campaign_goal && typeof step4.campaign_goal === 'string' && step4.campaign_goal.trim()) {
+              // TODO: This is a migration path - remove once all profiles are migrated to array format
+              return [step4.campaign_goal as CollaborationGoalOption]
+            }
+            return null
           })(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -1153,7 +1187,7 @@ function Step3Metrics({
           </div>
           <div>
             <label className="block text-sm font-medium text-[#374151] mb-2">
-              Khoảng ngân sách chiến dịch
+              Khoảng ngân sách cho 1 chiến dịch
             </label>
             <input
               type="text"
@@ -1228,7 +1262,7 @@ function Step4Collaboration({
           collaboration_expectation: creatorData.collaboration_expectation || [],
         }
       : {
-          campaign_goal: brandData.campaign_goal || '',
+          collaboration_goals: brandData.collaboration_goals || [],
           preferred_collaboration_type: brandData.preferred_collaboration_type || [],
         }
   )
@@ -1241,8 +1275,9 @@ function Step4Collaboration({
         newErrors.collaboration_expectation = 'Vui lòng chọn ít nhất một loại hợp tác'
       }
     } else {
-      if (!localData.campaign_goal?.trim()) {
-        newErrors.campaign_goal = 'Vui lòng nhập mục tiêu chiến dịch'
+      // Validate collaboration_goals as array (multiple selections required)
+      if (!localData.collaboration_goals || localData.collaboration_goals.length === 0) {
+        newErrors.collaboration_goals = 'Vui lòng chọn ít nhất một mục tiêu hợp tác'
       }
       if (!localData.preferred_collaboration_type || localData.preferred_collaboration_type.length === 0) {
         newErrors.preferred_collaboration_type = 'Vui lòng chọn ít nhất một loại hợp tác'
@@ -1268,6 +1303,30 @@ function Step4Collaboration({
     }
   }
 
+  // Collaboration goal options with labels
+  const collaborationGoalOptions: { value: CollaborationGoalOption; label: string }[] = [
+    { value: 'brand_awareness', label: 'Nâng cao nhận diện thương hiệu' },
+    { value: 'product_launch', label: 'Ra mắt sản phẩm mới' },
+    { value: 'engagement', label: 'Tăng tương tác' },
+    { value: 'conversions', label: 'Tăng chuyển đổi bán hàng' },
+    { value: 'community_building', label: 'Xây dựng cộng đồng' },
+    { value: 'content_creation', label: 'Tạo nội dung' },
+    { value: 'influencer_relations', label: 'Quan hệ với Influencer' },
+  ]
+
+  const toggleCollaborationGoal = (goal: CollaborationGoalOption) => {
+    if (role !== 'brand') return
+    const brandLocalData = localData as { collaboration_goals: CollaborationGoalOption[]; preferred_collaboration_type: ('paid' | 'gift' | 'affiliate')[] }
+    const current = brandLocalData.collaboration_goals || []
+    const updated = current.includes(goal)
+      ? current.filter((g) => g !== goal)
+      : [...current, goal]
+    setLocalData({ ...localData, collaboration_goals: updated } as any)
+    if (errors.collaboration_goals) {
+      setErrors({ ...errors, collaboration_goals: '' })
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateStep4()) return
@@ -1278,7 +1337,7 @@ function Step4Collaboration({
       } as CreatorFormData)
     } else {
       onSave({
-        campaign_goal: localData.campaign_goal,
+        collaboration_goals: localData.collaboration_goals,
         preferred_collaboration_type: localData.preferred_collaboration_type,
       } as BrandFormData)
     }
@@ -1447,25 +1506,31 @@ function Step4Collaboration({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#374151] mb-2">
-              Mục tiêu chiến dịch *
+              Mục tiêu hợp tác *
             </label>
-            <textarea
-              value={localData.campaign_goal}
-              onChange={(e) => {
-                  setLocalData({ ...localData, campaign_goal: e.target.value } as any)
-                  if (errors.campaign_goal) {
-                    setErrors({ ...errors, campaign_goal: '' })
-                  }
-                }}
-                rows={5}
-                className={`w-full px-4 py-2.5 border rounded-lg ${errors.campaign_goal ? 'border-red-500' : ''}`}
-                placeholder="Mô tả mục tiêu hợp tác của thương hiệu..."
-                required
-              />
-              {errors.campaign_goal && (
-                <p className="mt-1 text-sm text-red-600">{errors.campaign_goal}</p>
-              )}
+            <p className="text-sm text-gray-600 mb-3">
+              Chọn một hoặc nhiều mục tiêu cho chiến dịch hợp tác của bạn
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {collaborationGoalOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => toggleCollaborationGoal(option.value)}
+                  className={`px-4 py-3 rounded-lg border text-sm text-left transition-colors ${
+                    localData.collaboration_goals?.includes(option.value)
+                      ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#6366F1]'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
+            {errors.collaboration_goals && (
+              <p className="mt-1 text-sm text-red-600">{errors.collaboration_goals}</p>
+            )}
+          </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
                 Loại hợp tác ưa thích *

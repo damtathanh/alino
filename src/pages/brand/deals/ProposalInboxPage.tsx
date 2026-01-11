@@ -140,11 +140,6 @@ export default function ProposalInboxPage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Proposal Inbox ({pendingCount} New)
-            </h1>
-          </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex items-center gap-4 flex-wrap">
