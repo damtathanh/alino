@@ -3,6 +3,8 @@ import DashboardHome from '../pages/creator/dashboard/DashboardHome'
 import BrandDashboard from '../pages/brand/dashboard/BrandDashboard'
 import AnalyticsPage from '../pages/creator/dashboard/AnalyticsPage'
 import BrandCampaignAnalyticsPage from '../pages/brand/dashboard/BrandCampaignAnalyticsPage'
+import MyDealsPage from '../pages/creator/dashboard/MyDealsPage'
+import MyProposalsPage from '../pages/creator/dashboard/MyProposalsPage'
 import ProfilePage from '../pages/creator/profile/ProfilePage'
 import BrandProfilePage from '../pages/brand/profile/ProfilePage'
 import SettingsPage from '../pages/creator/profile/SettingsPage'
@@ -13,7 +15,9 @@ import SubmitProposalPage from '../pages/creator/proposals/SubmitProposalPage'
 import ProposalsListPage from '../pages/creator/proposals/ProposalsListPage'
 import DealWorkspacePage from '../pages/creator/proposals/DealWorkspacePage'
 import CreatorDiscoveryPage from '../pages/brand/discovery/CreatorDiscoveryPage'
+import BrandDiscoveryPage from '../pages/brand/discovery/BrandDiscoveryPage'
 import CreateCampaignPage from '../pages/brand/campaigns/CreateCampaignPage'
+import PrivateCampaignBookingPage from '../pages/brand/campaigns/PrivateCampaignBookingPage'
 import CampaignManagementListPage from '../pages/brand/campaigns/CampaignManagementListPage'
 import CampaignDetailPage from '../pages/brand/campaigns/CampaignDetailPage'
 import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
@@ -54,8 +58,10 @@ export const creatorRoutes: RouteDefinition[] = [
   { path: 'settings', element: <SettingsPage /> },
   { path: 'services', element: <ServicesPage /> },
   { path: 'discovery', element: <OpportunitiesPage /> },
-  { path: 'proposals', element: <ProposalsListPage /> },
+  { path: 'deals', element: <MyDealsPage /> },
+  { path: 'proposals', element: <MyProposalsPage /> },
   { path: 'proposals/new', element: <SubmitProposalPage /> },
+  { path: 'proposals/list', element: <ProposalsListPage /> },
   { path: 'workspace', element: <DealWorkspacePage /> },
   { path: 'analytics', element: <AnalyticsPage /> },
 ]
@@ -67,7 +73,7 @@ export const brandRoutes: RouteDefinition[] = [
   { path: '', element: <BrandDashboard />, exact: true },
   { path: 'profile', element: <BrandProfilePage /> },
   { path: 'analytics', element: <BrandCampaignAnalyticsPage /> },
-  { path: 'discovery', element: <CreatorDiscoveryPage /> },
+  { path: 'discovery', element: <BrandDiscoveryPage /> },
   
   // Workspace: Execution Layer (daily working area)
   // STATE A: Workspace Overview (DEFAULT) - shows multiple campaigns, pending work
@@ -84,6 +90,8 @@ export const brandRoutes: RouteDefinition[] = [
   { path: 'workspace/:workspaceId/*', element: <WorkspaceRoutes /> },
   
   // Campaigns: Management Layer (create, list, config-level details)
+  // Create private campaign & book creator (must come before campaigns/new)
+  { path: 'campaigns/new/private', element: <PrivateCampaignBookingPage /> },
   // Create new campaign (must come before :campaignId to avoid route conflict)
   { path: 'campaigns/new', element: <CreateCampaignPage /> },
   // Campaign details (configuration-level only, no execution logic)

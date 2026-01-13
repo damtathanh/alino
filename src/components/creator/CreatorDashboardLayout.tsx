@@ -9,6 +9,7 @@ import {
   FaChartBar,
   FaCog,
   FaSignOutAlt,
+  FaHandshake,
 } from 'react-icons/fa'
 import { useAuth } from '../../hooks/useAuth'
 import DashboardHeader from '../dashboard/DashboardHeader'
@@ -23,7 +24,8 @@ export default function CreatorDashboardLayout() {
     { path: 'profile', label: 'Hồ sơ cá nhân', icon: FaUser },
     { path: 'services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
     { path: 'discovery', label: 'Cơ hội', icon: FaLightbulb },
-    { path: 'proposals', label: 'Đề xuất', icon: FaFileAlt },
+    { path: 'deals', label: 'My Deals', icon: FaHandshake },
+    { path: 'proposals', label: 'My Proposals', icon: FaFileAlt },
     { path: 'workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
     { path: 'analytics', label: 'Phân tích', icon: FaChartBar },
   ]

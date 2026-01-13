@@ -11,6 +11,7 @@ import RolePage from '../pages/onboarding/RolePage'
 import OnboardingPage from '../pages/onboarding/OnboardingPage'
 import TermsPage from '../pages/public/TermsPage'
 import PrivacyPage from '../pages/public/PrivacyPage'
+import PublicCreatorProfilePage from '../pages/public/PublicCreatorProfilePage'
 import { CreatorRoutes } from './creatorRoutes'
 import { BrandRoutes } from './brandRoutes'
 import DashboardRoutes from './dashboardRoutes'
@@ -98,6 +99,8 @@ export function Router() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/creator/:id" element={<PublicCreatorProfilePage />} />
+      <Route path="/c/:id" element={<PublicCreatorProfilePage />} />
 
       {/* AppGate routes - /app is the ONLY decision gate */}
       {/* AppGate handles: auth check, role check, onboarding check, and redirects */}
