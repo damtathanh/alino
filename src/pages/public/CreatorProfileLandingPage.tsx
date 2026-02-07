@@ -40,34 +40,28 @@ export default function CreatorProfileLandingPage() {
       const supabase = getSupabase()
 
       try {
-        const { data: coreProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .eq('id', creatorId)
-          .single()
-
-        if (profileError || !coreProfile || coreProfile.role !== 'creator') {
-          setError('Creator not found')
-          setLoading(false)
-          return
-        }
-
-        const { data: creatorProfile, error: creatorError } = await supabase
+        const { data: creatorRow, error: creatorError } = await supabase
           .from('creator_profiles')
-          .select('*')
+          .select('user_id, full_name, avatar_url, city, country, creator_platforms, content_categories')
           .eq('user_id', creatorId)
           .single()
 
-        if (creatorError || !creatorProfile) {
+        if (creatorError || !creatorRow) {
           setError('Creator not found')
           setLoading(false)
           return
         }
 
         const merged: CreatorProfile = {
-          ...coreProfile,
-          ...creatorProfile,
+          id: creatorRow.user_id,
           role: 'creator',
+          onboarding_completed: true,
+          full_name: creatorRow.full_name ?? null,
+          avatar_url: creatorRow.avatar_url ?? null,
+          city: creatorRow.city ?? null,
+          country: creatorRow.country ?? null,
+          creator_platforms: creatorRow.creator_platforms ?? null,
+          content_categories: creatorRow.content_categories ?? null,
         }
         setProfile(merged)
 
