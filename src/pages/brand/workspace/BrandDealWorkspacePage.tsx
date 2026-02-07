@@ -29,10 +29,12 @@ export default function BrandDealWorkspacePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const brandId = session?.user?.id
+
   useEffect(() => {
-    if (!dealId || !session?.user?.id) {
+    if (!dealId || !brandId) {
       setLoading(false)
-      if (!session?.user?.id) return
+      if (!brandId) return
       setError('Deal not found')
       return
     }
@@ -45,7 +47,7 @@ export default function BrandDealWorkspacePage() {
           .from('deals')
           .select('*')
           .eq('id', dealId)
-          .eq('brand_id', session.user.id)
+          .eq('brand_id', brandId)
           .single()
 
         if (dealError || !dealData) {
@@ -77,7 +79,7 @@ export default function BrandDealWorkspacePage() {
     }
 
     fetchDealAndCreator()
-  }, [dealId, session?.user?.id])
+  }, [dealId, brandId])
 
   if (loading) {
     return (
