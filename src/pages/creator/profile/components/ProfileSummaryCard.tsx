@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { ReactNode } from 'react'
-import { FaClock, FaUsers, FaStar, FaLink, FaInstagram, FaYoutube } from 'react-icons/fa'
+import { FaClock, FaUsers, FaStar, FaLink, FaInstagram, FaYoutube, FaCopy } from 'react-icons/fa'
 import AvatarUpload from '../../../../components/AvatarUpload/AvatarUpload'
+import { publicProfileUrl as getPublicProfileUrl } from '../../../../lib/publicUrl'
 import type { CreatorProfileFormData } from '../hooks/useCreatorProfileForm'
 import type { CreatorProfileDisplayData } from '../hooks/useCreatorProfileForm'
 
@@ -26,6 +28,21 @@ export function ProfileSummaryCard({
   onAvatarChange,
   onSave,
 }: ProfileSummaryCardProps) {
+  const [copied, setCopied] = useState(false)
+
+  const publicProfileLink = getPublicProfileUrl(userId)
+
+  const handleCopyPublicLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicProfileLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      // fallback for older browsers
+      setCopied(false)
+    }
+  }
+
   return (
     <div className="lg:col-span-1">
       <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-24">
@@ -47,7 +64,16 @@ export function ProfileSummaryCard({
             className="text-lg font-semibold text-gray-900 text-center border-0 border-b-2 border-transparent hover:border-gray-300 focus:border-[#6366F1] focus:outline-none bg-transparent mb-1 w-full"
           />
 
-          <p className="text-xs text-gray-500 mb-3">Creator Profile</p>
+          <p className="text-xs text-gray-500 mb-2">Creator Profile</p>
+
+          <button
+            type="button"
+            onClick={handleCopyPublicLink}
+            className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#6366F1] transition-colors mb-4"
+          >
+            <FaCopy className="w-3.5 h-3.5" />
+            {copied ? 'Copied!' : 'Copy public profile link'}
+          </button>
 
           <div className="mb-4">
             <select

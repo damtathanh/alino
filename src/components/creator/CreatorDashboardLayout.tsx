@@ -24,8 +24,8 @@ export default function CreatorDashboardLayout() {
     { path: 'profile', label: 'Hồ sơ cá nhân', icon: FaUser },
     { path: 'services', label: 'Dịch vụ & Bảng giá', icon: FaDollarSign },
     { path: 'discovery', label: 'Cơ hội', icon: FaLightbulb },
-    { path: 'deals', label: 'My Deals', icon: FaHandshake },
-    { path: 'proposals', label: 'My Proposals', icon: FaFileAlt },
+    { path: 'deals', label: 'Hợp tác hiện tại', icon: FaHandshake },
+    { path: 'proposals', label: 'Gói dịch vụ', icon: FaFileAlt },
     { path: 'workspace', label: 'Trung tâm làm việc', icon: FaCheckCircle },
     { path: 'analytics', label: 'Phân tích', icon: FaChartBar },
   ]

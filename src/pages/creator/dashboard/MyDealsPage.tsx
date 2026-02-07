@@ -109,7 +109,7 @@ export default function MyDealsPage() {
     <div className="bg-gray-50 min-h-screen py-8 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Deals</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Hợp tác hiện tại</h1>
           <p className="text-gray-600">
             View all your deals and collaborations with brands
           </p>
@@ -117,9 +117,9 @@ export default function MyDealsPage() {
 
         {deals.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-gray-600 mb-2">You don't have any deals yet</p>
+            <p className="text-gray-600 mb-2">Bạn chưa có hợp tác nào</p>
             <p className="text-sm text-gray-500">
-              Deals will appear here once brands book you
+              Hợp tác sẽ hiện tại ở đây khi thương hiệu đặt bạn
             </p>
           </div>
         ) : (

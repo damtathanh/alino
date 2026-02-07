@@ -24,6 +24,8 @@ import ProposalInboxPage from '../pages/brand/deals/ProposalInboxPage'
 import WorkspacePage from '../pages/brand/workspace/WorkspacePage'
 import WorkspaceCampaignPage from '../pages/brand/workspace/WorkspaceCampaignPage'
 import WorkspaceRoutes from '../pages/brand/workspace/WorkspaceRoutes'
+import StartCollaborationPage from '../pages/brand/workspace/StartCollaborationPage'
+import BrandDealWorkspacePage from '../pages/brand/workspace/BrandDealWorkspacePage'
 import ComingSoonPage from '../pages/shared/ComingSoonPage'
 
 /**
@@ -74,12 +76,15 @@ export const brandRoutes: RouteDefinition[] = [
   { path: 'profile', element: <BrandProfilePage /> },
   { path: 'analytics', element: <BrandCampaignAnalyticsPage /> },
   { path: 'discovery', element: <BrandDiscoveryPage /> },
-  
+  // Start collaboration from public creator profile → create deal, redirect to deal workspace
+  { path: 'start-collaboration', element: <StartCollaborationPage /> },
   // Workspace: Execution Layer (daily working area)
   // STATE A: Workspace Overview (DEFAULT) - shows multiple campaigns, pending work
   // Route: /dashboard/brand/workspace
   // MUST NOT auto-open any campaign - this is the overview dashboard
   { path: 'workspace', element: <WorkspacePage /> },
+  // Deal workspace: shared workspace for one deal (from "Start collaboration")
+  { path: 'workspace/deal/:dealId', element: <BrandDealWorkspacePage /> },
   // STATE B: Workspace with Campaign Selected - shows execution UI (timeline, creator progress, actions)
   // Route: /dashboard/brand/workspace/:campaignId
   // Only shows execution UI when a specific campaign is selected
